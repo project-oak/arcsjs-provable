@@ -1,10 +1,9 @@
-#[macro_use]
-extern crate lazy_static;
-
 use crepe::crepe;
+use paste::paste;
 use std::collections::HashMap;
 
 type Ent = u32;
+type Rel = u32;
 
 struct Context {
     last_ent: Ent,
@@ -39,32 +38,77 @@ impl Context {
 
 crepe! {
     @input
-    struct IsAClaim(Ent, Ent);
+    struct P(Rel, Ent, Ent); // Premise
+
     @input
-    struct Exists(Ent);
+    struct IsA(Rel); // Relation
+    @input
+    struct HasType(Rel); // Relation
 
     @output
-    struct IsA(Ent, Ent);
+    struct C(Rel, Ent, Ent); // Conclusion
 
-    IsA(x,x) <- Exists(x);
-    IsA(x,x) <- IsAClaim(x, _);
-    IsA(x,x) <- IsAClaim(_, x);
-    IsA(x, z) <- IsAClaim(x, y), IsA(y, z);
+    C(r, x,x) <- IsA(r), P(r, x, _);
+    C(r, x,x) <- IsA(r), P(r, _, x);
+    C(r, x, z) <- IsA(r), C(r, x, y), P(r, y, z);
+}
+
+macro_rules! relations {
+    ($ctx: expr, $runtime: expr $(, $name: ident )+ ) => {
+        {
+            $(
+                let $name: Ent = $ctx.decl(stringify!($name));
+                $runtime.extend(&[paste!( [< $name:camel >] )($name)]);
+            )*
+            (
+            $(
+                $name,
+            )*
+            )
+        }
+    };
+}
+
+macro_rules! entities {
+    ($ctx: expr $(, $name: ident )+ ) => {
+        {
+            $(
+                let $name: Ent = $ctx.decl(stringify!($name));
+            )*
+            (
+            $(
+                $name,
+            )*
+            )
+        }
+    };
+}
+
+macro_rules! facts {
+    ($runtime: expr $(, $tuple: expr )+ ) => {
+        {
+            $runtime.extend(&[ $($tuple, )* ]);
+        }
+    };
 }
 
 fn main() {
     let mut ctx = Context::new();
     let mut runtime = Crepe::new();
 
-    let socretes: Ent = ctx.decl("socretes");
-    let man: Ent = ctx.decl("man");
-    let mortal: Ent = ctx.decl("mortal");
+    let (is_a, _has_type) = relations!(ctx, runtime, is_a, has_type);
+    let (socretes, man, mortal) = entities!(ctx, socretes, man, mortal);
 
-    runtime.extend(&[Exists(socretes), Exists(man), Exists(mortal)]);
-    runtime.extend(&[IsAClaim(socretes, man), IsAClaim(man, mortal)]);
+    facts!(runtime,
+       P(is_a, socretes, man),
+       P(is_a, man, mortal)
+    );
 
-    let (reachable,) = &runtime.run();
-    for IsA(x, y) in reachable {
-        println!("{} is a {}", ctx.name(x), ctx.name(y));
+    let (concs,) = &runtime.run();
+    for C(r, x, y) in concs {
+        if *r != is_a || *x != socretes {
+            continue;
+        }
+        println!("{} {} {}", ctx.name(x), ctx.name(r), ctx.name(y));
     }
 }

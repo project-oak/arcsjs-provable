@@ -7,4 +7,4 @@ edition = "2021"
 
 [dependencies]
 crepe = "0.1.5"
-lazy_static = "1.4.0"
+paste = "1.0.6"
