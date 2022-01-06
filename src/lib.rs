@@ -16,8 +16,6 @@ macro_rules! set {
     };
 }
 
-
-// type Ent = &'static str;
 type EntId = u32;
 
 #[derive(Copy, Clone, PartialOrd, Ord, Eq, PartialEq, Hash)]
@@ -93,7 +91,7 @@ impl std::fmt::Debug for Ent {
 macro_rules! relation {
     ($name: ident $args: tt) => {
         use paste::paste;
-        paste!{
+        paste! {
             @input
             struct [<$name Claim>]$args
             @output
@@ -101,7 +99,7 @@ macro_rules! relation {
 
             $name $args <- [<$name Claim>]$args;
         }
-    }
+    };
 }
 
 #[macro_export]
