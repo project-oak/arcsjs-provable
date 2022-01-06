@@ -1,6 +1,6 @@
-use std::collections::HashMap;
-use std::borrow::Borrow;
 use lazy_static::lazy_static;
+use std::borrow::Borrow;
+use std::collections::HashMap;
 
 use std::cell::RefCell;
 use std::sync::Mutex;
@@ -39,7 +39,7 @@ impl Ctx {
         Self {
             last_ent: 0,
             name_by_id: HashMap::new(),
-            id_by_name: HashMap::new()
+            id_by_name: HashMap::new(),
         }
     }
 }
@@ -72,8 +72,7 @@ impl Ent {
     }
 
     pub fn name(&self) -> String {
-        get_name_by_id(self.id)
-            .expect("All entities should have a name")
+        get_name_by_id(self.id).expect("All entities should have a name")
     }
 
     pub fn get_by_name(name: &str) -> Option<Ent> {
