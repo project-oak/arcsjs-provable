@@ -11,3 +11,6 @@ path = "src/lib.rs"
 crepe = { version = "0.1.5", path = "/home/jopra/google/crepe" }
 paste = "1.0.6"
 lazy_static = "1.4.0"
+
+[dev_dependencies]
+pretty_assertions = "1.0.0"

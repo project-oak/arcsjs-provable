@@ -1,5 +1,22 @@
 use std::collections::HashMap;
 
+#[macro_export]
+macro_rules! set {
+    () => {
+        std::collections::HashSet::new()
+    };
+    ( $( $arg: expr ),* ) => {
+        {
+            let mut st = set!();
+            $(
+                st.insert( $arg );
+            )*
+            st
+        }
+    };
+}
+
+
 // type Ent = &'static str;
 type EntId = u32;
 
@@ -74,14 +91,16 @@ impl std::fmt::Debug for Ent {
 
 #[macro_export]
 macro_rules! relation {
-    ($name: ident $(, $arg: expr )* ) => {
+    ($name: ident $args: tt) => {
         use paste::paste;
-        @input
-        struct paste!([<$name Claim>])( $($arg, )* )
-        @output
-        struct $name( $($arg, )* )
+        paste!{
+            @input
+            struct [<$name Claim>]$args
+            @output
+            struct $name $args
 
-        $name( $($arg, )*) <- paste!([<$name Claim>])( $($arg)* );
+            $name $args <- [<$name Claim>]$args;
+        }
     }
 }
 
