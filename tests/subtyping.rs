@@ -88,7 +88,7 @@ fn dynamic_subtyping_mr_socretes_is_mortal() {
         struct Man(Ent);
         Man(x) <- Instance(x, Ent::by_name("man"));
 
-        Man(Ent::by_name(&("Mr. ".to_string()+y.name()))) <- Man(y), ((&y.name()).starts_with("Mr. "));
+        Man(Ent::by_name(&("Mr. ".to_string()+&y.name()))) <- Man(y), ((&y.name()).starts_with("Mr. "));
         Subtype(x, z) <- Subtype(x, y), Subtype(y, z);
         Instance(x, z) <- Instance(x, y), Subtype(y, z);
     }

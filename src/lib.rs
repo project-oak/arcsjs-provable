@@ -1,4 +1,9 @@
 use std::collections::HashMap;
+use std::borrow::Borrow;
+use lazy_static::lazy_static;
+
+use std::cell::RefCell;
+use std::sync::Mutex;
 
 #[macro_export]
 macro_rules! set {
@@ -23,48 +28,56 @@ pub struct Ent {
     id: EntId,
 }
 
-static mut LAST_ENT: EntId = 0;
+struct Ctx {
+    last_ent: EntId,
+    name_by_id: HashMap<EntId, String>,
+    id_by_name: HashMap<String, EntId>,
+}
 
-static mut NAME_BY_ID: Option<HashMap<EntId, String>> = None; // HashMap::new();
-static mut ID_BY_NAME: Option<HashMap<String, EntId>> = None; // HashMap::new();
-
-fn id_by_name() -> &'static mut HashMap<String, EntId> {
-    unsafe {
-        if ID_BY_NAME == None {
-            ID_BY_NAME = Some(HashMap::new());
+impl Ctx {
+    fn new() -> Self {
+        Self {
+            last_ent: 0,
+            name_by_id: HashMap::new(),
+            id_by_name: HashMap::new()
         }
-        ID_BY_NAME.as_mut().expect("Should never fail: ID_BY_NAME")
     }
 }
 
-fn name_by_id() -> &'static mut HashMap<EntId, String> {
-    unsafe {
-        if NAME_BY_ID == None {
-            NAME_BY_ID = Some(HashMap::new());
-        }
-        NAME_BY_ID.as_mut().expect("Should never fail: NAME_BY_ID")
-    }
+lazy_static! {
+    static ref CTX: Mutex<RefCell<Ctx>> = Mutex::new(RefCell::new(Ctx::new()));
+}
+
+fn get_id_by_name(name: &str) -> Option<EntId> {
+    let guard = CTX.lock().expect("Shouldn't fail");
+    let ctx = (*guard).borrow();
+    ctx.borrow().id_by_name.get(name).cloned()
+}
+
+fn get_name_by_id(id: EntId) -> Option<String> {
+    let guard = CTX.lock().expect("Shouldn't fail");
+    let ctx = (*guard).borrow();
+    ctx.borrow().name_by_id.get(&id).cloned()
 }
 
 impl Ent {
     pub fn new(name: &str) -> Self {
-        let id = unsafe {
-            LAST_ENT += 1;
-            LAST_ENT
-        };
-        name_by_id().insert(id, name.to_string());
-        id_by_name().insert(name.to_string(), id);
+        let guard = CTX.lock().expect("Shouldn't fail");
+        let mut ctx = (*guard).borrow_mut();
+        ctx.last_ent += 1;
+        let id = ctx.last_ent;
+        ctx.id_by_name.insert(name.to_string(), id);
+        ctx.name_by_id.insert(id, name.to_string());
         Ent { id }
     }
 
-    pub fn name(&self) -> &String {
-        name_by_id()
-            .get(&self.id)
+    pub fn name(&self) -> String {
+        get_name_by_id(self.id)
             .expect("All entities should have a name")
     }
 
     pub fn get_by_name(name: &str) -> Option<Ent> {
-        id_by_name().get(name).map(|id| Ent { id: *id })
+        get_id_by_name(name).map(|id| Ent { id })
     }
 
     pub fn by_name(name: &str) -> Ent {
