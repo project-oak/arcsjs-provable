@@ -8,9 +8,10 @@ name = "ibis"
 path = "src/lib.rs"
 
 [dependencies]
-crepe = { version = "0.1.5", path = "/home/jopra/google/crepe" }
 paste = "1.0.6"
+crepe = { version = "0.1.5", path = "/home/jopra/google/crepe" }
 lazy_static = "1.4.0"
+ibis_macros = { path = "./ibis_macros" }
 
 [dev_dependencies]
 pretty_assertions = "1.0.0"

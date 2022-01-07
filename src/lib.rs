@@ -5,6 +5,9 @@ use std::collections::HashMap;
 use std::cell::RefCell;
 use std::sync::Mutex;
 
+extern crate ibis_macros;
+pub use ibis_macros::*;
+
 #[macro_export]
 macro_rules! set {
     () => {
@@ -127,5 +130,5 @@ macro_rules! facts {
                 ]);
             )*
         }
-    };
+    }
 }
