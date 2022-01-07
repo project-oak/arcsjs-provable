@@ -243,22 +243,7 @@ fn iterator_types_subtype() {
         Type(t) <- InductiveType(t);
         Type(t) <- GenericType(t);
 
-        struct SpecialisationOfClaim(Ent, Ent);
-        struct SpecialisationOf(Ent, Ent);
-        SpecialisationOf(x, y) <- SpecialisationOfClaim(x, y);
-
-        SpecialisationOf(x, y) <- SpecialisationBy(x, y, _);
-
-        SpecialisationOf(x, y) <-
-            GenericType(y),
-            Type(x),
-            (x.name().starts_with(&(y.name()+"("))),
-            (x.name().ends_with(")"));
-
-        struct SpecialisationByClaim(Ent, Ent, Ent);
         struct SpecialisationBy(Ent, Ent, Ent);
-        SpecialisationBy(x, y, z) <- SpecialisationByClaim(x, y, z);
-
         SpecialisationBy(Ent::by_name(&format!("{}({})", y.name(), x.name())), y, x) <-
             GenericType(y),
             Type(x),
