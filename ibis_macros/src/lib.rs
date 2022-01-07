@@ -16,7 +16,8 @@ pub fn ibis(input: TokenStream) -> TokenStream {
         let name = definition.pop().expect("Definition must have a name");
         if definition.is_empty() {
             // This is an atom definition;
-            atoms += &format!("let {name} = Ent::by_name(\"{name}\");", name=name);
+            let lower_name = format!("{}", name).to_lowercase();
+            atoms += &format!("let {lower_name} = Ent::by_name(\"{name}\");", lower_name=lower_name, name=name);
             return;
         }
         let args = definition.pop().expect("Definition must have args");
@@ -45,10 +46,10 @@ pub fn ibis(input: TokenStream) -> TokenStream {
             // this is a struct definition
             definitions += &format!("
             @input
-            #[derive(Debug)]
+            #[derive(Debug, Ord, PartialOrd)]
             struct {name}Claim{args};
             @output
-            #[derive(Debug)]
+            #[derive(Debug, Ord, PartialOrd)]
             struct {name}{args};
 
             {name}({arg_names}) <- {name}Claim({arg_names});
