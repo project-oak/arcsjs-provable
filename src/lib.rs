@@ -135,6 +135,9 @@ macro_rules! facts {
 
 #[macro_export]
 macro_rules! ent {
+    ($fmt: expr) => {
+        Ent::by_name($fmt)
+    };
     ($fmt: expr, $($names: expr),*) => {
         Ent::by_name(&format!($fmt, $( $names.name(), )*))
     }
