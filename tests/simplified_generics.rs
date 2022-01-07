@@ -1,19 +1,18 @@
-use ibis::{ibis, facts, set, Ent, is_a, ent, gen};
+use ibis::{ibis, facts, Ent, is_a, ent, gen};
 use pretty_assertions::assert_eq;
 
 #[test]
 fn list_types_subtype() {
     ibis!{
         Subtype(Ent, Ent);
-        Instance(Ent, Ent);
         Type(Ent);
 
         Type(t) <- Subtype(t, _);
         Type(t) <- Subtype(_, t);
-        Type(t) <- Instance(_, t);
+
+        Subtype(t, t) <- Type(t);
 
         Subtype(x, z) <- Subtype(x, y), Subtype(y, z);
-        Instance(x, z) <- Instance(x, y), Subtype(y, z);
 
         Subtype(
             x,
@@ -41,31 +40,27 @@ fn list_types_subtype() {
     facts!(
         runtime,
         Subtype(man, mortal),
-        Subtype(list_man, list_man),
-        Subtype(list_mortal, list_mortal),
-        Instance(plato, man),
-        Instance(socretes, man)
+        Type(list_man),
+        Type(list_mortal),
+        Subtype(plato, man),
+        Subtype(socretes, man)
     );
 
-    let (subtypes, instances, _types) = &runtime.run();
+    let (subtypes, _types) = &runtime.run();
+    let mut subtypes: Vec<Subtype> = subtypes.iter().filter(|Subtype(x, y)| x != y).map(|x|x.clone()).collect();
+    subtypes.sort();
+    let mut expected = vec![
+        Subtype(man, mortal),
+        Subtype(list_man, list_mortal),
+        Subtype(socretes, man),
+        Subtype(plato, man),
+        Subtype(socretes, mortal),
+        Subtype(plato, mortal)
+    ];
+    expected.sort();
     assert_eq!(
         subtypes,
-        &set![
-            Subtype(man, mortal),
-            Subtype(list_man, list_man),
-            Subtype(list_man, list_mortal),
-            Subtype(list_mortal, list_mortal)
-        ]
-    );
-
-    assert_eq!(
-        instances,
-        &set![
-            Instance(socretes, man),
-            Instance(plato, man),
-            Instance(socretes, mortal),
-            Instance(plato, mortal)
-        ]
+        expected
     );
 }
 
@@ -76,34 +71,22 @@ fn iterator_types_subtype() {
         Type(Ent);
         GenericType(Ent);
         InductiveType(Ent);
+        SpecialisationBy(Ent, Ent, Ent);
 
         Type(t) <- Subtype(t, _);
         Type(t) <- Subtype(_, t);
-        Type(t) <- Instance(_, t);
         Type(t) <- InductiveType(t);
         Type(t) <- GenericType(t);
 
-        SpecialisationOf(Ent, Ent);
-
-        SpecialisationOf(x, y) <- SpecialisationBy(x, y, _);
-
-        SpecialisationOf(x, y) <-
-            GenericType(y),
-            Type(x),
-            (is_a!(x, y));
-
-        SpecialisationBy(Ent, Ent, Ent);
+        Subtype(x, z) <- Subtype(x, y), Subtype(y, z);
 
         SpecialisationBy(gen!(y, x), y, x) <-
             GenericType(y),
             Type(x),
             Type(gen!(y, x));
 
-        Instance(Ent, Ent);
-
         Subtype(x, x) <- Type(x);
         Subtype(x, z) <- Subtype(x, y), Subtype(y, z);
-        Instance(x, z) <- Instance(x, y), Subtype(y, z);
 
         Subtype(
             x,
@@ -134,11 +117,9 @@ fn iterator_types_subtype() {
     facts!(
         runtime,
         Subtype(man, mortal),
-        Type(list),
-        Type(iterable),
         Subtype(list, iterable),
-        Instance(plato, man),
-        Instance(socretes, man),
+        Subtype(plato, man),
+        Subtype(socretes, man),
         GenericType(list),
         GenericType(iterable),
         InductiveType(list),
@@ -150,7 +131,7 @@ fn iterator_types_subtype() {
         Type(iterable_man)
     );
 
-    let (subtypes, _types, _generic_types, _inductive_types, _specialisations_of, _specialisations_by, instances) = &runtime.run();
+    let (subtypes, _types, _generic_types, _inductive_types, _specialisations_by) = &runtime.run();
     let mut subtypes: Vec<Subtype> = subtypes.iter().filter(|Subtype(x, y)| x != y).map(|x|x.clone()).collect();
     let mut expected = vec![
             Subtype(man, mortal),
@@ -159,7 +140,11 @@ fn iterator_types_subtype() {
             Subtype(list_man, iterable_man), // Check that a list of men, is an interable of men
             Subtype(iterable_man, iterable_mortal), // Check that an iterable of men, is an iterable of mortals
             Subtype(list_mortal, iterable_mortal), // Check that a list of mortals, is an iterable of mortals
-            Subtype(list_man, iterable_mortal) // Check that a list of men, is an iterable of mortals
+            Subtype(list_man, iterable_mortal), // Check that a list of men, is an iterable of mortals
+            Subtype(socretes, man),
+            Subtype(plato, man),
+            Subtype(socretes, mortal),
+            Subtype(plato, mortal)
         ];
 
     subtypes.sort();
@@ -168,15 +153,5 @@ fn iterator_types_subtype() {
     assert_eq!(
         subtypes,
         expected,
-    );
-
-    assert_eq!(
-        instances,
-        &set![
-            Instance(socretes, man),
-            Instance(plato, man),
-            Instance(socretes, mortal),
-            Instance(plato, mortal)
-        ]
     );
 }
