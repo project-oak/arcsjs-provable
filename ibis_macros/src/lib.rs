@@ -95,8 +95,6 @@ pub fn ibis(input: TokenStream) -> TokenStream {
     // also add the last definition
     add_definition(curr);
 
-    eprintln!("defs: {}", &definitions);
-
     format!("use crepe::crepe;
     crepe!{{
         {definitions}

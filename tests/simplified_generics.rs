@@ -1,4 +1,4 @@
-use ibis::{ibis, facts, set, Ent};
+use ibis::{ibis, facts, set, Ent, is_a, gen};
 use pretty_assertions::assert_eq;
 
 #[test]
@@ -70,7 +70,6 @@ fn list_types_subtype() {
     );
 }
 
-
 #[test]
 fn iterator_types_subtype() {
     ibis! {
@@ -92,15 +91,14 @@ fn iterator_types_subtype() {
         SpecialisationOf(x, y) <-
             GenericType(y),
             Type(x),
-            (x.name().starts_with(&(y.name()+"("))),
-            (x.name().ends_with(")"));
+            (is_a!(x, y));
 
         SpecialisationBy(Ent, Ent, Ent);
 
-        SpecialisationBy(Ent::by_name(&format!("{}({})", y.name(), x.name())), y, x) <-
+        SpecialisationBy(gen!(y, x), y, x) <-
             GenericType(y),
             Type(x),
-            Type(Ent::by_name(&format!("{}({})", y.name(), x.name())));
+            Type(gen!(y, x));
 
         Instance(Ent, Ent);
 

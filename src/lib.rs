@@ -132,3 +132,25 @@ macro_rules! facts {
         }
     }
 }
+
+#[macro_export]
+macro_rules! ent {
+    ($fmt: expr, $($names: expr),*) => {
+        Ent::by_name(&format!($fmt, $( $names.name(), )*))
+    }
+}
+
+#[macro_export]
+macro_rules! gen {
+    ($type: expr, $arg: expr) => {
+        Ent::by_name(&format!("{}({})", $type.name(), $arg.name()))
+    }
+}
+
+#[macro_export]
+macro_rules! is_a {
+    ($type: expr, $parent: expr) => {
+        ($type.name().starts_with(&($parent.name()+"(")) && $type.name().ends_with(")"))
+    }
+}
+
