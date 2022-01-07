@@ -1,4 +1,4 @@
-use ibis::{ibis, facts, Ent, is_a, ent, gen};
+use ibis::{ibis, facts, Ent, is_a, ent, apply};
 use pretty_assertions::assert_eq;
 
 #[test]
@@ -31,8 +31,8 @@ fn list_types_subtype() {
         mortal;
         List;
     }
-    let list_man = gen!(list, man);
-    let list_mortal = gen!(list, mortal);
+    let list_man = apply!(list, man);
+    let list_mortal = apply!(list, mortal);
 
     let mut runtime = Ibis::new();
 
@@ -80,10 +80,10 @@ fn iterator_types_subtype() {
 
         Subtype(x, z) <- Subtype(x, y), Subtype(y, z);
 
-        SpecialisationBy(gen!(y, x), y, x) <-
+        SpecialisationBy(apply!(y, x), y, x) <-
             GenericType(y),
             Type(x),
-            Type(gen!(y, x));
+            Type(apply!(y, x));
 
         Subtype(x, x) <- Type(x);
         Subtype(x, z) <- Subtype(x, y), Subtype(y, z);
@@ -108,10 +108,10 @@ fn iterator_types_subtype() {
 
     let mut runtime = Ibis::new();
 
-    let list_man = gen!(list, man);
-    let iterable_man = gen!(iterable, man);
-    let list_mortal = gen!(list, mortal);
-    let iterable_mortal = gen!(iterable, mortal);
+    let list_man = apply!(list, man);
+    let iterable_man = apply!(iterable, man);
+    let list_mortal = apply!(list, mortal);
+    let iterable_mortal = apply!(iterable, mortal);
 
     // specify all the 'dynamic' facts
     facts!(

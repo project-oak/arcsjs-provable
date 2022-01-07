@@ -144,7 +144,7 @@ macro_rules! ent {
 }
 
 #[macro_export]
-macro_rules! gen {
+macro_rules! apply {
     ($type: expr, $arg: expr) => {
         Ent::by_name(&format!("{}({})", $type.name(), $arg.name()))
     }
