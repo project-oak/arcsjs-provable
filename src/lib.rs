@@ -147,13 +147,12 @@ macro_rules! ent {
 macro_rules! apply {
     ($type: expr, $arg: expr) => {
         Ent::by_name(&format!("{}({})", $type.name(), $arg.name()))
-    }
+    };
 }
 
 #[macro_export]
 macro_rules! is_a {
     ($type: expr, $parent: expr) => {
-        ($type.name().starts_with(&($parent.name()+"(")) && $type.name().ends_with(")"))
-    }
+        ($type.name().starts_with(&($parent.name() + "(")) && $type.name().ends_with(")"))
+    };
 }
-

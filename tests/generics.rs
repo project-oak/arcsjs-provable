@@ -200,24 +200,25 @@ fn iterator_types_subtype() {
     );
 
     let (subtypes, instances) = &runtime.run();
-    let mut subtypes: Vec<Subtype> = subtypes.iter().filter(|Subtype(x, y)| x != y).map(|x|x.clone()).collect();
+    let mut subtypes: Vec<Subtype> = subtypes
+        .iter()
+        .filter(|Subtype(x, y)| x != y)
+        .map(|x| x.clone())
+        .collect();
     let mut expected = vec![
-            Subtype(man, mortal),
-            Subtype(list, iterable),
-            Subtype(list_man, list_mortal), // Check that a list of men, is a list of mortals
-            Subtype(list_man, iterable_man), // Check that a list of men, is an interable of men
-            Subtype(iterable_man, iterable_mortal), // Check that an iterable of men, is an iterable of mortals
-            Subtype(list_mortal, iterable_mortal), // Check that a list of mortals, is an iterable of mortals
-            Subtype(list_man, iterable_mortal) // Check that a list of men, is an iterable of mortals
-        ];
+        Subtype(man, mortal),
+        Subtype(list, iterable),
+        Subtype(list_man, list_mortal), // Check that a list of men, is a list of mortals
+        Subtype(list_man, iterable_man), // Check that a list of men, is an interable of men
+        Subtype(iterable_man, iterable_mortal), // Check that an iterable of men, is an iterable of mortals
+        Subtype(list_mortal, iterable_mortal), // Check that a list of mortals, is an iterable of mortals
+        Subtype(list_man, iterable_mortal), // Check that a list of men, is an iterable of mortals
+    ];
 
     subtypes.sort();
     expected.sort();
 
-    assert_eq!(
-        subtypes,
-        expected,
-    );
+    assert_eq!(subtypes, expected,);
 
     assert_eq!(
         instances,
@@ -229,4 +230,3 @@ fn iterator_types_subtype() {
         ]
     );
 }
-

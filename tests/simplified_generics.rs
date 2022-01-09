@@ -1,9 +1,9 @@
-use ibis::{ibis, facts, Ent, is_a, ent, apply};
+use ibis::{apply, ent, facts, ibis, is_a, Ent};
 use pretty_assertions::assert_eq;
 
 #[test]
 fn list_types_subtype() {
-    ibis!{
+    ibis! {
         Subtype(Ent, Ent);
         Type(Ent);
 
@@ -47,7 +47,11 @@ fn list_types_subtype() {
     );
 
     let (subtypes, _types) = &runtime.run();
-    let mut subtypes: Vec<Subtype> = subtypes.iter().filter(|Subtype(x, y)| x != y).map(|x|x.clone()).collect();
+    let mut subtypes: Vec<Subtype> = subtypes
+        .iter()
+        .filter(|Subtype(x, y)| x != y)
+        .map(|x| x.clone())
+        .collect();
     subtypes.sort();
     let mut expected = vec![
         Subtype(man, mortal),
@@ -55,13 +59,10 @@ fn list_types_subtype() {
         Subtype(socretes, man),
         Subtype(plato, man),
         Subtype(socretes, mortal),
-        Subtype(plato, mortal)
+        Subtype(plato, mortal),
     ];
     expected.sort();
-    assert_eq!(
-        subtypes,
-        expected
-    );
+    assert_eq!(subtypes, expected);
 }
 
 #[test]
@@ -132,26 +133,27 @@ fn iterator_types_subtype() {
     );
 
     let (subtypes, _types, _generic_types, _inductive_types, _specialisations_by) = &runtime.run();
-    let mut subtypes: Vec<Subtype> = subtypes.iter().filter(|Subtype(x, y)| x != y).map(|x|x.clone()).collect();
+    let mut subtypes: Vec<Subtype> = subtypes
+        .iter()
+        .filter(|Subtype(x, y)| x != y)
+        .map(|x| x.clone())
+        .collect();
     let mut expected = vec![
-            Subtype(man, mortal),
-            Subtype(list, iterable),
-            Subtype(list_man, list_mortal), // Check that a list of men, is a list of mortals
-            Subtype(list_man, iterable_man), // Check that a list of men, is an interable of men
-            Subtype(iterable_man, iterable_mortal), // Check that an iterable of men, is an iterable of mortals
-            Subtype(list_mortal, iterable_mortal), // Check that a list of mortals, is an iterable of mortals
-            Subtype(list_man, iterable_mortal), // Check that a list of men, is an iterable of mortals
-            Subtype(socretes, man),
-            Subtype(plato, man),
-            Subtype(socretes, mortal),
-            Subtype(plato, mortal)
-        ];
+        Subtype(man, mortal),
+        Subtype(list, iterable),
+        Subtype(list_man, list_mortal), // Check that a list of men, is a list of mortals
+        Subtype(list_man, iterable_man), // Check that a list of men, is an interable of men
+        Subtype(iterable_man, iterable_mortal), // Check that an iterable of men, is an iterable of mortals
+        Subtype(list_mortal, iterable_mortal), // Check that a list of mortals, is an iterable of mortals
+        Subtype(list_man, iterable_mortal), // Check that a list of men, is an iterable of mortals
+        Subtype(socretes, man),
+        Subtype(plato, man),
+        Subtype(socretes, mortal),
+        Subtype(plato, mortal),
+    ];
 
     subtypes.sort();
     expected.sort();
 
-    assert_eq!(
-        subtypes,
-        expected,
-    );
+    assert_eq!(subtypes, expected,);
 }
