@@ -43,7 +43,7 @@ fn list_types_subtype() {
         Type(list_man),
         Type(list_mortal),
         Subtype(plato, man),
-        Subtype(socretes, man)
+        Subtype(socretes, man),
     );
 
     let (subtypes, _types) = &runtime.run();

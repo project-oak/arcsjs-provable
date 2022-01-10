@@ -119,13 +119,13 @@ macro_rules! relation {
 
 #[macro_export]
 macro_rules! facts {
-    ($runtime: expr $(, $name: ident ($first: expr $(, $arg: expr )*) )+ ) => {
+    ($runtime: expr $(, $name: ident ($($arg: expr ),*) )* $(,)? ) => {
         {
             use paste::paste;
             $(
                 $runtime.extend(&[
                     paste!( [< $name Claim >]) (
-                        $first $(, $arg)*
+                        $($arg, )*
                     ),
                 ]);
             )*
