@@ -1,7 +1,6 @@
 use lazy_static::lazy_static;
 use std::borrow::Borrow;
 use std::collections::HashMap;
-
 use std::cell::RefCell;
 use std::sync::Mutex;
 
@@ -24,7 +23,7 @@ macro_rules! set {
     };
 }
 
-type EntId = u32;
+type EntId = u64;
 
 #[derive(Copy, Clone, PartialOrd, Ord, Eq, PartialEq, Hash)]
 pub struct Ent {
@@ -32,7 +31,7 @@ pub struct Ent {
 }
 
 struct Ctx {
-    last_ent: EntId,
+    last_id: EntId,
     name_by_id: HashMap<EntId, String>,
     id_by_name: HashMap<String, EntId>,
 }
@@ -40,7 +39,7 @@ struct Ctx {
 impl Ctx {
     fn new() -> Self {
         Self {
-            last_ent: 0,
+            last_id: 0,
             name_by_id: HashMap::new(),
             id_by_name: HashMap::new(),
         }
@@ -51,9 +50,7 @@ lazy_static! {
     static ref CTX: Mutex<RefCell<Ctx>> = Mutex::new(RefCell::new(Ctx::new()));
 }
 
-fn get_id_by_name(name: &str) -> Option<EntId> {
-    let guard = CTX.lock().expect("Shouldn't fail");
-    let ctx = (*guard).borrow();
+fn get_id_by_name(ctx: &Ctx, name: &str) -> Option<EntId> {
     ctx.borrow().id_by_name.get(name).cloned()
 }
 
@@ -64,11 +61,9 @@ fn get_name_by_id(id: EntId) -> Option<String> {
 }
 
 impl Ent {
-    pub fn new(name: &str) -> Self {
-        let guard = CTX.lock().expect("Shouldn't fail");
-        let mut ctx = (*guard).borrow_mut();
-        ctx.last_ent += 1;
-        let id = ctx.last_ent;
+    fn new(ctx: &mut Ctx, name: &str) -> Self {
+        let id = ctx.last_id;
+        ctx.last_id += 1;
         ctx.id_by_name.insert(name.to_string(), id);
         ctx.name_by_id.insert(id, name.to_string());
         Ent { id }
@@ -78,12 +73,14 @@ impl Ent {
         get_name_by_id(self.id).expect("All entities should have a name")
     }
 
-    pub fn get_by_name(name: &str) -> Option<Ent> {
-        get_id_by_name(name).map(|id| Ent { id })
+    fn get_by_name(ctx: &mut Ctx, name: &str) -> Option<Ent> {
+        get_id_by_name(&ctx, name).map(|id| Ent { id })
     }
 
     pub fn by_name(name: &str) -> Ent {
-        Ent::get_by_name(name).unwrap_or_else(|| Ent::new(name))
+        let guard = CTX.lock().expect("Shouldn't fail");
+        let mut ctx = (*guard).borrow_mut();
+        Ent::get_by_name(&mut ctx, name).unwrap_or_else(|| Ent::new(&mut ctx, name))
     }
 }
 
