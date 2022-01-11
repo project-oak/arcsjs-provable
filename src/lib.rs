@@ -1,7 +1,7 @@
 use lazy_static::lazy_static;
 use std::borrow::Borrow;
-use std::collections::HashMap;
 use std::cell::RefCell;
+use std::collections::HashMap;
 use std::sync::Mutex;
 
 extern crate ibis_macros;
@@ -30,18 +30,76 @@ pub struct Ent {
     id: EntId,
 }
 
+#[derive(Copy, Clone, PartialOrd, Ord, Eq, Hash)]
+enum SolId {
+    Any,
+    Id(u32),
+}
+
+impl PartialEq for SolId {
+    fn eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (SolId::Any, _) => true,
+            (_, SolId::Any) => true,
+            (SolId::Id(self_id), SolId::Id(other_id)) => self_id == other_id,
+        }
+    }
+}
+
+#[derive(Copy, Clone, PartialOrd, Ord, Eq, PartialEq, Hash)]
+pub struct Sol {
+    id: SolId,
+}
+
+impl Sol {
+    pub fn new() -> Self {
+        let guard = CTX.lock().expect("Shouldn't fail");
+        let mut ctx = (*guard).borrow_mut();
+        let id = SolId::Id(ctx.solution_id);
+        ctx.solution_id += 1;
+        Self { id }
+    }
+
+    pub fn empty() -> Self {
+        Self { id: SolId::Id(0)}
+    }
+
+    pub fn any() -> Self {
+        Self { id: SolId::Any }
+    }
+}
+
+impl std::fmt::Display for Sol {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self.id {
+            SolId::Any => write!(f, "sol_any"),
+            SolId::Id(id) => write!(f, "sol_{}", id),
+        }
+    }
+}
+
+impl std::fmt::Debug for Sol {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Sol").field("id", &self).finish()
+    }
+}
+
 struct Ctx {
     last_id: EntId,
+    solution_id: u32,
     name_by_id: HashMap<EntId, String>,
     id_by_name: HashMap<String, EntId>,
+    // solution_history: HashMap<Sol, Vec<Sol>>,
 }
 
 impl Ctx {
     fn new() -> Self {
         Self {
             last_id: 0,
+            solution_id: 1,
             name_by_id: HashMap::new(),
             id_by_name: HashMap::new(),
+            // solution_history: HashMap::new(),
         }
     }
 }
