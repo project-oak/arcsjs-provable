@@ -13,7 +13,7 @@ macro_rules! set {
     () => {
         std::collections::HashSet::new()
     };
-    ( $( $arg: expr ),* ) => {
+    ( $( $arg: expr ),* $(,)?) => {
         {
             let mut st = set!();
             $(
