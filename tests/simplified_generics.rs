@@ -2,7 +2,7 @@ use ibis::{apply, ent, facts, ibis, is_a, Ent};
 use pretty_assertions::assert_eq;
 
 #[test]
-fn list_types_subtype() {
+fn simple_list_types_subtype() {
     ibis! {
         Subtype(Ent, Ent);
         Type(Ent);
@@ -66,7 +66,7 @@ fn list_types_subtype() {
 }
 
 #[test]
-fn iterator_types_subtype() {
+fn simple_iterator_types_subtype() {
     ibis! {
         Subtype(Ent, Ent);
         Type(Ent);

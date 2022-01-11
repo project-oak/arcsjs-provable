@@ -1,15 +1,15 @@
 use crepe::crepe;
-use ibis::{facts, set, Ent};
+use ibis::{facts, Ent};
 use pretty_assertions::assert_eq;
 
 #[test]
-fn list_types_subtype() {
+fn fixed_list_types_subtype() {
     crepe! {
         @input
         #[derive(Debug)]
         struct SubtypeClaim(Ent, Ent);
         @output
-        #[derive(Debug)]
+        #[derive(Debug, Ord, PartialOrd)]
         struct Subtype(Ent, Ent);
         Subtype(x,y) <- SubtypeClaim(x, y);
 
@@ -23,7 +23,7 @@ fn list_types_subtype() {
         #[derive(Debug)]
         struct InstanceClaim(Ent, Ent);
         @output
-        #[derive(Debug)]
+        #[derive(Debug, Ord, PartialOrd)]
         struct Instance(Ent, Ent);
         Instance(x,y) <- InstanceClaim(x, y);
 
@@ -64,30 +64,41 @@ fn list_types_subtype() {
         Instance(socretes, man)
     );
 
-    let (subtypes, instances) = &runtime.run();
-    assert_eq!(
-        subtypes,
-        &set![
+    let (subtypes, instances) = runtime.run();
+    let mut subtypes: Vec<Subtype> = subtypes.iter().cloned().collect();
+    subtypes.sort();
+    let mut instances: Vec<Instance> = instances
+        .iter()
+        .cloned()
+        .collect();
+    instances.sort();
+    let mut expected = vec![
             Subtype(man, mortal),
             Subtype(list_man, list_man),
             Subtype(list_man, list_mortal),
             Subtype(list_mortal, list_mortal)
-        ]
+        ];
+    expected.sort();
+    assert_eq!(
+        subtypes,
+        expected
     );
 
-    assert_eq!(
-        instances,
-        &set![
+    let mut expected = vec![
             Instance(socretes, man),
             Instance(plato, man),
             Instance(socretes, mortal),
             Instance(plato, mortal)
-        ]
+        ];
+    expected.sort();
+    assert_eq!(
+        instances,
+        expected
     );
 }
 
 #[test]
-fn iterator_types_subtype() {
+fn fixed_iterator_types_subtype() {
     crepe! {
         @input
         #[derive(Debug)]
@@ -146,7 +157,7 @@ fn iterator_types_subtype() {
         #[derive(Debug)]
         struct InstanceClaim(Ent, Ent);
         @output
-        #[derive(Debug)]
+        #[derive(Debug, Ord, PartialOrd)]
         struct Instance(Ent, Ent);
         Instance(x,y) <- InstanceClaim(x, y);
 
@@ -203,8 +214,14 @@ fn iterator_types_subtype() {
     let mut subtypes: Vec<Subtype> = subtypes
         .iter()
         .filter(|Subtype(x, y)| x != y)
-        .map(|x| x.clone())
+        .cloned()
         .collect();
+    subtypes.sort();
+    let mut instances: Vec<Instance> = instances
+        .iter()
+        .cloned()
+        .collect();
+    instances.sort();
     let mut expected = vec![
         Subtype(man, mortal),
         Subtype(list, iterable),
@@ -214,19 +231,20 @@ fn iterator_types_subtype() {
         Subtype(list_mortal, iterable_mortal), // Check that a list of mortals, is an iterable of mortals
         Subtype(list_man, iterable_mortal), // Check that a list of men, is an iterable of mortals
     ];
-
-    subtypes.sort();
     expected.sort();
 
-    assert_eq!(subtypes, expected,);
+    assert_eq!(subtypes, expected);
 
-    assert_eq!(
-        instances,
-        &set![
+    let mut expected = vec![
             Instance(socretes, man),
             Instance(plato, man),
             Instance(socretes, mortal),
             Instance(plato, mortal)
-        ]
+    ];
+    expected.sort();
+
+    assert_eq!(
+        instances,
+        expected
     );
 }
