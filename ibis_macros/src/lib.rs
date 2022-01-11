@@ -60,9 +60,9 @@ pub fn ibis(input: TokenStream) -> TokenStream {
 
             let name = format!("{}", name);
             let claim_name = if name.ends_with("Claim") {
-                format!("{}Claim", &name)
-            } else {
                 name.clone()
+            } else {
+                format!("{}Claim", &name)
             };
 
             // this is a struct definition
@@ -74,8 +74,8 @@ pub fn ibis(input: TokenStream) -> TokenStream {
             #[derive(Debug, Ord, PartialOrd)]
             struct {name}{args};
 
-            {name}({arg_names}) <- {name}Claim({arg_names});
-            ", name=name, args=args, arg_names=arg_names.join(", "));
+            {name}({arg_names}) <- {claim_name}({arg_names});
+            ", name=name, claim_name=claim_name, args=args, arg_names=arg_names.join(", "));
         } else {
             match definition.pop() {
                 Some(Punct(ch)) => {
