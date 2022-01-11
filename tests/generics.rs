@@ -67,34 +67,25 @@ fn fixed_list_types_subtype() {
     let (subtypes, instances) = runtime.run();
     let mut subtypes: Vec<Subtype> = subtypes.iter().cloned().collect();
     subtypes.sort();
-    let mut instances: Vec<Instance> = instances
-        .iter()
-        .cloned()
-        .collect();
+    let mut instances: Vec<Instance> = instances.iter().cloned().collect();
     instances.sort();
     let mut expected = vec![
-            Subtype(man, mortal),
-            Subtype(list_man, list_man),
-            Subtype(list_man, list_mortal),
-            Subtype(list_mortal, list_mortal)
-        ];
+        Subtype(man, mortal),
+        Subtype(list_man, list_man),
+        Subtype(list_man, list_mortal),
+        Subtype(list_mortal, list_mortal),
+    ];
     expected.sort();
-    assert_eq!(
-        subtypes,
-        expected
-    );
+    assert_eq!(subtypes, expected);
 
     let mut expected = vec![
-            Instance(socretes, man),
-            Instance(plato, man),
-            Instance(socretes, mortal),
-            Instance(plato, mortal)
-        ];
+        Instance(socretes, man),
+        Instance(plato, man),
+        Instance(socretes, mortal),
+        Instance(plato, mortal),
+    ];
     expected.sort();
-    assert_eq!(
-        instances,
-        expected
-    );
+    assert_eq!(instances, expected);
 }
 
 #[test]
@@ -217,10 +208,7 @@ fn fixed_iterator_types_subtype() {
         .cloned()
         .collect();
     subtypes.sort();
-    let mut instances: Vec<Instance> = instances
-        .iter()
-        .cloned()
-        .collect();
+    let mut instances: Vec<Instance> = instances.iter().cloned().collect();
     instances.sort();
     let mut expected = vec![
         Subtype(man, mortal),
@@ -236,15 +224,12 @@ fn fixed_iterator_types_subtype() {
     assert_eq!(subtypes, expected);
 
     let mut expected = vec![
-            Instance(socretes, man),
-            Instance(plato, man),
-            Instance(socretes, mortal),
-            Instance(plato, mortal)
+        Instance(socretes, man),
+        Instance(plato, man),
+        Instance(socretes, mortal),
+        Instance(plato, mortal),
     ];
     expected.sort();
 
-    assert_eq!(
-        instances,
-        expected
-    );
+    assert_eq!(instances, expected);
 }
