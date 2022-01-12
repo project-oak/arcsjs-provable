@@ -1,66 +1,19 @@
 use lazy_static::lazy_static;
 use std::borrow::Borrow;
 use std::cell::RefCell;
-use std::collections::HashMap;
 use std::collections::BTreeSet;
+use std::collections::HashMap;
 use std::sync::Mutex;
 
+mod ids;
+mod solution;
+mod util;
 extern crate ibis_macros;
+
 pub use ibis_macros::*;
-
-#[macro_export]
-macro_rules! set {
-    () => {
-        std::collections::HashSet::new()
-    };
-    ( $( $arg: expr ),* $(,)?) => {
-        {
-            let mut st = set!();
-            $(
-                st.insert( $arg );
-            )*
-            st
-        }
-    };
-}
-
-type EntId = u64;
-
-#[derive(Copy, Clone, PartialOrd, Ord, Eq, PartialEq, Hash)]
-pub struct Ent {
-    id: EntId,
-}
-
-type SolId = u32;
-
-#[derive(Copy, Clone, PartialOrd, Ord, Eq, Hash)]
-pub enum Sol {
-    Any,
-    Id {id: SolId},
-}
-
-impl PartialEq for Sol {
-    fn eq(&self, other: &Self) -> bool {
-        match (self, other) {
-            (Sol::Any, _) => true,
-            (_, Sol::Any) => true,
-            (Sol::Id{id: self_id}, Sol::Id{id: other_id}) => self_id == other_id,
-        }
-    }
-}
-
-#[derive(Clone, PartialEq, Eq, Ord, PartialOrd, Hash)]
-pub struct SolData {
-    edges: BTreeSet<(Ent, Ent)>,
-}
-
-impl Default for SolData {
-    fn default() -> Self {
-        Self {
-            edges: BTreeSet::new(),
-        }
-    }
-}
+pub use ids::*;
+use solution::*;
+pub use util::*;
 
 impl SolData {
     pub fn has_edge(&self, from: Ent, to: Ent) -> bool {
@@ -70,12 +23,9 @@ impl SolData {
     pub fn add_edge(&self, from: Ent, to: Ent) -> SolData {
         let mut edges = self.edges.clone();
         edges.insert((from, to));
-        SolData {
-            edges
-        }
+        SolData { edges }
     }
 }
-
 
 impl Sol {
     fn new_with_id(ctx: &mut Ctx, sol: Sol, solution: SolData) -> Self {
@@ -86,14 +36,23 @@ impl Sol {
 
     fn new(ctx: &mut Ctx, solution: SolData) -> Self {
         ctx.solution_id += 1;
-        let sol = Sol::Id{id: ctx.solution_id};
+        let sol = Sol::Id {
+            id: ctx.solution_id,
+        };
         Sol::new_with_id(ctx, sol, solution)
+    }
+
+    fn get_id(&self) -> Option<SolId> {
+        match self {
+            Sol::Any => None,
+            Sol::Id { id } => Some(*id),
+        }
     }
 
     pub fn empty() -> Self {
         let guard = CTX.lock().expect("Shouldn't fail");
         let mut ctx = (*guard).borrow_mut();
-        let id = Sol::Id{id: 0};
+        let id = Sol::Id { id: 0 };
         ctx.ancestors.insert(id, BTreeSet::default());
         Sol::new_with_id(&mut ctx, id, SolData::default()) // unsafe....
     }
@@ -102,29 +61,45 @@ impl Sol {
         Self::Any
     }
 
+    fn get_solution(&self, ctx: &Ctx) -> SolData {
+        ctx.borrow()
+            .id_to_solution
+            .get(self)
+            .cloned()
+            .expect("All solution ids should have a solution")
+    }
+
     pub fn solution(&self) -> SolData {
         let guard = CTX.lock().expect("Shouldn't fail");
         let ctx = (*guard).borrow();
-        ctx.borrow().id_to_solution.get(self).cloned().expect("All solution ids should have a solution")
+        self.get_solution(&ctx)
     }
 
     pub fn ancestors(&self) -> BTreeSet<Sol> {
         let guard = CTX.lock().expect("Shouldn't fail");
         let ctx = (*guard).borrow();
-        ctx.borrow().ancestors.get(self).cloned().expect("All solutions should have ancestors")
+        ctx.borrow()
+            .ancestors
+            .get(self)
+            .cloned()
+            .expect("All solutions should have ancestors")
     }
 
     pub fn add_edge(&self, from: Ent, to: Ent) -> Sol {
-        let new_solution = self.solution().add_edge(from, to);
         let guard = CTX.lock().expect("Shouldn't fail");
         let mut ctx = (*guard).borrow_mut();
-        let result = ctx.solution_to_id.get(&new_solution).cloned().unwrap_or_else(|| Sol::new(&mut ctx, new_solution));
+        let new_solution = self.get_solution(&ctx).add_edge(from, to);
+        let result = ctx
+            .solution_to_id
+            .get(&new_solution)
+            .cloned()
+            .unwrap_or_else(|| Sol::new(&mut ctx, new_solution));
 
         // Track the history of solutions
         use std::collections::hash_map::Entry;
         let ancestors: &mut BTreeSet<Sol> = match ctx.ancestors.entry(result) {
             Entry::Occupied(o) => o.into_mut(),
-            Entry::Vacant(v) => v.insert(BTreeSet::default())
+            Entry::Vacant(v) => v.insert(BTreeSet::default()),
         };
         ancestors.insert(*self);
 
@@ -136,14 +111,16 @@ impl std::fmt::Display for Sol {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Sol::Any => write!(f, "sol_any"),
-            Sol::Id{id: _} => {
+            Sol::Id { id: _ } => {
                 let solution = self.solution();
-                let mut edges: Vec<String> = solution.edges.iter().map(|(f, t)| format!("({}, {})", f, t)).collect();
+                let mut edges: Vec<String> = solution
+                    .edges
+                    .iter()
+                    .map(|(f, t)| format!("({}, {})", f, t))
+                    .collect();
                 edges.sort();
                 let edges = edges.join(", ");
-                f.debug_struct("Sol")
-                        .field("{edges}", &edges)
-                        .finish()
+                f.debug_struct("Sol").field("{edges}", &edges).finish()
             }
         }
     }
@@ -153,16 +130,26 @@ impl std::fmt::Debug for Sol {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Sol::Any => write!(f, "sol_any"),
-            Sol::Id{id} => {
+            Sol::Id { id } => {
                 let solution = self.solution();
-                let ancestors = self.ancestors();
-                let edges: Vec<String> = solution.edges.iter().map(|(f, t)| format!("({}, {})", f, t)).collect();
+                let ancestors: Option<Vec<String>> = self
+                    .ancestors()
+                    .iter()
+                    .map(|anc| anc.get_id().map(|x| x.to_string()))
+                    .filter(|id| !id.is_none())
+                    .collect();
+                let ancestors: Vec<String> = ancestors.expect("Should never fail");
+                let edges: Vec<String> = solution
+                    .edges
+                    .iter()
+                    .map(|(f, t)| format!("({}, {})", f, t))
+                    .collect();
                 let edges = edges.join(", ");
                 f.debug_struct("Sol")
-                        .field("id", id)
-                        .field("{ancestors}", &ancestors)
-                        .field("{edges}", &edges)
-                        .finish()
+                    .field("id", id)
+                    .field("{ancestors}", &Raw(&ancestors.join(", ")))
+                    .field("{edges}", &Raw(&edges))
+                    .finish()
             }
         }
     }
@@ -209,7 +196,11 @@ impl Ent {
     pub fn name(&self) -> String {
         let guard = CTX.lock().expect("Shouldn't fail");
         let ctx = (*guard).borrow();
-        ctx.borrow().name_by_id.get(self).cloned().expect("All entities should have a name")
+        ctx.borrow()
+            .name_by_id
+            .get(self)
+            .cloned()
+            .expect("All entities should have a name")
     }
 
     fn get_by_name(ctx: &mut Ctx, name: &str) -> Option<Ent> {
@@ -236,21 +227,6 @@ impl std::fmt::Debug for Ent {
             .field("{name}", &self.name())
             .finish()
     }
-}
-
-#[macro_export]
-macro_rules! relation {
-    ($name: ident $args: tt) => {
-        use paste::paste;
-        paste! {
-            @input
-            struct [<$name Claim>]$args
-            @output
-            struct $name $args
-
-            $name $args <- [<$name Claim>]$args;
-        }
-    };
 }
 
 #[macro_export]
