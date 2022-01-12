@@ -16,14 +16,14 @@ use solution::*;
 pub use util::*;
 
 impl Sol {
-    fn new_with_id(ctx: &mut Ctx, sol: Sol, solution: SolData) -> Self {
+    fn new_with_id(ctx: &mut Ctx, sol: Sol, solution: Solution) -> Self {
         ctx.solution_to_id.insert(solution.clone(), sol);
         ctx.id_to_solution.insert(sol, solution);
         ctx.ancestors.insert(sol, BTreeSet::default());
         sol
     }
 
-    fn new(ctx: &mut Ctx, solution: SolData) -> Self {
+    fn new(ctx: &mut Ctx, solution: Solution) -> Self {
         ctx.solution_id += 1;
         let sol = Sol {
             id: ctx.solution_id,
@@ -37,10 +37,10 @@ impl Sol {
         let id = Sol { id: 0 };
         // The following inserts the 'default' Sol with the 'zero' id, clobbering the old data
         // This is safe because we only ever insert the 'default'
-        Sol::new_with_id(&mut ctx, id, SolData::default())
+        Sol::new_with_id(&mut ctx, id, Solution::default())
     }
 
-    fn get_solution(&self, ctx: &Ctx) -> SolData {
+    fn get_solution(&self, ctx: &Ctx) -> Solution {
         ctx.borrow()
             .id_to_solution
             .get(self)
@@ -48,7 +48,7 @@ impl Sol {
             .expect("All solution ids should have a solution")
     }
 
-    pub fn solution(&self) -> SolData {
+    pub fn solution(&self) -> Solution {
         let guard = CTX.lock().expect("Shouldn't fail");
         let ctx = (*guard).borrow();
         self.get_solution(&ctx)
@@ -72,7 +72,7 @@ impl Sol {
             .insert(parent);
     }
 
-    pub fn make_child(&self, update: &dyn Fn(&SolData) -> SolData) -> Sol {
+    pub fn make_child(&self, update: &dyn Fn(&Solution) -> Solution) -> Sol {
         let guard = CTX.lock().expect("Shouldn't fail");
         let mut ctx = (*guard).borrow_mut();
         let new_solution = update(&self.get_solution(&ctx));
@@ -133,8 +133,8 @@ struct Ctx {
     solution_id: u32,
     name_by_id: HashMap<Ent, String>,
     id_by_name: HashMap<String, Ent>,
-    id_to_solution: HashMap<Sol, SolData>,
-    solution_to_id: HashMap<SolData, Sol>,
+    id_to_solution: HashMap<Sol, Solution>,
+    solution_to_id: HashMap<Solution, Sol>,
     ancestors: HashMap<Sol, BTreeSet<Sol>>,
 }
 
