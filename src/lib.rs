@@ -36,29 +36,18 @@ impl Sol {
 
     fn new(ctx: &mut Ctx, solution: SolData) -> Self {
         ctx.solution_id += 1;
-        let sol = Sol::Id {
+        let sol = Sol {
             id: ctx.solution_id,
         };
         Sol::new_with_id(ctx, sol, solution)
     }
 
-    fn get_id(&self) -> Option<SolId> {
-        match self {
-            Sol::Any => None,
-            Sol::Id { id } => Some(*id),
-        }
-    }
-
     pub fn empty() -> Self {
         let guard = CTX.lock().expect("Shouldn't fail");
         let mut ctx = (*guard).borrow_mut();
-        let id = Sol::Id { id: 0 };
+        let id = Sol { id: 0 };
         ctx.ancestors.insert(id, BTreeSet::default());
         Sol::new_with_id(&mut ctx, id, SolData::default()) // unsafe....
-    }
-
-    pub fn any() -> Self {
-        Self::Any
     }
 
     fn get_solution(&self, ctx: &Ctx) -> SolData {
@@ -109,49 +98,37 @@ impl Sol {
 
 impl std::fmt::Display for Sol {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Sol::Any => write!(f, "sol_any"),
-            Sol::Id { id: _ } => {
-                let solution = self.solution();
-                let mut edges: Vec<String> = solution
-                    .edges
-                    .iter()
-                    .map(|(f, t)| format!("({}, {})", f, t))
-                    .collect();
-                edges.sort();
-                let edges = edges.join(", ");
-                f.debug_struct("Sol").field("{edges}", &edges).finish()
-            }
-        }
+        let solution = self.solution();
+        let mut edges: Vec<String> = solution
+            .edges
+            .iter()
+            .map(|(f, t)| format!("({}, {})", f, t))
+            .collect();
+        edges.sort();
+        let edges = edges.join(", ");
+        f.debug_struct("Sol").field("{edges}", &edges).finish()
     }
 }
 
 impl std::fmt::Debug for Sol {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Sol::Any => write!(f, "sol_any"),
-            Sol::Id { id } => {
-                let solution = self.solution();
-                let ancestors: Option<Vec<String>> = self
-                    .ancestors()
-                    .iter()
-                    .map(|anc| anc.get_id().map(|x| x.to_string()))
-                    .filter(|id| !id.is_none())
-                    .collect();
-                let ancestors: Vec<String> = ancestors.expect("Should never fail");
-                let edges: Vec<String> = solution
-                    .edges
-                    .iter()
-                    .map(|(f, t)| format!("({}, {})", f, t))
-                    .collect();
-                let edges = edges.join(", ");
-                f.debug_struct("Sol")
-                    .field("id", id)
-                    .field("{ancestors}", &Raw(&ancestors.join(", ")))
-                    .field("{edges}", &Raw(&edges))
-                    .finish()
-            }
-        }
+        let solution = self.solution();
+        let ancestors: Vec<String> = self
+            .ancestors()
+            .iter()
+            .map(|anc| anc.id.to_string())
+            .collect();
+        let edges: Vec<String> = solution
+            .edges
+            .iter()
+            .map(|(f, t)| format!("({}, {})", f, t))
+            .collect();
+        let edges = edges.join(", ");
+        f.debug_struct("Sol")
+            .field("id", &self.id)
+            .field("{ancestors}", &Raw(&ancestors.join(", ")))
+            .field("{edges}", &Raw(&edges))
+            .finish()
     }
 }
 
