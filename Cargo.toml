@@ -7,6 +7,10 @@ edition = "2021"
 name = "ibis"
 path = "src/lib.rs"
 
+[features]
+default = []
+ancestors = [] # Support the tracking of ancestor solutions
+
 [dependencies]
 paste = "1.0.6"
 crepe = { version = "0.1.5", path = "/home/jopra/google/crepe" }

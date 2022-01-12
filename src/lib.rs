@@ -1,6 +1,7 @@
 use lazy_static::lazy_static;
 use std::borrow::Borrow;
 use std::cell::RefCell;
+#[cfg(feature = "ancestors")]
 use std::collections::BTreeSet;
 use std::collections::HashMap;
 use std::sync::Mutex;
@@ -19,6 +20,7 @@ impl Sol {
     fn new_with_id(ctx: &mut Ctx, sol: Sol, solution: Solution) -> Self {
         ctx.solution_to_id.insert(solution.clone(), sol);
         ctx.id_to_solution.insert(sol, solution);
+        #[cfg(feature = "ancestors")]
         ctx.ancestors.insert(sol, BTreeSet::default());
         sol
     }
@@ -54,6 +56,7 @@ impl Sol {
         self.get_solution(&ctx)
     }
 
+    #[cfg(feature = "ancestors")]
     pub fn ancestors(&self) -> BTreeSet<Sol> {
         let guard = CTX.lock().expect("Shouldn't fail");
         let ctx = (*guard).borrow();
@@ -64,6 +67,7 @@ impl Sol {
             .expect("All solutions should have ancestors")
     }
 
+    #[cfg(feature = "ancestors")]
     fn add_ancestor(&self, ctx: &mut Ctx, parent: Sol) {
         ctx.ancestors
             .get_mut(self)
@@ -83,12 +87,28 @@ impl Sol {
             .unwrap_or_else(|| Sol::new(&mut ctx, new_solution));
 
         // Track the history of solutions
+        #[cfg(feature = "ancestors")]
         result.add_ancestor(&mut ctx, *self);
         result
     }
 
     pub fn add_edge(&self, from: Ent, to: Ent) -> Sol {
         self.make_child(&|sol| sol.add_edge(from, to))
+    }
+
+    #[cfg(feature = "ancestors")]
+    fn ancestor_string(&self) -> String {
+        let ancestors: Vec<String> = self
+            .ancestors()
+            .iter()
+            .map(|anc| anc.id.to_string())
+            .collect();
+        ancestors.join(", ")
+    }
+
+    #[cfg(not(feature = "ancestors"))]
+    fn ancestor_string(&self) -> String {
+        "<ancestors disabled>".to_string()
     }
 }
 
@@ -107,13 +127,10 @@ impl std::fmt::Display for Sol {
 }
 
 impl std::fmt::Debug for Sol {
+
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let solution = self.solution();
-        let ancestors: Vec<String> = self
-            .ancestors()
-            .iter()
-            .map(|anc| anc.id.to_string())
-            .collect();
+
         let edges: Vec<String> = solution
             .edges
             .iter()
@@ -122,8 +139,8 @@ impl std::fmt::Debug for Sol {
         let edges = edges.join(", ");
         f.debug_struct("Sol")
             .field("id", &self.id)
-            .field("{ancestors}", &Raw(&ancestors.join(", ")))
-            .field("{edges}", &Raw(&edges))
+            .field("{ancestors}", &Raw(self.ancestor_string()))
+            .field("{edges}", &Raw(edges))
             .finish()
     }
 }
@@ -135,6 +152,7 @@ struct Ctx {
     id_by_name: HashMap<String, Ent>,
     id_to_solution: HashMap<Sol, Solution>,
     solution_to_id: HashMap<Solution, Sol>,
+    #[cfg(feature = "ancestors")]
     ancestors: HashMap<Sol, BTreeSet<Sol>>,
 }
 
@@ -147,6 +165,7 @@ impl Ctx {
             id_by_name: HashMap::new(),
             id_to_solution: HashMap::new(),
             solution_to_id: HashMap::new(),
+            #[cfg(feature = "ancestors")]
             ancestors: HashMap::new(),
         }
     }

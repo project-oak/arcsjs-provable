@@ -14,9 +14,9 @@ macro_rules! set {
     };
 }
 
-pub struct Raw<'a>(pub &'a str);
+pub struct Raw(pub String);
 
-impl<'a> std::fmt::Debug for Raw<'a> {
+impl std::fmt::Debug for Raw {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.0)
     }
