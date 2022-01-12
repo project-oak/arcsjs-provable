@@ -15,22 +15,11 @@ pub use ids::*;
 use solution::*;
 pub use util::*;
 
-impl SolData {
-    pub fn has_edge(&self, from: Ent, to: Ent) -> bool {
-        self.edges.contains(&(from, to))
-    }
-
-    pub fn add_edge(&self, from: Ent, to: Ent) -> SolData {
-        let mut edges = self.edges.clone();
-        edges.insert((from, to));
-        SolData { edges }
-    }
-}
-
 impl Sol {
     fn new_with_id(ctx: &mut Ctx, sol: Sol, solution: SolData) -> Self {
         ctx.solution_to_id.insert(solution.clone(), sol);
         ctx.id_to_solution.insert(sol, solution);
+        ctx.ancestors.insert(sol, BTreeSet::default());
         sol
     }
 
@@ -46,8 +35,9 @@ impl Sol {
         let guard = CTX.lock().expect("Shouldn't fail");
         let mut ctx = (*guard).borrow_mut();
         let id = Sol { id: 0 };
-        ctx.ancestors.insert(id, BTreeSet::default());
-        Sol::new_with_id(&mut ctx, id, SolData::default()) // unsafe....
+        // The following inserts the 'default' Sol with the 'zero' id, clobbering the old data
+        // This is safe because we only ever insert the 'default'
+        Sol::new_with_id(&mut ctx, id, SolData::default())
     }
 
     fn get_solution(&self, ctx: &Ctx) -> SolData {
@@ -74,10 +64,18 @@ impl Sol {
             .expect("All solutions should have ancestors")
     }
 
-    pub fn add_edge(&self, from: Ent, to: Ent) -> Sol {
+    fn add_ancestor(&self, ctx: &mut Ctx, parent: Sol) {
+        ctx.ancestors
+            .get_mut(self)
+            .cloned()
+            .expect("All solutions should have ancestors")
+            .insert(parent);
+    }
+
+    pub fn make_child(&self, update: &dyn Fn(&SolData) -> SolData) -> Sol {
         let guard = CTX.lock().expect("Shouldn't fail");
         let mut ctx = (*guard).borrow_mut();
-        let new_solution = self.get_solution(&ctx).add_edge(from, to);
+        let new_solution = update(&self.get_solution(&ctx));
         let result = ctx
             .solution_to_id
             .get(&new_solution)
@@ -85,14 +83,12 @@ impl Sol {
             .unwrap_or_else(|| Sol::new(&mut ctx, new_solution));
 
         // Track the history of solutions
-        use std::collections::hash_map::Entry;
-        let ancestors: &mut BTreeSet<Sol> = match ctx.ancestors.entry(result) {
-            Entry::Occupied(o) => o.into_mut(),
-            Entry::Vacant(v) => v.insert(BTreeSet::default()),
-        };
-        ancestors.insert(*self);
-
+        result.add_ancestor(&mut ctx, *self);
         result
+    }
+
+    pub fn add_edge(&self, from: Ent, to: Ent) -> Sol {
+        self.make_child(&|sol| sol.add_edge(from, to))
     }
 }
 
