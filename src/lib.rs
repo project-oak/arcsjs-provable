@@ -2,6 +2,7 @@ use lazy_static::lazy_static;
 use std::borrow::Borrow;
 use std::cell::RefCell;
 use std::collections::HashMap;
+use std::collections::BTreeSet;
 use std::sync::Mutex;
 
 extern crate ibis_macros;
@@ -30,76 +31,163 @@ pub struct Ent {
     id: EntId,
 }
 
+type SolId = u32;
+
 #[derive(Copy, Clone, PartialOrd, Ord, Eq, Hash)]
-enum SolId {
+pub enum Sol {
     Any,
-    Id(u32),
+    Id {id: SolId},
 }
 
-impl PartialEq for SolId {
+impl PartialEq for Sol {
     fn eq(&self, other: &Self) -> bool {
         match (self, other) {
-            (SolId::Any, _) => true,
-            (_, SolId::Any) => true,
-            (SolId::Id(self_id), SolId::Id(other_id)) => self_id == other_id,
+            (Sol::Any, _) => true,
+            (_, Sol::Any) => true,
+            (Sol::Id{id: self_id}, Sol::Id{id: other_id}) => self_id == other_id,
         }
     }
 }
 
-#[derive(Copy, Clone, PartialOrd, Ord, Eq, PartialEq, Hash)]
-pub struct Sol {
-    id: SolId,
+#[derive(Clone, PartialEq, Eq, Ord, PartialOrd, Hash)]
+pub struct SolData {
+    edges: BTreeSet<(Ent, Ent)>,
 }
 
+impl Default for SolData {
+    fn default() -> Self {
+        Self {
+            edges: BTreeSet::new(),
+        }
+    }
+}
+
+impl SolData {
+    pub fn has_edge(&self, from: Ent, to: Ent) -> bool {
+        self.edges.contains(&(from, to))
+    }
+
+    pub fn add_edge(&self, from: Ent, to: Ent) -> SolData {
+        let mut edges = self.edges.clone();
+        edges.insert((from, to));
+        SolData {
+            edges
+        }
+    }
+}
+
+
 impl Sol {
-    pub fn new() -> Self {
-        let guard = CTX.lock().expect("Shouldn't fail");
-        let mut ctx = (*guard).borrow_mut();
-        let id = SolId::Id(ctx.solution_id);
+    fn new_with_id(ctx: &mut Ctx, sol: Sol, solution: SolData) -> Self {
+        ctx.solution_to_id.insert(solution.clone(), sol);
+        ctx.id_to_solution.insert(sol, solution);
+        sol
+    }
+
+    fn new(ctx: &mut Ctx, solution: SolData) -> Self {
         ctx.solution_id += 1;
-        Self { id }
+        let sol = Sol::Id{id: ctx.solution_id};
+        Sol::new_with_id(ctx, sol, solution)
     }
 
     pub fn empty() -> Self {
-        Self { id: SolId::Id(0)}
+        let guard = CTX.lock().expect("Shouldn't fail");
+        let mut ctx = (*guard).borrow_mut();
+        let id = Sol::Id{id: 0};
+        ctx.ancestors.insert(id, BTreeSet::default());
+        Sol::new_with_id(&mut ctx, id, SolData::default()) // unsafe....
     }
 
     pub fn any() -> Self {
-        Self { id: SolId::Any }
+        Self::Any
+    }
+
+    pub fn solution(&self) -> SolData {
+        let guard = CTX.lock().expect("Shouldn't fail");
+        let ctx = (*guard).borrow();
+        ctx.borrow().id_to_solution.get(self).cloned().expect("All solution ids should have a solution")
+    }
+
+    pub fn ancestors(&self) -> BTreeSet<Sol> {
+        let guard = CTX.lock().expect("Shouldn't fail");
+        let ctx = (*guard).borrow();
+        ctx.borrow().ancestors.get(self).cloned().expect("All solutions should have ancestors")
+    }
+
+    pub fn add_edge(&self, from: Ent, to: Ent) -> Sol {
+        let new_solution = self.solution().add_edge(from, to);
+        let guard = CTX.lock().expect("Shouldn't fail");
+        let mut ctx = (*guard).borrow_mut();
+        let result = ctx.solution_to_id.get(&new_solution).cloned().unwrap_or_else(|| Sol::new(&mut ctx, new_solution));
+
+        // Track the history of solutions
+        use std::collections::hash_map::Entry;
+        let ancestors: &mut BTreeSet<Sol> = match ctx.ancestors.entry(result) {
+            Entry::Occupied(o) => o.into_mut(),
+            Entry::Vacant(v) => v.insert(BTreeSet::default())
+        };
+        ancestors.insert(*self);
+
+        result
     }
 }
 
 impl std::fmt::Display for Sol {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self.id {
-            SolId::Any => write!(f, "sol_any"),
-            SolId::Id(id) => write!(f, "sol_{}", id),
+        match self {
+            Sol::Any => write!(f, "sol_any"),
+            Sol::Id{id: _} => {
+                let solution = self.solution();
+                let mut edges: Vec<String> = solution.edges.iter().map(|(f, t)| format!("({}, {})", f, t)).collect();
+                edges.sort();
+                let edges = edges.join(", ");
+                f.debug_struct("Sol")
+                        .field("{edges}", &edges)
+                        .finish()
+            }
         }
     }
 }
 
 impl std::fmt::Debug for Sol {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("Sol").field("id", &self).finish()
+        match self {
+            Sol::Any => write!(f, "sol_any"),
+            Sol::Id{id} => {
+                let solution = self.solution();
+                let ancestors = self.ancestors();
+                let edges: Vec<String> = solution.edges.iter().map(|(f, t)| format!("({}, {})", f, t)).collect();
+                let edges = edges.join(", ");
+                f.debug_struct("Sol")
+                        .field("id", id)
+                        .field("{ancestors}", &ancestors)
+                        .field("{edges}", &edges)
+                        .finish()
+            }
+        }
     }
 }
 
 struct Ctx {
     last_id: EntId,
     solution_id: u32,
-    name_by_id: HashMap<EntId, String>,
-    id_by_name: HashMap<String, EntId>,
-    // solution_history: HashMap<Sol, Vec<Sol>>,
+    name_by_id: HashMap<Ent, String>,
+    id_by_name: HashMap<String, Ent>,
+    id_to_solution: HashMap<Sol, SolData>,
+    solution_to_id: HashMap<SolData, Sol>,
+    ancestors: HashMap<Sol, BTreeSet<Sol>>,
 }
 
 impl Ctx {
     fn new() -> Self {
         Self {
             last_id: 0,
-            solution_id: 1,
+            solution_id: 0, // zero is never used except for the 'empty' solution
             name_by_id: HashMap::new(),
             id_by_name: HashMap::new(),
-            // solution_history: HashMap::new(),
+            id_to_solution: HashMap::new(),
+            solution_to_id: HashMap::new(),
+            ancestors: HashMap::new(),
         }
     }
 }
@@ -108,31 +196,24 @@ lazy_static! {
     static ref CTX: Mutex<RefCell<Ctx>> = Mutex::new(RefCell::new(Ctx::new()));
 }
 
-fn get_id_by_name(ctx: &Ctx, name: &str) -> Option<EntId> {
-    ctx.borrow().id_by_name.get(name).cloned()
-}
-
-fn get_name_by_id(id: EntId) -> Option<String> {
-    let guard = CTX.lock().expect("Shouldn't fail");
-    let ctx = (*guard).borrow();
-    ctx.borrow().name_by_id.get(&id).cloned()
-}
-
 impl Ent {
     fn new(ctx: &mut Ctx, name: &str) -> Self {
         let id = ctx.last_id;
         ctx.last_id += 1;
-        ctx.id_by_name.insert(name.to_string(), id);
-        ctx.name_by_id.insert(id, name.to_string());
-        Ent { id }
+        let ent = Ent { id };
+        ctx.id_by_name.insert(name.to_string(), ent);
+        ctx.name_by_id.insert(ent, name.to_string());
+        ent
     }
 
     pub fn name(&self) -> String {
-        get_name_by_id(self.id).expect("All entities should have a name")
+        let guard = CTX.lock().expect("Shouldn't fail");
+        let ctx = (*guard).borrow();
+        ctx.borrow().name_by_id.get(self).cloned().expect("All entities should have a name")
     }
 
     fn get_by_name(ctx: &mut Ctx, name: &str) -> Option<Ent> {
-        get_id_by_name(&ctx, name).map(|id| Ent { id })
+        ctx.id_by_name.get(name).cloned()
     }
 
     pub fn by_name(name: &str) -> Ent {
