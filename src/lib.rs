@@ -3,15 +3,15 @@ use std::collections::BTreeSet;
 
 mod context;
 mod ent;
-mod solution_id;
 mod solution;
+mod solution_id;
 mod util;
 extern crate ibis_macros;
 
-pub use ibis_macros::*;
-pub use util::*;
 pub use ent::Ent;
+pub use ibis_macros::*;
 pub use solution_id::Sol;
+pub use util::*;
 
 #[macro_export]
 macro_rules! facts {

@@ -1,8 +1,8 @@
-use std::borrow::Borrow;
-use super::util::*;
 use super::context::{Ctx, CTX};
-use super::solution::*;
 use super::ent::*;
+use super::solution::*;
+use super::util::*;
+use std::borrow::Borrow;
 
 pub type SolutionIdBackingType = u32;
 
@@ -13,7 +13,6 @@ pub struct Sol {
 
 impl Sol {
     fn new_with_id(ctx: &mut Ctx, sol: Sol, solution: Solution) -> Self {
-        ctx.solution_to_id.insert(solution.clone(), sol);
         ctx.id_to_solution.insert(sol, solution);
         #[cfg(feature = "ancestors")]
         ctx.ancestors.insert(sol, BTreeSet::default());
@@ -76,8 +75,8 @@ impl Sol {
         let mut ctx = (*guard).borrow_mut();
         let new_solution = update(&self.get_solution(&ctx));
         let result = ctx
-            .solution_to_id
-            .get(&new_solution)
+            .id_to_solution
+            .get_back(&new_solution)
             .cloned()
             .unwrap_or_else(|| Sol::new(&mut ctx, new_solution));
 
@@ -122,7 +121,6 @@ impl std::fmt::Display for Sol {
 }
 
 impl std::fmt::Debug for Sol {
-
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let solution = self.solution();
 

@@ -1,5 +1,5 @@
-use std::borrow::Borrow;
 use super::context::{Ctx, CTX};
+use std::borrow::Borrow;
 
 pub type EntityIdBackingType = u64;
 
@@ -13,7 +13,6 @@ impl Ent {
         let id = ctx.last_id;
         ctx.last_id += 1;
         let ent = Ent { id };
-        ctx.name_to_id.insert(name.to_string(), ent);
         ctx.id_to_name.insert(ent, name.to_string());
         ent
     }
@@ -29,7 +28,7 @@ impl Ent {
     }
 
     fn get_by_name(ctx: &mut Ctx, name: &str) -> Option<Ent> {
-        ctx.name_to_id.get(name).cloned()
+        ctx.id_to_name.get_back(name).cloned()
     }
 
     pub fn by_name(name: &str) -> Ent {

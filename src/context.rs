@@ -1,18 +1,17 @@
+use super::ent::*;
+use super::solution::*;
+use super::solution_id::*;
+use super::util::BiMap;
 use lazy_static::lazy_static;
-use std::collections::HashMap;
 use std::cell::RefCell;
 use std::sync::Mutex;
-use super::ent::*;
-use super::solution_id::*;
-use super::solution::*;
 
 pub struct Ctx {
     pub last_id: EntityIdBackingType,
     pub solution_id: SolutionIdBackingType,
-    pub id_to_name: HashMap<Ent, String>,
-    pub name_to_id: HashMap<String, Ent>,
-    pub id_to_solution: HashMap<Sol, Solution>,
-    pub solution_to_id: HashMap<Solution, Sol>,
+    // TODO: Consider using https://docs.rs/bimap/latest/bimap/
+    pub id_to_name: BiMap<Ent, String>,
+    pub id_to_solution: BiMap<Sol, Solution>,
     #[cfg(feature = "ancestors")]
     pub ancestors: HashMap<Sol, BTreeSet<Sol>>,
 }
@@ -22,10 +21,8 @@ impl Ctx {
         Self {
             last_id: 0,
             solution_id: 0, // zero is never used except for the 'empty' solution
-            name_to_id: HashMap::new(),
-            id_to_name: HashMap::new(),
-            id_to_solution: HashMap::new(),
-            solution_to_id: HashMap::new(),
+            id_to_name: BiMap::new(),
+            id_to_solution: BiMap::new(),
             #[cfg(feature = "ancestors")]
             ancestors: HashMap::new(),
         }
@@ -35,4 +32,3 @@ impl Ctx {
 lazy_static! {
     pub static ref CTX: Mutex<RefCell<Ctx>> = Mutex::new(RefCell::new(Ctx::new()));
 }
-
