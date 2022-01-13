@@ -70,15 +70,15 @@ fn create_edges() {
             Node(to),
             (from != to),
             (!parent.solution().has_edge(from, to));
+        Solution(Sol::empty()) <- (true);
     }
 
     let mut runtime = Ibis::new();
-    facts!(
-        runtime,
+
+    runtime.add_data(&[
         Node(ent!("a")),
         Node(ent!("b")),
-        Solution(Sol::empty()),
-    );
+    ]);
 
     let (_char, solutions) = runtime.run();
 

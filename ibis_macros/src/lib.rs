@@ -6,6 +6,7 @@ pub fn ibis(input: TokenStream) -> TokenStream {
     let mut curr = Vec::new();
 
     let mut definitions = "".to_string();
+    let mut trait_impls = "".to_string();
     let mut atoms = "".to_string();
 
     let mut add_definition = |mut definition: Vec<TokenTree>| {
@@ -65,6 +66,26 @@ pub fn ibis(input: TokenStream) -> TokenStream {
                 format!("{}Claim", &name)
             };
 
+            if name != claim_name {
+                trait_impls += &format!("
+                    impl ToClaim for {name} {{
+                        type U = {claim_name};
+                        fn to_claim(self) -> {claim_name} {{
+                            let {name}({arg_names}) = self;
+                            {claim_name}({arg_names})
+                        }}
+                    }}
+                ", name=name, claim_name=claim_name, arg_names=arg_names.join(", "));
+            }
+            trait_impls += &format!("
+                impl ToClaim for {claim_name} {{
+                    type U = {claim_name};
+                    fn to_claim(self) -> {claim_name} {{
+                        self
+                    }}
+                }}
+            ", claim_name=claim_name);
+
             // this is a struct definition
             definitions += &format!("
             @input
@@ -122,6 +143,21 @@ pub fn ibis(input: TokenStream) -> TokenStream {
         {definitions}
     }};
     type Ibis=Crepe;
+
+    pub trait ToClaim {{
+        type U;
+        fn to_claim(self) -> Self::U;
+    }}
+
+    impl Crepe {{
+        // TODO: Remove clone requirement here
+        fn add_data<T: ToClaim + Clone>(&mut self, data: &[T]) where Crepe: Extend<T::U> {{
+            self.extend(data.iter().map(|datum|datum.clone().to_claim()));
+        }}
+    }}
+
+    {trait_impls}
+
     {atoms}
-    ", definitions=definitions, atoms=atoms).parse().unwrap()
+    ", definitions=definitions, atoms=atoms, trait_impls=trait_impls).parse().unwrap()
 }
