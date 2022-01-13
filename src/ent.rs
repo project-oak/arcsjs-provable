@@ -13,8 +13,8 @@ impl Ent {
         let id = ctx.last_id;
         ctx.last_id += 1;
         let ent = Ent { id };
-        ctx.id_by_name.insert(name.to_string(), ent);
-        ctx.name_by_id.insert(ent, name.to_string());
+        ctx.name_to_id.insert(name.to_string(), ent);
+        ctx.id_to_name.insert(ent, name.to_string());
         ent
     }
 
@@ -22,14 +22,14 @@ impl Ent {
         let guard = CTX.lock().expect("Shouldn't fail");
         let ctx = (*guard).borrow();
         ctx.borrow()
-            .name_by_id
+            .id_to_name
             .get(self)
             .cloned()
             .expect("All entities should have a name")
     }
 
     fn get_by_name(ctx: &mut Ctx, name: &str) -> Option<Ent> {
-        ctx.id_by_name.get(name).cloned()
+        ctx.name_to_id.get(name).cloned()
     }
 
     pub fn by_name(name: &str) -> Ent {
