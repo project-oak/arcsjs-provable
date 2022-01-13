@@ -1,6 +1,6 @@
 use std::collections::BTreeSet;
 
-use crate::ids::*;
+use crate::ent::*;
 
 #[derive(Clone, PartialEq, Eq, Ord, PartialOrd, Hash, Default)]
 pub struct Solution {
