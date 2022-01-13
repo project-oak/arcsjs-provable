@@ -123,7 +123,7 @@ fn create_all_directed_graphs_with_4_nodes() {
 
     let mut runtime = Ibis::new();
 
-    runtime.extend(('a'..'e').map(|node| NodeClaim(Ent::by_name(&format!("{}", node)))));
+    runtime.add_data(('a'..'e').map(|node| Node(Ent::by_name(&format!("{}", node)))));
 
     let (_char, solutions) = runtime.run();
 

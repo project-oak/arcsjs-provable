@@ -149,10 +149,18 @@ pub fn ibis(input: TokenStream) -> TokenStream {
         fn to_claim(self) -> Self::U;
     }}
 
+    impl <T: ToClaim + Clone> ToClaim for &T {{
+        type U = T::U;
+
+        fn to_claim(self) -> Self::U {{
+            self.clone().to_claim()
+        }}
+    }}
+
     impl Crepe {{
         // TODO: Remove clone requirement here
-        fn add_data<T: ToClaim + Clone>(&mut self, data: &[T]) where Crepe: Extend<T::U> {{
-            self.extend(data.iter().map(|datum|datum.clone().to_claim()));
+        fn add_data<T: ToClaim, Iter: IntoIterator<Item=T>>(&mut self, data: Iter) where Crepe: Extend<T::U> {{
+            self.extend(data.into_iter().map(|datum|datum.to_claim()));
         }}
     }}
 
