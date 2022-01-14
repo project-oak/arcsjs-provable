@@ -60,15 +60,15 @@ pub fn ibis(input: TokenStream) -> TokenStream {
             }
 
             let name = format!("{}", name);
-            let claim_name = if name.ends_with("Claim") {
+            let claim_name = if name.ends_with("Input") {
                 name.clone()
             } else {
-                format!("{}Claim", &name)
+                format!("{}Input", &name)
             };
 
             if name != claim_name {
                 trait_impls += &format!("
-                    impl ToClaim for {name} {{
+                    impl ToInput for {name} {{
                         type U = {claim_name};
                         fn to_claim(self) -> {claim_name} {{
                             let {name}({arg_names}) = self;
@@ -78,7 +78,7 @@ pub fn ibis(input: TokenStream) -> TokenStream {
                 ", name=name, claim_name=claim_name, arg_names=arg_names.join(", "));
             }
             trait_impls += &format!("
-                impl ToClaim for {claim_name} {{
+                impl ToInput for {claim_name} {{
                     type U = {claim_name};
                     fn to_claim(self) -> {claim_name} {{
                         self
@@ -90,7 +90,7 @@ pub fn ibis(input: TokenStream) -> TokenStream {
             definitions += &format!("
             @input
             #[derive(Debug, Ord, PartialOrd)]
-            struct {name}Claim{args};
+            struct {name}Input{args};
             @output
             #[derive(Debug, Ord, PartialOrd)]
             struct {name}{args};
@@ -104,7 +104,8 @@ pub fn ibis(input: TokenStream) -> TokenStream {
                         panic!("Parse error: expected <-");
                     }
                 },
-                _ => { panic!("Parse error") }
+                Some(token) => { panic!("Parse error: unexpected {:?} (1)", token) },
+                None => { panic!("Parse error: unexpected EOL (1)") }
             }
             match definition.pop() {
                 Some(Punct(ch)) => {
@@ -112,7 +113,8 @@ pub fn ibis(input: TokenStream) -> TokenStream {
                         panic!("Parse error: expected -");
                     }
                 },
-                _ => { panic!("Parse error") }
+                Some(token) => { panic!("Parse error: unexpected {:?} (2)", token) },
+                None => { panic!("Parse error: unexpected EOL (2)") }
             }
             definition.reverse();
             // panic!("name: {}, args: {}, tail: {:?}", name, args, definition);
@@ -144,12 +146,12 @@ pub fn ibis(input: TokenStream) -> TokenStream {
     }};
     type Ibis=Crepe;
 
-    pub trait ToClaim {{
+    pub trait ToInput {{
         type U;
         fn to_claim(self) -> Self::U;
     }}
 
-    impl <T: ToClaim + Clone> ToClaim for &T {{
+    impl <T: ToInput + Clone> ToInput for &T {{
         type U = T::U;
 
         fn to_claim(self) -> Self::U {{
@@ -159,7 +161,7 @@ pub fn ibis(input: TokenStream) -> TokenStream {
 
     impl Crepe {{
         // TODO: Remove clone requirement here
-        fn add_data<T: ToClaim, Iter: IntoIterator<Item=T>>(&mut self, data: Iter) where Crepe: Extend<T::U> {{
+        fn add_data<T: ToInput, Iter: IntoIterator<Item=T>>(&mut self, data: Iter) where Crepe: Extend<T::U> {{
             self.extend(data.into_iter().map(|datum|datum.to_claim()));
         }}
     }}

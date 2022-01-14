@@ -7,11 +7,11 @@ fn fixed_list_types_subtype() {
     crepe! {
         @input
         #[derive(Debug)]
-        struct SubtypeClaim(Ent, Ent);
+        struct SubtypeInput(Ent, Ent);
         @output
         #[derive(Debug, Ord, PartialOrd)]
         struct Subtype(Ent, Ent);
-        Subtype(x,y) <- SubtypeClaim(x, y);
+        Subtype(x,y) <- SubtypeInput(x, y);
 
         struct Type(Ent);
 
@@ -21,11 +21,11 @@ fn fixed_list_types_subtype() {
 
         @input
         #[derive(Debug)]
-        struct InstanceClaim(Ent, Ent);
+        struct InstanceInput(Ent, Ent);
         @output
         #[derive(Debug, Ord, PartialOrd)]
         struct Instance(Ent, Ent);
-        Instance(x,y) <- InstanceClaim(x, y);
+        Instance(x,y) <- InstanceInput(x, y);
 
         Subtype(x, z) <- Subtype(x, y), Subtype(y, z);
         Instance(x, z) <- Instance(x, y), Subtype(y, z);
@@ -93,29 +93,29 @@ fn fixed_iterator_types_subtype() {
     crepe! {
         @input
         #[derive(Debug)]
-        struct SubtypeClaim(Ent, Ent);
+        struct SubtypeInput(Ent, Ent);
         @output
         #[derive(Debug, Ord, PartialOrd)]
         struct Subtype(Ent, Ent);
-        Subtype(x,y) <- SubtypeClaim(x, y);
+        Subtype(x,y) <- SubtypeInput(x, y);
 
         @input
         #[derive(Debug)]
-        struct TypeClaim(Ent);
+        struct TypeInput(Ent);
         struct Type(Ent);
-        Type(x) <- TypeClaim(x);
+        Type(x) <- TypeInput(x);
 
         @input
         #[derive(Debug)]
-        struct GenericTypeClaim(Ent);
+        struct GenericTypeInput(Ent);
         struct GenericType(Ent);
-        GenericType(x) <- GenericTypeClaim(x);
+        GenericType(x) <- GenericTypeInput(x);
 
         @input
         #[derive(Debug)]
-        struct InductiveTypeClaim(Ent);
+        struct InductiveTypeInput(Ent);
         struct InductiveType(Ent);
-        InductiveType(x) <- InductiveTypeClaim(x);
+        InductiveType(x) <- InductiveTypeInput(x);
 
         Type(t) <- Subtype(t, _);
         Type(t) <- Subtype(_, t);
@@ -123,9 +123,9 @@ fn fixed_iterator_types_subtype() {
         Type(t) <- InductiveType(t);
         Type(t) <- GenericType(t);
 
-        struct SpecialisationOfClaim(Ent, Ent);
+        struct SpecialisationOfInput(Ent, Ent);
         struct SpecialisationOf(Ent, Ent);
-        SpecialisationOf(x, y) <- SpecialisationOfClaim(x, y);
+        SpecialisationOf(x, y) <- SpecialisationOfInput(x, y);
 
         SpecialisationOf(x, y) <- SpecialisationBy(x, y, _);
 
@@ -135,9 +135,9 @@ fn fixed_iterator_types_subtype() {
             (x.name().starts_with(&(y.name()+"("))),
             (x.name().ends_with(")"));
 
-        struct SpecialisationByClaim(Ent, Ent, Ent);
+        struct SpecialisationByInput(Ent, Ent, Ent);
         struct SpecialisationBy(Ent, Ent, Ent);
-        SpecialisationBy(x, y, z) <- SpecialisationByClaim(x, y, z);
+        SpecialisationBy(x, y, z) <- SpecialisationByInput(x, y, z);
 
         SpecialisationBy(Ent::by_name(&format!("{}({})", y.name(), x.name())), y, x) <-
             GenericType(y),
@@ -146,11 +146,11 @@ fn fixed_iterator_types_subtype() {
 
         @input
         #[derive(Debug)]
-        struct InstanceClaim(Ent, Ent);
+        struct InstanceInput(Ent, Ent);
         @output
         #[derive(Debug, Ord, PartialOrd)]
         struct Instance(Ent, Ent);
-        Instance(x,y) <- InstanceClaim(x, y);
+        Instance(x,y) <- InstanceInput(x, y);
 
         Subtype(x, x) <- Type(x);
         Subtype(x, z) <- Subtype(x, y), Subtype(y, z);

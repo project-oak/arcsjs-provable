@@ -20,7 +20,7 @@ macro_rules! facts {
             use paste::paste;
             $(
                 $runtime.extend(&[
-                    paste!( [< $name Claim >]) (
+                    paste!( [< $name Input >]) (
                         $($arg, )*
                     ),
                 ]);

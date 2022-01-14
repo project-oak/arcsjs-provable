@@ -117,7 +117,7 @@ fn create_all_directed_graphs_with_4_nodes() {
             Node(from),
             Node(to),
             (from != to),
-            (!parent.solution().has_edge(from, to));
+            (!parent.has_edge(from, to));
         Solution(Sol::empty()) <- (true);
     }
 

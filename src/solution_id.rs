@@ -90,6 +90,14 @@ impl Sol {
         self.make_child(&|sol| sol.add_edge(from, to))
     }
 
+    pub fn edges(&self) -> std::collections::BTreeSet<(Ent, Ent)> {
+        self.solution().edges.clone()
+    }
+
+    pub fn has_edge(&self, from: Ent, to: Ent) -> bool {
+        self.solution().has_edge(from, to)
+    }
+
     #[cfg(feature = "ancestors")]
     fn ancestor_string(&self) -> String {
         let ancestors: Vec<String> = self

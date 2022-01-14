@@ -7,19 +7,19 @@ fn static_subtyping_socretes_is_mortal() {
     crepe! {
         @input
         #[derive(Debug)]
-        struct SubtypeClaim(Ent, Ent);
+        struct SubtypeInput(Ent, Ent);
         @output
         #[derive(Debug)]
         struct Subtype(Ent, Ent);
-        Subtype(x,y) <- SubtypeClaim(x, y);
+        Subtype(x,y) <- SubtypeInput(x, y);
 
         @input
         #[derive(Debug)]
-        struct HasTagClaim(Ent, Ent);
+        struct HasTagInput(Ent, Ent);
         @output
         #[derive(Debug)]
         struct HasTag(Ent, Ent);
-        HasTag(x,y) <- HasTagClaim(x, y);
+        HasTag(x,y) <- HasTagInput(x, y);
 
         Subtype(x,x) <- Subtype(x, _);
         Subtype(x,x) <- Subtype(_, x);
@@ -69,19 +69,19 @@ fn dynamic_subtyping_mr_socretes_is_mortal() {
     crepe! {
         @input
         #[derive(Debug)]
-        struct SubtypeClaim(Ent, Ent);
+        struct SubtypeInput(Ent, Ent);
         @output
         #[derive(Debug)]
         struct Subtype(Ent, Ent);
-        Subtype(x,y) <- SubtypeClaim(x, y);
+        Subtype(x,y) <- SubtypeInput(x, y);
 
         @input
         #[derive(Debug)]
-        struct InstanceClaim(Ent, Ent);
+        struct InstanceInput(Ent, Ent);
         @output
         #[derive(Debug)]
         struct Instance(Ent, Ent);
-        Instance(x,y) <- InstanceClaim(x, y);
+        Instance(x,y) <- InstanceInput(x, y);
 
         @output
         #[derive(Debug)]
