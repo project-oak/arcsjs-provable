@@ -97,7 +97,7 @@ impl Sol {
     }
 
     pub fn edges(&self) -> std::collections::BTreeSet<(Ent, Ent)> {
-        self.solution().edges.clone()
+        self.solution().edges
     }
 
     pub fn has_edge(&self, from: Ent, to: Ent) -> bool {
