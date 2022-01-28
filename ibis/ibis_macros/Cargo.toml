@@ -1,5 +1,5 @@
 [package]
-name = "arcsjs-ibis_macros"
+name = "arcsjs_ibis_macros"
 version = "0.1.0"
 edition = "2021"
 

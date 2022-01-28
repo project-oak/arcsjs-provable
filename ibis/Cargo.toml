@@ -15,7 +15,7 @@ ancestors = [] # Support the tracking of ancestor solutions
 paste = "1.0.6"
 crepe = { version = "0.1.5", path = "/home/jopra/google/crepe" }
 lazy_static = "1.4.0"
-ibis_macros = { path = "./ibis_macros" }
+ibis_macros = { package = "arcsjs_ibis_macros", path = "./ibis_macros" }
 
 [dev_dependencies]
 pretty_assertions = "1.0.0"
