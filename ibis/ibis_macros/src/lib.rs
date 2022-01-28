@@ -25,7 +25,11 @@ pub fn ibis(input: TokenStream) -> TokenStream {
         if definition.is_empty() {
             // This is an atom definition;
             let lower_name = format!("{}", name).to_lowercase();
-            atoms += &format!("let {lower_name} = Ent::by_name(\"{name}\");", lower_name=lower_name, name=name);
+            atoms += &format!(
+                "let {lower_name} = Ent::by_name(\"{name}\");",
+                lower_name = lower_name,
+                name = name
+            );
             return;
         }
         let args = definition.pop().expect("Definition must have args");
@@ -41,7 +45,7 @@ pub fn ibis(input: TokenStream) -> TokenStream {
             };
 
             match &args {
-                Group (stream) => {
+                Group(stream) => {
                     for token in stream.stream() {
                         match token {
                             Punct(ch) => {
@@ -50,12 +54,12 @@ pub fn ibis(input: TokenStream) -> TokenStream {
                                     curr_arg = false; // we're not currently in an arg
                                     continue;
                                 }
-                            },
+                            }
                             _arg => {}
                         }
                         curr_arg = true;
                     }
-                },
+                }
                 _ => {
                     panic!("expected {} to be a group", args);
                 }
@@ -73,7 +77,8 @@ pub fn ibis(input: TokenStream) -> TokenStream {
             };
 
             if name != claim_name {
-                trait_impls += &format!("
+                trait_impls += &format!(
+                    "
                     impl ToInput for {name} {{
                         type U = {claim_name};
                         fn to_claim(self) -> {claim_name} {{
@@ -81,19 +86,27 @@ pub fn ibis(input: TokenStream) -> TokenStream {
                             {claim_name}({arg_names})
                         }}
                     }}
-                ", name=name, claim_name=claim_name, arg_names=arg_names.join(", "));
+                ",
+                    name = name,
+                    claim_name = claim_name,
+                    arg_names = arg_names.join(", ")
+                );
             }
-            trait_impls += &format!("
+            trait_impls += &format!(
+                "
                 impl ToInput for {claim_name} {{
                     type U = {claim_name};
                     fn to_claim(self) -> {claim_name} {{
                         self
                     }}
                 }}
-            ", claim_name=claim_name);
+            ",
+                claim_name = claim_name
+            );
 
             // this is a struct definition
-            definitions += &format!("
+            definitions += &format!(
+                "
             @input
             #[derive(Debug, Ord, PartialOrd)]
             struct {name}Input{args};
@@ -102,38 +115,56 @@ pub fn ibis(input: TokenStream) -> TokenStream {
             struct {name}{args};
 
             {name}({arg_names}) <- {claim_name}({arg_names});
-            ", name=name, claim_name=claim_name, args=args, arg_names=arg_names.join(", "));
+            ",
+                name = name,
+                claim_name = claim_name,
+                args = args,
+                arg_names = arg_names.join(", ")
+            );
         } else {
             match definition.pop() {
                 Some(Punct(ch)) => {
                     if ch != '<' {
                         panic!("Parse error: expected <-");
                     }
-                },
-                Some(token) => { panic!("Parse error: unexpected {:?} (1)", token) },
-                None => { panic!("Parse error: unexpected EOL (1)") }
+                }
+                Some(token) => {
+                    panic!("Parse error: unexpected {:?} (1)", token)
+                }
+                None => {
+                    panic!("Parse error: unexpected EOL (1)")
+                }
             }
             match definition.pop() {
                 Some(Punct(ch)) => {
                     if ch != '-' {
                         panic!("Parse error: expected -");
                     }
-                },
-                Some(token) => { panic!("Parse error: unexpected {:?} (2)", token) },
-                None => { panic!("Parse error: unexpected EOL (2)") }
+                }
+                Some(token) => {
+                    panic!("Parse error: unexpected {:?} (2)", token)
+                }
+                None => {
+                    panic!("Parse error: unexpected EOL (2)")
+                }
             }
             definition.reverse();
             // panic!("name: {}, args: {}, tail: {:?}", name, args, definition);
             // this is a rule definition
-            definitions += &format!("
+            definitions += &format!(
+                "
             {name}{args} <- {tail};
-            ", name=name, args=args, tail=TokenStream::from_iter(definition.iter().cloned()));
+            ",
+                name = name,
+                args = args,
+                tail = TokenStream::from_iter(definition.iter().cloned())
+            );
         }
     };
 
     for token in input {
         let is_semi = match &token {
-            Punct ( ch ) => *ch == ';',
+            Punct(ch) => *ch == ';',
             _ => false,
         };
         if is_semi {
