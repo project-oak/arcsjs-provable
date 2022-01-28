@@ -9,6 +9,7 @@ use super::ent::*;
 use super::solution::*;
 use super::util::*;
 use std::borrow::Borrow;
+use std::collections::BTreeSet;
 
 pub type SolutionIdBackingType = u32;
 

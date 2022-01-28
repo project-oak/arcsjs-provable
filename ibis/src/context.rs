@@ -11,6 +11,7 @@ use super::util::BiMap;
 use lazy_static::lazy_static;
 use std::cell::RefCell;
 use std::sync::Mutex;
+use std::collections::{BTreeSet, HashMap};
 
 pub struct Ctx {
     pub last_id: EntityIdBackingType,
