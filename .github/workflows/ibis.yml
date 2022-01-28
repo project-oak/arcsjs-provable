@@ -13,7 +13,6 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest] #, windows-latest]
-        toolchain: ["cargo", "cargo wasi"]
     steps:
     - uses: actions/checkout@v1
     - uses: actions/cache@v2
@@ -23,13 +22,32 @@ jobs:
           ~/.cargo/git
           target
         key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-    - name: Install toolchain
-      if: runner.toolchain == 'cargo wasi'
+    - name: Run tests
+      run: cargo test --locked --release --verbose
+    - name: Run ignored tests
+      run: cargo test --locked --release --verbose -- --ignored
+
+  test_wasm:
+    name: Test using ${{ matrix.os }} and WASM
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest] #, windows-latest]
+    steps:
+    - uses: actions/checkout@v1
+    - uses: actions/cache@v2
+      with:
+        path: |
+          ~/.cargo/registry
+          ~/.cargo/git
+          target
+        key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+    - name: Install wasi toolchain
       run: cargo install cargo-wasi
-    - name: Run tests ${{ runner.toolchain }}
-      run: ${{ runner.toolchain }} test --locked --release --verbose
-    - name: Run ignored tests ${{ runner.toolchain }}
-      run: ${{ runner.toolchain }} test --locked --release --verbose -- --ignored
+    - name: Run tests with WASI
+      run: cargo wasi test --locked --release --verbose
+    - name: Run ignored tests with WASI
+      run: cargo wasi test --locked --release --verbose -- --ignored
 
   build:
     name: Build using ${{ matrix.os }}
