@@ -44,6 +44,8 @@ jobs:
         key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
     - name: Install wasi toolchain
       run: cargo install cargo-wasi
+    - name: Install wasmtime
+      run: curl https://wasmtime.dev/install.sh -sSf | bash
     - name: Run tests with WASI
       run: cargo wasi test --locked --release --verbose
     - name: Run ignored tests with WASI
