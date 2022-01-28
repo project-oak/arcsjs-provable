@@ -82,12 +82,14 @@ fn create_type_checked_graphs() {
         }
     }
     assert_eq!(solutions.len(), 64);
-    let solutions: Vec<&Sol> = solutions.iter().filter(|sol|sol.edges().len() == max).collect();
+    let solutions: Vec<&Sol> = solutions
+        .iter()
+        .filter(|sol| sol.edges().len() == max)
+        .collect();
     assert_eq!(solutions.len(), 1);
     let best = solutions[0];
     let edges: Vec<(Ent, Ent)> = best.edges().iter().map(|edge| *edge).collect();
     assert_eq!(edges, vec![(a, b), (a, d), (a, e), (b, e), (c, d), (c, e)]);
-
 }
 
 #[test]
@@ -178,15 +180,25 @@ fn create_tagged_type_checked_graphs() {
         Node(d, serializable),
         Node(e, number_or_string),
     ]);
-    runtime.add_data(&[
-        Claim(a, private),
-    ]);
+    runtime.add_data(&[Claim(a, private)]);
     runtime.add_data(&[
         Check(e, public), // exfiltration
         Check(d, public), // exfiltration
     ]);
 
-    let (_types, _nodes, _claims, _checks, _has_tags, _conflicting, _leaks, _subtypes, _trusted_with, _edge, solutions) = runtime.run();
+    let (
+        _types,
+        _nodes,
+        _claims,
+        _checks,
+        _has_tags,
+        _conflicting,
+        _leaks,
+        _subtypes,
+        _trusted_with,
+        _edge,
+        solutions,
+    ) = runtime.run();
 
     let solutions: Vec<Sol> = solutions.iter().map(|Solution(sol)| *sol).collect();
     // assert_eq!(solutions.len(), 1);
@@ -198,12 +210,19 @@ fn create_tagged_type_checked_graphs() {
         leak_map.insert(*sol, Vec::new());
     }
     for leak in _leaks {
-        leak_map.get_mut(&leak.0).expect("every solution should have a leak set").push(leak);
+        leak_map
+            .get_mut(&leak.0)
+            .expect("every solution should have a leak set")
+            .push(leak);
     }
 
     // dbg!(&_leaks);
 
-    let filtered_sols: Vec<Sol> = solutions.iter().filter(|s| leak_map.get(&s).unwrap().len() == 0).cloned().collect();
+    let filtered_sols: Vec<Sol> = solutions
+        .iter()
+        .filter(|s| leak_map.get(&s).unwrap().len() == 0)
+        .cloned()
+        .collect();
 
     let mut max = 0;
     for sol in &filtered_sols {
@@ -213,7 +232,10 @@ fn create_tagged_type_checked_graphs() {
         }
     }
     // assert_eq!(solutions.len(), 64);
-    let filtered_sols: Vec<&Sol> = filtered_sols.iter().filter(|sol|sol.edges().len() == max).collect();
+    let filtered_sols: Vec<&Sol> = filtered_sols
+        .iter()
+        .filter(|sol| sol.edges().len() == max)
+        .collect();
     dbg!(filtered_sols);
     // dbg!(_has_tags);
 

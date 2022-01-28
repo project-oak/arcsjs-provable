@@ -81,10 +81,7 @@ fn create_edges() {
 
     let mut runtime = Ibis::new();
 
-    runtime.add_data(&[
-        Node(ent!("a")),
-        Node(ent!("b")),
-    ]);
+    runtime.add_data(&[Node(ent!("a")), Node(ent!("b"))]);
 
     let (_char, solutions) = runtime.run();
 
