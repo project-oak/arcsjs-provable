@@ -26,9 +26,9 @@ jobs:
     - name: Install toolchain
       if: runner.toolchain == 'cargo wasi'
       run: cargo install cargo-wasi
-    - name: Run tests: ${{ runner.toolchain }}
+    - name: Run tests ${{ runner.toolchain }}
       run: ${{ runner.toolchain }} test --locked --release --verbose
-    - name: Run ignored tests: ${{ runner.toolchain }}
+    - name: Run ignored tests ${{ runner.toolchain }}
       run: ${{ runner.toolchain }} test --locked --release --verbose -- --ignored
 
   build:
@@ -47,7 +47,7 @@ jobs:
           ~/.cargo/git
           target
         key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-    - name: Build: ${{ runner.toolchain }}
+    - name: Build ${{ runner.toolchain }}
       run: ${{ runner.toolchain }} build --locked --release --verbose
 
   lint:
