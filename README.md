@@ -5,3 +5,11 @@
 
 Directory:
 - [Ibis](./ibis/README.md) - a knowledge engine for type checking asynchronously communicating modules
+
+# Contributing
+
+Please see the project's [contributing guide](./contributing.md).
+
+# License
+
+Please see the project's [license](./LICENSE).
