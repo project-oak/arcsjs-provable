@@ -36,6 +36,15 @@ pub struct BiMap<T, U> {
     back: HashMap<U, T>,
 }
 
+impl<T: Eq + Hash + Clone, U: Eq + Hash + Clone> Default for BiMap<T, U> {
+    // Implement Default for BiMap manually to avoid incorrect trait bounds T: Default and
+    // U: Default.
+    // For more info see: https://github.com/rust-lang/rust/issues/26925
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<T: Eq + Hash + Clone, U: Eq + Hash + Clone> BiMap<T, U> {
     pub fn new() -> Self {
         Self {
