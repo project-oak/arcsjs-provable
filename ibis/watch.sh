@@ -1,7 +1,9 @@
 #!/bin/bash
 
 render() {
-  dot -Tpng -o /tmp/last.png && kitty +kitten icat --align=left /tmp/last.png
+  sleep 1
+  dot -Tpng -o ./last.png >> watch.log 2>&1
+  kitty +kitten icat --align=left ./last.png >> watch.log 2>&1
 }
 
 always_render() {
@@ -11,4 +13,10 @@ always_render() {
   done
 }
 
-cargo watch -q -x run | always_render
+watcher () {
+  cargo watch -q -x run | always_render &
+}
+
+watcher &
+echo "open http://localhost/watch.html to view the output"
+python3 -m http.server &> http.server.log
