@@ -177,7 +177,8 @@ pub fn ibis(input: TokenStream) -> TokenStream {
     // also add the last definition
     add_definition(curr);
 
-    format!("use crepe::crepe;
+    format!(
+        "use crepe::crepe;
     crepe!{{
         {definitions}
     }};
@@ -187,7 +188,12 @@ pub fn ibis(input: TokenStream) -> TokenStream {
     {trait_impls}
 
     {atoms}
-    ", definitions=definitions, atoms=atoms, trait_impls=trait_impls,
-    core=include_str!("core.rs"),
-    ).parse().unwrap()
+    ",
+        definitions = definitions,
+        atoms = atoms,
+        trait_impls = trait_impls,
+        core = include_str!("core.rs"),
+    )
+    .parse()
+    .unwrap()
 }

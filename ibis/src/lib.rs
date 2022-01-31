@@ -6,14 +6,14 @@
 
 mod context;
 mod ent;
+mod error;
 mod solution;
 mod solution_id;
 mod util;
-mod error;
 extern crate ibis_macros;
 
-pub use error::IbisError;
 pub use ent::Ent;
+pub use error::IbisError;
 pub use ibis_macros::*;
 pub use solution_id::Sol;
 pub use util::*;

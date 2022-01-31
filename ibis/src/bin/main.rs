@@ -1,6 +1,6 @@
 use ibis::IbisError;
 
-use ibis::{Sol, Ent, ibis};
+use ibis::{ibis, Ent, Sol};
 
 fn main() -> Result<(), IbisError> {
     ibis! {
