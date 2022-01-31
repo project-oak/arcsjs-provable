@@ -196,10 +196,49 @@ pub fn ibis(input: TokenStream) -> TokenStream {
         }}
     }}
 
+    struct Graph {{
+        nodes: Vec<String>,
+        edges: Vec<(String, String, Vec<String>)>,
+    }}
+
+    impl Default for Graph {{
+        fn default() -> Self {{
+            Self {{
+                nodes: vec![],
+                edges: vec![],
+            }}
+        }}
+    }}
+
+    impl Graph {{
+        fn to_dot(self) -> String {{
+            let mut items: Vec<String> = vec![];
+
+            for node in self.nodes {{
+                items.push(node);
+            }}
+
+            for edge in self.edges {{
+                let attrs: Vec<String> = edge.2.iter().map(|attr|format!(\"[{{}}]\", attr)).collect();
+                items.push(edge.0 + \" -> \" + &edge.1 + &attrs.join(\"\"));
+            }}
+            format!(\"digraph name {{{{ {{}} }}}}\", items.join(\"; \"))
+        }}
+    }}
+
     impl Crepe {{
         // TODO: Remove clone requirement here
         fn add_data<T: ToInput, Iter: IntoIterator<Item=T>>(&mut self, data: Iter) where Crepe: Extend<T::U> {{
             self.extend(data.into_iter().map(|datum|datum.to_claim()));
+        }}
+
+        fn solve_graph(self) -> Graph {{
+            let results = self.run();
+
+            let mut g = Graph::default();
+            g.edges.push((\"a\".to_string(), \"b\".to_string(), vec![]));
+            g.edges.push((\"b\".to_string(), \"a\".to_string(), vec![\"color=blue\".to_string(), \"label=\\\"Wat\\\"\".to_string()]));
+            g
         }}
     }}
 
