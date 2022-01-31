@@ -60,20 +60,37 @@ impl Crepe {
         let mut g = DotGraph::default();
 
         for s in &solutions {
+            g.nodes.push(
+                format!("s{} [label=\"{}\" shape=ellipse]", &s.id, &s.id)
+            );
             for (to_id, from_id) in s.edges() {
                 let to = format!("s{}_{}", &s.id, to_id);
                 let from = format!("s{}_{}", &s.id, from_id);
                 g.nodes.push(
-                    format!("{} [label=\"{}\"]", &to, to_id)
+                    format!("{} [label=\"{}\" shape=record]", &to, to_id)
                 );
                 g.nodes.push(
-                    format!("{} [label=\"{}\"]", &from, from_id)
+                    format!("{} [label=\"{}\" shape=record]", &from, from_id)
                 );
                 g.edges.push(
                     (
-                        from,
+                        from.clone(),
+                        to.clone(),
+                        vec![] //format!("label=\"s{}\"", &s.id)]
+                    )
+                );
+                g.edges.push(
+                    (
+                        format!("s{}", &s.id),
                         to,
-                        vec![format!("label=\"s{}\"", &s.id)]
+                        vec!["color=grey arrowhead=none style=dashed".to_string()] //format!("label=\"s{}\"", &s.id)]
+                    )
+                );
+                g.edges.push(
+                    (
+                        format!("s{}", &s.id),
+                        from,
+                        vec!["color=grey arrowhead=none style=dashed".to_string()] //format!("label=\"s{}\"", &s.id)]
                     )
                 );
             }
