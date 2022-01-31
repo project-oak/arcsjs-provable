@@ -7,34 +7,64 @@
 extern crate proc_macro;
 use proc_macro::{TokenStream, TokenTree, TokenTree::*};
 
-#[proc_macro]
-pub fn ibis(input: TokenStream) -> TokenStream {
-    let mut curr = Vec::new();
+#[derive(Default)]
+struct IbisBuilder {
+    definitions: String,
+    trait_impls: String,
+    atoms: String,
+}
 
-    let mut definitions = "".to_string();
-    let mut trait_impls = "".to_string();
-    let mut atoms = "".to_string();
-
-    let mut add_definition = |mut definition: Vec<TokenTree>| {
-        if definition.is_empty() {
-            return;
+impl IbisBuilder {
+    fn add_atom(&mut self, name: TokenTree) {
+        // This is an atom definition;
+        let lower_name = format!("{}", name).to_lowercase();
+        self.atoms += &format!(
+            "let {lower_name} = Ent::by_name(\"{name}\");",
+            lower_name = lower_name,
+            name = name
+        );
+    }
+    fn add_rule(&mut self, name: TokenTree, args: TokenTree, definition: &mut Vec<TokenTree>) {
+        match definition.pop() {
+            Some(Punct(ch)) => {
+                if ch != '<' {
+                    panic!("Parse error: expected <-");
+                }
+            }
+            Some(token) => {
+                panic!("Parse error: unexpected {:?} (1)", token)
+            }
+            None => {
+                panic!("Parse error: unexpected EOL (1)")
+            }
         }
-
+        match definition.pop() {
+            Some(Punct(ch)) => {
+                if ch != '-' {
+                    panic!("Parse error: expected -");
+                }
+            }
+            Some(token) => {
+                panic!("Parse error: unexpected {:?} (2)", token)
+            }
+            None => {
+                panic!("Parse error: unexpected EOL (2)")
+            }
+        }
         definition.reverse();
-        let name = definition.pop().expect("Definition must have a name");
-        if definition.is_empty() {
-            // This is an atom definition;
-            let lower_name = format!("{}", name).to_lowercase();
-            atoms += &format!(
-                "let {lower_name} = Ent::by_name(\"{name}\");",
-                lower_name = lower_name,
-                name = name
-            );
-            return;
-        }
-        let args = definition.pop().expect("Definition must have args");
+        // panic!("name: {}, args: {}, tail: {:?}", name, args, definition);
+        // this is a rule definition
+        self.definitions += &format!(
+            "
+        {name}{args} <- {tail};
+        ",
+            name = name,
+            args = args,
+            tail = TokenStream::from_iter(definition.iter().cloned())
+        );
+    }
 
-        if definition.is_empty() {
+    fn add_relation(&mut self, name: TokenTree, args: TokenTree) {
             let mut arity = 0;
             let mut arg_names: Vec<String> = vec![];
 
@@ -77,7 +107,7 @@ pub fn ibis(input: TokenStream) -> TokenStream {
             };
 
             if name != claim_name {
-                trait_impls += &format!(
+                self.trait_impls += &format!(
                     "
                     impl ToInput for {name} {{
                         type U = {claim_name};
@@ -92,7 +122,7 @@ pub fn ibis(input: TokenStream) -> TokenStream {
                     arg_names = arg_names.join(", ")
                 );
             }
-            trait_impls += &format!(
+            self.trait_impls += &format!(
                 "
                 impl ToInput for {claim_name} {{
                     type U = {claim_name};
@@ -105,7 +135,7 @@ pub fn ibis(input: TokenStream) -> TokenStream {
             );
 
             // this is a struct definition
-            definitions += &format!(
+            self.definitions += &format!(
                 "
             @input
             #[derive(Debug, Ord, PartialOrd)]
@@ -121,46 +151,52 @@ pub fn ibis(input: TokenStream) -> TokenStream {
                 args = args,
                 arg_names = arg_names.join(", ")
             );
-        } else {
-            match definition.pop() {
-                Some(Punct(ch)) => {
-                    if ch != '<' {
-                        panic!("Parse error: expected <-");
-                    }
-                }
-                Some(token) => {
-                    panic!("Parse error: unexpected {:?} (1)", token)
-                }
-                None => {
-                    panic!("Parse error: unexpected EOL (1)")
-                }
-            }
-            match definition.pop() {
-                Some(Punct(ch)) => {
-                    if ch != '-' {
-                        panic!("Parse error: expected -");
-                    }
-                }
-                Some(token) => {
-                    panic!("Parse error: unexpected {:?} (2)", token)
-                }
-                None => {
-                    panic!("Parse error: unexpected EOL (2)")
-                }
-            }
-            definition.reverse();
-            // panic!("name: {}, args: {}, tail: {:?}", name, args, definition);
-            // this is a rule definition
-            definitions += &format!(
-                "
-            {name}{args} <- {tail};
-            ",
-                name = name,
-                args = args,
-                tail = TokenStream::from_iter(definition.iter().cloned())
-            );
+
+    }
+
+    fn add_definition(&mut self, definition: &mut Vec<TokenTree>) {
+        if definition.is_empty() {
+            return;
         }
-    };
+        definition.reverse();
+        let name = definition.pop().expect("Definition must have a name");
+        if definition.is_empty() {
+            return self.add_atom(name);
+        }
+        let args = definition.pop().expect("Definition must have args");
+        if definition.is_empty() {
+            return self.add_relation(name, args);
+        }
+        self.add_rule(name, args, definition);
+    }
+
+    fn build(self) -> TokenStream {
+        format!(
+            "use crepe::crepe;
+        crepe!{{
+            {definitions}
+        }};
+
+        {core}
+
+        {trait_impls}
+
+        {atoms}
+        ",
+            definitions = self.definitions,
+            atoms = self.atoms,
+            trait_impls = self.trait_impls,
+            core = include_str!("core.rs"),
+        )
+        .parse()
+        .unwrap()
+    }
+}
+
+#[proc_macro]
+pub fn ibis(input: TokenStream) -> TokenStream {
+    let mut curr = Vec::new();
+    let mut builder = IbisBuilder::default();
 
     for token in input {
         let is_semi = match &token {
@@ -168,32 +204,13 @@ pub fn ibis(input: TokenStream) -> TokenStream {
             _ => false,
         };
         if is_semi {
-            add_definition(curr);
+            builder.add_definition(&mut curr);
             curr = Vec::new();
         } else {
             curr.push(token);
         }
     }
     // also add the last definition
-    add_definition(curr);
-
-    format!(
-        "use crepe::crepe;
-    crepe!{{
-        {definitions}
-    }};
-
-    {core}
-
-    {trait_impls}
-
-    {atoms}
-    ",
-        definitions = definitions,
-        atoms = atoms,
-        trait_impls = trait_impls,
-        core = include_str!("core.rs"),
-    )
-    .parse()
-    .unwrap()
+    builder.add_definition(&mut curr);
+    builder.build()
 }
