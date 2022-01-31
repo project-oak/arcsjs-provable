@@ -10,6 +10,7 @@ use super::solution_id::*;
 use super::util::BiMap;
 use lazy_static::lazy_static;
 use std::cell::RefCell;
+#[cfg(feature = "ancestors")]
 use std::collections::{BTreeSet, HashMap};
 use std::sync::Mutex;
 

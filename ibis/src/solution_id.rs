@@ -9,6 +9,7 @@ use super::ent::*;
 use super::solution::*;
 use super::util::*;
 use std::borrow::Borrow;
+#[cfg(feature = "ancestors")]
 use std::collections::BTreeSet;
 
 pub type SolutionIdBackingType = u32;
