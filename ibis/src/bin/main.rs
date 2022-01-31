@@ -4,6 +4,7 @@ use ibis::{Sol, Ent, ibis};
 
 fn main() -> Result<(), IbisError> {
     ibis! {
+        Solution(Sol);
         Type(Ent); // type
         Node(Ent, Ent); // identifier, type
         Claim(Ent, Ent); // identifier, tag
@@ -20,7 +21,6 @@ fn main() -> Result<(), IbisError> {
         Edge(Sol, Ent, Ent);
         Edge(sol, from, to) <- Solution(sol), Node(from, _), Node(to, _), (sol.has_edge(from, to));
 
-        Solution(Sol); // current
         Solution(parent.add_edge(from, to)) <-
             Solution(parent),
             Node(from, from_type),
