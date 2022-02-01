@@ -1,12 +1,12 @@
 use ibis::IbisError;
 
-use ibis::{ibis, Ent, Sol};
+use ibis::{ibis, Ent};
 
 fn main() -> Result<(), IbisError> {
     ibis! {
         Solution(Sol);
         Type(Ent); // type
-        Node(Ent, Ent); // identifier, type
+        Node(Ent, Ent, Ent); // particle-identifier, identifier, type
         Claim(Ent, Ent); // identifier, tag
         Check(Ent, Ent); // identifier, tag
         HasTag(Sol, Ent, Ent, Ent); // sol, source node, node, tag
@@ -14,21 +14,21 @@ fn main() -> Result<(), IbisError> {
         Leak(Sol, Ent, Ent, Ent, Ent); // sol, node, expected_tag, source, tag2
         Subtype(Ent, Ent); // sub, super
         TrustedWithTag(Ent, Ent); // Node, Tag that it can remove
-        Edge(Sol, Ent, Ent);
+        Edge(Sol, Ent, Ent, Ent, Ent);
 
-        Edge(sol, from, to) <- Solution(sol), Node(from, _), Node(to, _), (sol.has_edge(from, to));
+        Edge(sol, from_particle, from, to_particle, to) <- Solution(sol), Node(from_particle, from, _), Node(to_particle, to, _), (sol.has_edge(from, to));
 
         Solution(parent.add_edge(from, to)) <-
             Solution(parent),
-            Node(from, from_type),
-            Node(to, to_type),
+            Node(_pfrom, from, from_type),
+            Node(_pto, to, to_type),
             Subtype(from_type, to_type),
             (from != to),
             (!parent.has_edge(from, to));
         Solution(Sol::empty()) <- (true);
 
         HasTag(s, n, n, tag) <- Solution(s), Claim(n, tag);
-        HasTag(s, source, down, tag) <- HasTag(s, source, curr, tag), !TrustedWithTag(curr, tag), Edge(s, curr, down); // Propagate 'downstream'.
+        HasTag(s, source, down, tag) <- HasTag(s, source, curr, tag), !TrustedWithTag(curr, tag), Edge(s, _curr_particle, curr, _down_particle, down); // Propagate 'downstream'.
 
         Leak(s, n, t1, source, t2) <-
             LessPrivateThan(t1, t2),
@@ -53,6 +53,11 @@ fn main() -> Result<(), IbisError> {
         c;
         d;
         e;
+
+        p_a;
+        p_b;
+        p_c;
+        p_de;
 
         private;
         public;
@@ -80,11 +85,11 @@ fn main() -> Result<(), IbisError> {
     ]);
 
     runtime.add_data(&[
-        Node(a, int),
-        Node(b, number),
-        Node(c, string),
-        Node(d, serializable),
-        Node(e, number_or_string),
+        Node(p_a, a, int),
+        Node(p_b, b, number),
+        Node(p_c, c, string),
+        Node(p_de, d, serializable),
+        Node(p_de, e, number_or_string),
     ]);
     runtime.add_data(&[Claim(a, private)]);
     runtime.add_data(&[

@@ -2,13 +2,15 @@
 
 render() {
   sleep 1
+  rm ./last.png
   dot -Tpng -o ./last.png >> watch.log 2>&1
-  kitty +kitten icat --align=left ./last.png >> watch.log 2>&1
+  # kitty +kitten icat --align=left ./last.png >> watch.log 2>&1
 }
 
 always_render() {
   while read -r line;
   do
+    echo "$line" > last.dot
     echo "$line" | render
   done
 }

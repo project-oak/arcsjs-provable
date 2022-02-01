@@ -1,4 +1,5 @@
 use ibis::Sol;
+use std::collections::HashMap;
 
 type Ibis=Crepe;
 
@@ -15,33 +16,45 @@ impl <T: ToInput + Clone> ToInput for &T {
     }
 }
 
+#[derive(Default)]
 struct DotGraph {
     nodes: Vec<String>,
     edges: Vec<(String, String, Vec<String>)>,
-}
-
-impl Default for DotGraph {
-    fn default() -> Self {
-        Self {
-            nodes: vec![],
-            edges: vec![],
-        }
-    }
+    children: Vec<(String, String, DotGraph)>,
 }
 
 impl DotGraph {
+    fn add_node(&mut self, node: String) {
+        self.nodes.push(node);
+    }
+
+    fn add_edge(&mut self, from: String, to: String, attrs: Vec<String>) {
+        self.edges.push((from, to, attrs));
+    }
+
+    fn add_child(&mut self, name: String, label: String, child: DotGraph) {
+        self.children.push((name, label, child));
+    }
+
     fn to_dot(self) -> String {
+        format!("digraph solutions {{ {} }}", self.to_dot_items())
+    }
+
+    fn to_dot_items(self) -> String {
         let mut items: Vec<String> = vec![];
 
         for node in self.nodes {
-            items.push(node);
+            items.push(node+";");
         }
 
         for edge in self.edges {
             let attrs: Vec<String> = edge.2.iter().map(|attr|format!("[{}]", attr)).collect();
-            items.push(format!("{} -> {}{}", edge.0, edge.1, attrs.join("")));
+            items.push(format!("{} -> {}{};", edge.0, edge.1, attrs.join("")));
         }
-        format!("digraph name {{ {} }}", items.join("; "))
+        for (name, label, child) in self.children {
+            items.push(format!("subgraph cluster_{name} {{ {} label=\"{label}\"}}", child.to_dot_items(), name=name, label=label));
+        }
+        items.join("")
     }
 }
 
@@ -52,7 +65,7 @@ impl Crepe {
     }
 
     fn solve_graph(self) -> DotGraph {
-        let (solutions, _type, nodes, _claim, _check, has_tags, _lpt, leak, _subtype, trusted_withs, _edge) = self.run();
+        let (solutions, _type, nodes, _claim, _check, has_tags, _lpt, leak, _subtype, trusted_withs, edges) = self.run();
 
 
         // Solution(Sol);
@@ -67,7 +80,7 @@ impl Crepe {
         // TrustedWithTag(Ent, Ent); // Node, Tag that it can remove
         // Edge(Sol, Ent, Ent);
 
-        dbg!(&leak, &has_tags, &trusted_withs);
+        // dbg!(&leak, &has_tags, &trusted_withs);
         let solutions: Vec<Sol> = solutions.iter().map(|Solution(sol)| *sol).collect();
 
         let mut g = DotGraph::default();
@@ -77,45 +90,43 @@ impl Crepe {
         for s in &solutions {
             let l = s.edges().len();
             if l > max {
-                best = Some(s);
+                best = Some(*s);
                 max = l;
             }
         }
-        let solutions = best;
+        // let solutions = best;
         for s in &solutions {
-            g.nodes.push(
-                format!("s{} [label=\"{}\" shape=ellipse]", &s.id, &s.id)
-            );
-            for node in &nodes {
-                let n = format!("s{}_{}", &s.id, node.0);
+            let particle_id = |particle| format!("s{}_{}", &s.id, particle);
+            let node_id = |node| format!("s{}_{}", &s.id, node);
+            let mut sol_graph = DotGraph::default();
+            let mut particles = HashMap::new();
+            for Node(particle, node, ty) in &nodes {
                 let mut extras: Vec<String> = vec![];
-                for has_tag in &has_tags {
-                    if has_tag.0 == **s && has_tag.2 == node.0 {
-                        extras.push(format!("\\n'{}' from {}", has_tag.3, has_tag.1));
+                for HasTag(hts, source, sink, tag) in &has_tags {
+                    if hts == s && sink == node {
+                        extras.push(format!("\\n'{}' from {}", tag, source));
                     }
                 }
-                g.nodes.push(
-                    format!("{} [label=\"{} : {}{}\" shape=record]", n, node.0, node.1, extras.join(""))
-                );
-                g.edges.push(
-                    (
-                        format!("s{}", &s.id),
-                        n,
-                        vec!["color=grey arrowhead=none style=dashed".to_string()] //format!("label=\"s{}\"", &s.id)]
-                    )
+                let mut particle_g = particles.entry(particle).or_insert(DotGraph::default());
+                particle_g.add_node(format!("{node_id} [shape=record label=\"{node} : {ty}{extras}\"]", node_id=node_id(node), node=node, ty=ty, extras=extras.join("")));
+            }
+            for (particle, mut particle_g) in particles {
+                sol_graph.add_child(particle_id(particle), format!("{} : Particle", particle), particle_g);
+            }
+
+            for Edge(es, from_particle, from_id, to_particle, to_id) in &edges {
+                if es != s {
+                    continue;
+                }
+                let from = format!("{}:s", node_id(from_id));
+                let to = format!("{}:n", node_id(to_id));
+                sol_graph.add_edge(
+                    from.clone(),
+                    to.clone(),
+                    vec![]
                 );
             }
-            for (from_id, to_id) in s.edges() {
-                let to = format!("s{}_{}", &s.id, to_id);
-                let from = format!("s{}_{}", &s.id, from_id);
-                g.edges.push(
-                    (
-                        from.clone(),
-                        to.clone(),
-                        vec![] //format!("label=\"s{}\"", &s.id)]
-                    )
-                );
-            }
+            g.add_child(format!("sol_{}", &s.id), format!("Solution {}", &s.id), sol_graph);
         }
         g
     }
