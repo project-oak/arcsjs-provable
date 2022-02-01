@@ -48,11 +48,10 @@ impl DotGraph {
         }
 
         for edge in self.edges {
-            let attrs: Vec<String> = edge.2.iter().map(|attr|format!("[{}]", attr)).collect();
-            items.push(format!("{} -> {}{};", edge.0, edge.1, attrs.join("")));
+            items.push(format!("{} -> {}[{}];", edge.0, edge.1, edge.2.join(" ")));
         }
         for (name, label, child) in self.children {
-            items.push(format!("subgraph cluster_{name} {{ {} label=\"{label}\"}}", child.to_dot_items(), name=name, label=label));
+            items.push(format!("subgraph cluster_{name} {{ {} color=\"#00000070\"; label=\"{label}\"}}", child.to_dot_items(), name=name, label=label));
         }
         items.join("")
     }
@@ -105,6 +104,11 @@ impl Crepe {
                 for HasTag(hts, source, sink, tag) in &has_tags {
                     if hts == s && sink == node {
                         extras.push(format!("\\n'{}' from {}", tag, source));
+                    }
+                }
+                for TrustedWithTag(trusted_n, tag) in &trusted_withs {
+                    if trusted_n == node {
+                        extras.push(format!("\\n trusted to remove tag '{}'", tag));
                     }
                 }
                 let mut particle_g = particles.entry(particle).or_insert(DotGraph::default());

@@ -28,7 +28,7 @@ fn main() -> Result<(), IbisError> {
         Solution(Sol::empty()) <- (true);
 
         HasTag(s, n, n, tag) <- Solution(s), Claim(n, tag);
-        HasTag(s, source, down, tag) <- HasTag(s, source, curr, tag), !TrustedWithTag(curr, tag), Edge(s, _curr_particle, curr, _down_particle, down); // Propagate 'downstream'.
+        HasTag(s, source, down, tag) <- HasTag(s, source, curr, tag), Edge(s, _curr_particle, curr, _down_particle, down), !TrustedWithTag(down, tag); // Propagate 'downstream'.
 
         Leak(s, n, t1, source, t2) <-
             LessPrivateThan(t1, t2),
