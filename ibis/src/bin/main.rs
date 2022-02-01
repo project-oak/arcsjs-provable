@@ -11,14 +11,11 @@ fn main() -> Result<(), IbisError> {
         Check(Ent, Ent); // identifier, tag
         HasTag(Sol, Ent, Ent, Ent); // sol, source node, node, tag
         LessPrivateThan(Ent, Ent); // tag, tag
-
         Leak(Sol, Ent, Ent, Ent, Ent); // sol, node, expected_tag, source, tag2
-
         Subtype(Ent, Ent); // sub, super
-
         TrustedWithTag(Ent, Ent); // Node, Tag that it can remove
-
         Edge(Sol, Ent, Ent);
+
         Edge(sol, from, to) <- Solution(sol), Node(from, _), Node(to, _), (sol.has_edge(from, to));
 
         Solution(parent.add_edge(from, to)) <-
