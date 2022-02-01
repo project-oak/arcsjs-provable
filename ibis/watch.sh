@@ -2,15 +2,14 @@
 
 render() {
   sleep 1
-  rm ./last.png
+  rm -f ./last.png
   dot -Tpng -o ./last.png >> watch.log 2>&1
-  # kitty +kitten icat --align=left ./last.png >> watch.log 2>&1
 }
 
 always_render() {
   while read -r line;
   do
-    echo "$line" > last.dot
+    echo "$line" | dot > last.dot
     echo "$line" | render
   done
 }
@@ -20,5 +19,5 @@ watcher () {
 }
 
 watcher &
-echo "open http://localhost/watch.html to view the output"
+echo "open http://localhost:8000/watch.html to view the output"
 python3 -m http.server &> http.server.log
