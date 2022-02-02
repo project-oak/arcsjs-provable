@@ -8,14 +8,14 @@ _term() {
 trap _term SIGTERM
 
 render() {
-  rm -f ./last.png
-  dot -Tpng -o ./last.png >> watch.log 2>&1
+  rm -f ./watch/last.png ./watch/last.dot
+  dot -Tpng -o ./watch/last.png >> watch.log 2>&1
 }
 
 always_render() {
   while read -r line;
   do
-    echo "$line" | dot > last.dot
+    echo "$line" | dot > watch/last.dot
     echo "$line" | render
   done
 }
@@ -30,6 +30,6 @@ server () {
 }
 
 spawn_watcher
-echo "open http://localhost:8000/watch.html to view the output"
+echo "open http://localhost:8000/watch to view the output"
 server
 wait "$WATCH_PID"
