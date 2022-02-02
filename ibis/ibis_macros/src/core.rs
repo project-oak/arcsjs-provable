@@ -64,7 +64,7 @@ impl Crepe {
     }
 
     fn solve_graph(self) -> DotGraph {
-        let (solutions, _type, nodes, _claim, _check, has_tags, _lpt, leak, _subtype, trusted_withs, edges) = self.run();
+        let (solutions, _type, nodes, claims, checks, has_tags, _lpt, leak, _subtype, trusted_withs, edges) = self.run();
 
 
         // Solution(Sol);
@@ -79,7 +79,6 @@ impl Crepe {
         // TrustedWithTag(Ent, Ent); // Node, Tag that it can remove
         // Edge(Sol, Ent, Ent);
 
-        // dbg!(&leak, &has_tags, &trusted_withs);
         let solutions: Vec<Sol> = solutions.iter().map(|Solution(sol)| *sol).collect();
 
         let mut g = DotGraph::default();
@@ -102,17 +101,28 @@ impl Crepe {
             for Node(particle, node, ty) in &nodes {
                 let mut extras: Vec<String> = vec![];
                 for HasTag(hts, source, sink, tag) in &has_tags {
-                    if hts == s && sink == node {
-                        extras.push(format!("\\n'{}' from {}", tag, source));
+                    if hts == s && sink == node && source != node {
+                        extras.push(format!("'{}' from {}", tag, source));
                     }
                 }
                 for TrustedWithTag(trusted_n, tag) in &trusted_withs {
                     if trusted_n == node {
-                        extras.push(format!("\\n trusted to remove tag '{}'", tag));
+                        extras.push(format!("trusted to remove tag '{}'", tag));
                     }
                 }
+                for Claim(claim_node, tag) in &claims {
+                    if claim_node == node {
+                        extras.push(format!("claims to be '{}'", tag));
+                    }
+                }
+                for Check(check_node, tag) in &checks {
+                    if check_node == node {
+                        extras.push(format!("<font color=\"red\">checked to be '{}'</font>", tag));
+                    }
+                }
+                let extras: Vec<String> = extras.iter().map(|ex| format!("<tr><td>{}</td></tr>", ex)).collect();
                 let mut particle_g = particles.entry(particle).or_insert(DotGraph::default());
-                particle_g.add_node(format!("{node_id} [shape=record label=\"{node} : {ty}{extras}\"]", node_id=node_id(node), node=node, ty=ty, extras=extras.join("")));
+                particle_g.add_node(format!("{node_id} [shape=record label=< <table border=\"0\"><tr><td>{node} : {ty}</td></tr>{extras}</table>>]", node_id=node_id(node), node=node, ty=ty, extras=extras.join("")));
             }
             for (particle, mut particle_g) in particles {
                 sol_graph.add_child(particle_id(particle), format!("{} : Particle", particle), particle_g);
