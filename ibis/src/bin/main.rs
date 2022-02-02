@@ -25,7 +25,8 @@ fn main() -> Result<(), IbisError> {
             Subtype(from_type, to_type),
             (from != to),
             (!parent.has_edge(from, to));
-        Solution(Sol::empty()) <- (true);
+        Solution(Sol::empty()) <- (true); // By default, seed the solution graph with an empty solution
+        // TODO: Replace this with the 'current' state
 
         HasTag(s, n, n, tag) <- Solution(s), Claim(n, tag);
         HasTag(s, source, down, tag) <- HasTag(s, source, curr, tag), Edge(s, _curr_particle, curr, _down_particle, down), !TrustedWithTag(down, tag); // Propagate 'downstream'.

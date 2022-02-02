@@ -16,6 +16,7 @@ paste = "1.0.6"
 crepe = "0.1.5"
 lazy_static = "1.4.0"
 ibis_macros = { package = "arcsjs_ibis_macros", path = "./ibis_macros" }
+serde_json = "1.0"
 
 [dev_dependencies]
 pretty_assertions = "1.0.0"
