@@ -1,6 +1,22 @@
-use ibis::IbisError;
+use ibis::{IbisError, ibis, Ent};
+use serde_json::Value;
 
-use ibis::{ibis, Ent};
+fn get_array<T: Sized, F: Fn(&Value) -> T>(value: &Value, func: &F) -> Vec<T> {
+    match value {
+        Value::Array(value) => value.iter().map(func).collect(),
+        _ => {
+            eprintln!("Expected array of relations, found {:?}", value);
+            vec![]
+        }
+    }
+}
+
+fn get_str(value: &Value) -> &str {
+    match value {
+        Value::String(value) => value,
+        _ => panic!("Expected string, found {:?}", value),
+    }
+}
 
 fn main() -> Result<(), IbisError> {
     ibis! {
@@ -39,10 +55,6 @@ fn main() -> Result<(), IbisError> {
         Subtype(x, x) <- Type(x);
         Subtype(x, z) <- Subtype(x, y), Subtype(y, z);
 
-        LessPrivateThan(Ent::by_name("public"), Ent::by_name("private")) <- (true);
-
-        TrustedWithTag(Ent::by_name("b"), Ent::by_name("private")) <- (true);
-
         Number;
         Int;
         String;
@@ -66,37 +78,90 @@ fn main() -> Result<(), IbisError> {
 
     let mut runtime = Ibis::new();
 
-    runtime.add_data(&[
-        Type(number),
-        Type(int),
-        Type(string),
-        Type(serializable),
-        Type(number_or_string),
-    ]);
-
-    runtime.add_data(&[
-        // int = 'int' & number & serializable
-        Subtype(int, number),
-        Subtype(int, serializable),
-        // string = 'string' & serializable
-        Subtype(string, serializable),
-        // number_or_string = number | string
-        Subtype(number, number_or_string),
-        Subtype(string, number_or_string),
-    ]);
-
-    runtime.add_data(&[
-        Node(p_a, a, int),
-        Node(p_b, b, number),
-        Node(p_c, c, string),
-        Node(p_de, d, serializable),
-        Node(p_de, e, number_or_string),
-    ]);
-    runtime.add_data(&[Claim(a, private)]);
-    runtime.add_data(&[
-        Check(e, public), // exfiltration
-        Check(d, public), // exfiltration
-    ]);
+    let data = include_str!("../../demo.json");
+    let v: Value = serde_json::from_str(data).expect("JSON Error?");
+    let relations = match v {
+        Value::Object(relations) => relations,
+        _ => panic!("Expected object, found {:?}", v),
+    };
+    for (relation_name, values) in relations {
+        match relation_name.as_str() {
+            "types" => {
+                let values = get_array(&values, &|typename| {
+                    let typename = get_str(typename);
+                    Type(Ent::by_name(typename))
+                });
+                runtime.add_data(values);
+            }
+            "subtypes" => {
+                let values = get_array(&values, &|subtype| {
+                    let values: Vec<Ent> = get_array(subtype, &|s| Ent::by_name(get_str(s)));
+                    if let [sub, sup] = &values[..] {
+                        Subtype(*sub, *sup)
+                    } else {
+                        panic!("Expected 2-tuple for subtypes, found {:?}", subtype);
+                    }
+                });
+                runtime.add_data(values);
+            }
+            "nodes" => {
+                let values = get_array(&values, &|node| {
+                    let values: Vec<Ent> = get_array(node, &|s| Ent::by_name(get_str(s)));
+                    if let [particle, node, ty] = &values[..] {
+                        Node(*particle, *node, *ty)
+                    } else {
+                        panic!("Expected 3-tuple for node, found {:?}", node);
+                    }
+                });
+                runtime.add_data(values);
+            }
+            "claims" => {
+                let values = get_array(&values, &|claim| {
+                    let values: Vec<Ent> = get_array(claim, &|s| Ent::by_name(get_str(s)));
+                    if let [node, label] = &values[..] {
+                        Claim(*node, *label)
+                    } else {
+                        panic!("Expected 2-tuple for claim, found {:?}", claim);
+                    }
+                });
+                runtime.add_data(values);
+            }
+            "checks" => {
+                let values = get_array(&values, &|check| {
+                    let values: Vec<Ent> = get_array(check, &|s| Ent::by_name(get_str(s)));
+                    if let [node, label] = &values[..] {
+                        Check(*node, *label)
+                    } else {
+                        panic!("Expected 2-tuple for check, found {:?}", check);
+                    }
+                });
+                runtime.add_data(values);
+            }
+            "less_private_than" => {
+                let values = get_array(&values, &|less_private_than| {
+                    let values: Vec<Ent> = get_array(less_private_than, &|s| Ent::by_name(get_str(s)));
+                    if let [sublabel, suplabel] = &values[..] {
+                        LessPrivateThan(*sublabel, *suplabel)
+                    } else {
+                        panic!("Expected 2-tuple for less_private_than, found {:?}", less_private_than);
+                    }
+                });
+                runtime.add_data(values);
+            }
+            "trusted_with_tag" => {
+                let values = get_array(&values, &|trusted_with| {
+                    let values: Vec<Ent> = get_array(trusted_with, &|s| Ent::by_name(get_str(s)));
+                    if let [node, label] = &values[..] {
+                        TrustedWithTag(*node, *label)
+                    } else {
+                        panic!("Expected 2-tuple for trusted_with, found {:?}", trusted_with);
+                    }
+                });
+                runtime.add_data(values);
+            }
+            _ => eprintln!("Unknown relation named {:?}", relation_name),
+        }
+    }
 
     eprintln!("Preparing graph...");
     let g = runtime.solve_graph();
