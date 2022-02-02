@@ -15,6 +15,7 @@ always_render() {
   while read -r line;
   do
     rm -f ./watch/last.png ./watch/last.dot
+    echo "$line" > ./watch/last.raw.dot
     echo "$line" | dot > ./watch/last.dot
     echo "$line" | render
   done

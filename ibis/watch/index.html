@@ -1,33 +1,14 @@
 <html>
   <head>
     <title>Ibis - Watcher</title>
-<style>
-pre code {
-  background-color: #eee;
-  border: 1px solid #999;
-  display: block;
-  padding: 20px;
-}
-</style>
+    <link rel="stylesheet" href="styles.css">
+    <script src="reload.js"></script>
   </head>
   <body>
     <h1>Ibis - Watcher</h1>
-    <div>
-      <image id="dotImage" min-width="100%" min-height="100%"/>
-    </div>
-    <div id="dotContent">
-    </div>
+    <image id="dotImage" min-width="100%" min-height="100%"/>
+    <pre>
+    <code id="dotContent"/>
+    </pre>
   </body>
-  <script>
-    async function loadDot() {
-          const dot = await fetch('last.dot');
-          const dotContent = await dot.text();
-          document.getElementById('dotContent').innerHTML = `<pre><code>${dotContent}</code></pre>`;
-          document.getElementById('dotImage').src = "last.png";
-        }
-
-    //refresh info every 5 seconds//
-    loadDot();
-    setInterval('loadDot()', 5000);
-  </script>
 </html>
