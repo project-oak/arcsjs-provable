@@ -13,20 +13,21 @@ pre code {
   <body>
     <h1>Ibis - Watcher</h1>
     <div>
-      <image id="dotImage" src="./last.png" min-width="100%" min-height="100%"/>
+      <image id="dotImage" min-width="100%" min-height="100%"/>
     </div>
     <div id="dotContent">
     </div>
   </body>
   <script>
     async function loadDot() {
-          const dot = await fetch('./last.dot');
+          const dot = await fetch('last.dot');
           const dotContent = await dot.text();
           document.getElementById('dotContent').innerHTML = `<pre><code>${dotContent}</code></pre>`;
-          document.getElementById('dotImage').src = "./last.png";
+          document.getElementById('dotImage').src = "last.png";
         }
 
     //refresh info every 5 seconds//
+    loadDot();
     setInterval('loadDot()', 5000);
   </script>
 </html>

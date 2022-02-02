@@ -9,13 +9,13 @@ trap _term SIGTERM
 
 render() {
   rm -f ./watch/last.png ./watch/last.dot
-  dot -Tpng -o ./watch/last.png >> watch.log 2>&1
+  dot -Tpng -o ./watch/last.png >> ./watch/watch.log 2>&1
 }
 
 always_render() {
   while read -r line;
   do
-    echo "$line" | dot > watch/last.dot
+    echo "$line" | dot > ./watch/last.dot
     echo "$line" | render
   done
 }
@@ -26,7 +26,7 @@ spawn_watcher () {
 }
 
 server () {
-  python3 -m http.server &> http.server.log
+  python3 -m http.server &> ./watch/http.server.log
 }
 
 spawn_watcher
