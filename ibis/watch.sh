@@ -28,7 +28,7 @@ always_render() {
 }
 
 spawn_watcher () {
-  cargo watch -q -x run | always_render &
+  cargo watch -q -s "cat demo.json | cargo run" | always_render &
   WATCH_PID="$!"
 }
 
