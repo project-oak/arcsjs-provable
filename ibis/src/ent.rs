@@ -11,9 +11,15 @@ use std::borrow::Borrow;
 pub type EntityIdBackingType = u64;
 
 #[derive(Copy, Clone, PartialOrd, Ord, Eq, PartialEq, Hash, Serialize, Deserialize)]
-#[serde(from = "String")]
+#[serde(from = "String", into = "String")]
 pub struct Ent {
     pub id: EntityIdBackingType,
+}
+
+impl From<Ent> for String {
+    fn from(ent: Ent) -> Self {
+        ent.name()
+    }
 }
 
 impl From<String> for Ent {

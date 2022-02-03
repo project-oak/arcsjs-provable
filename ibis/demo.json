@@ -34,7 +34,7 @@
   "less_private_than": [
     ["public", "private"]
   ],
-  "trusted_with_tag": [
+  "trusted_to_remove_tag": [
     ["b", "private"]
   ]
 }

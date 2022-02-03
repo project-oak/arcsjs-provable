@@ -11,7 +11,7 @@ fn main() -> Result<(), IbisError> {
         LessPrivateThan(Ent, Ent); // tag, tag
         Leak(Sol, Ent, Ent, Ent, Ent); // sol, node, expected_tag, source, tag2
         Subtype(Ent, Ent); // sub, super
-        TrustedWithTag(Ent, Ent); // Node, Tag that it can remove
+        TrustedToRemoveTag(Ent, Ent); // Node, Tag that it can remove
         Edge(Sol, Ent, Ent, Ent, Ent);
 
         Edge(sol, from_particle, from, to_particle, to) <- Solution(sol), Node(from_particle, from, _), Node(to_particle, to, _), (sol.has_edge(from, to));
@@ -27,7 +27,7 @@ fn main() -> Result<(), IbisError> {
         // TODO: Replace this with the 'current' state
 
         HasTag(s, n, n, tag) <- Solution(s), Claim(n, tag);
-        HasTag(s, source, down, tag) <- HasTag(s, source, curr, tag), Edge(s, _curr_particle, curr, _down_particle, down), !TrustedWithTag(down, tag); // Propagate 'downstream'.
+        HasTag(s, source, down, tag) <- HasTag(s, source, curr, tag), Edge(s, _curr_particle, curr, _down_particle, down), !TrustedToRemoveTag(down, tag); // Propagate 'downstream'.
 
         Leak(s, n, t1, source, t2) <-
             LessPrivateThan(t1, t2),
@@ -59,7 +59,7 @@ fn main() -> Result<(), IbisError> {
     }
 
     // use serde::{Deserialize, Serialize};
-    #[derive(Default, Debug, Serialize, Deserialize)]
+    #[derive(Default, Debug, Serialize, Deserialize, Eq, PartialEq)]
     #[serde(default, deny_unknown_fields)]
     struct Recipe {
         metadata: serde_json::Value,
@@ -69,7 +69,7 @@ fn main() -> Result<(), IbisError> {
         claims: Vec<Claim>,
         checks: Vec<Check>,
         less_private_than: Vec<LessPrivateThan>,
-        trusted_with_tag: Vec<TrustedWithTag>,
+        trusted_to_remove_tag: Vec<TrustedToRemoveTag>,
     }
 
     let mut runtime = Ibis::new();
@@ -79,13 +79,20 @@ fn main() -> Result<(), IbisError> {
 
     dbg!(&recipe.metadata);
 
-    runtime.add_data(recipe.types);
-    runtime.add_data(recipe.subtypes);
-    runtime.add_data(recipe.nodes);
-    runtime.add_data(recipe.claims);
-    runtime.add_data(recipe.checks);
-    runtime.add_data(recipe.less_private_than);
-    runtime.add_data(recipe.trusted_with_tag);
+    runtime.add_data(&recipe.types);
+    runtime.add_data(&recipe.subtypes);
+    runtime.add_data(&recipe.nodes);
+    runtime.add_data(&recipe.claims);
+    runtime.add_data(&recipe.checks);
+    runtime.add_data(&recipe.less_private_than);
+    runtime.add_data(&recipe.trusted_to_remove_tag);
+
+    let serialized = serde_json::to_string(&recipe).unwrap();
+    eprintln!("serialized = {}", serialized);
+    let deserialized: Recipe = serde_json::from_str(&serialized).unwrap();
+    eprintln!("deserialized = {:?}", deserialized);
+
+    eprintln!("equal = {:?}", recipe == deserialized);
 
     eprintln!("Preparing graph...");
     let g = runtime.solve_graph();

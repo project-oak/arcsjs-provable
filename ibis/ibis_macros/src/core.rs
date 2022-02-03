@@ -64,7 +64,7 @@ impl Crepe {
     }
 
     fn solve_graph(self) -> DotGraph {
-        let (solutions, _type, nodes, claims, checks, has_tags, _lpt, leak, _subtype, trusted_withs, edges) = self.run();
+        let (solutions, _type, nodes, claims, checks, has_tags, _lpt, leaks, _subtype, trusted_to_remove_tag, edges) = self.run();
 
 
         // Solution(Sol);
@@ -76,7 +76,7 @@ impl Crepe {
         // LessPrivateThan(Ent, Ent); // tag, tag
         // Leak(Sol, Ent, Ent, Ent, Ent); // sol, node, expected_tag, source, tag2
         // Subtype(Ent, Ent); // sub, super
-        // TrustedWithTag(Ent, Ent); // Node, Tag that it can remove
+        // TrustedToRemoveTag(Ent, Ent); // Node, Tag that it can remove
         // Edge(Sol, Ent, Ent);
 
         let solutions: Vec<Sol> = solutions.iter().map(|Solution(sol)| *sol).collect();
@@ -105,7 +105,7 @@ impl Crepe {
                         extras.push(format!("'{}' from {}", tag, source));
                     }
                 }
-                for TrustedWithTag(trusted_n, tag) in &trusted_withs {
+                for TrustedToRemoveTag(trusted_n, tag) in &trusted_to_remove_tag {
                     if trusted_n == node {
                         extras.push(format!("trusted to remove tag '{}'", tag));
                     }
@@ -117,7 +117,7 @@ impl Crepe {
                 }
                 for Check(check_node, tag) in &checks {
                     if check_node == node {
-                        extras.push(format!("<font color=\"red\">checked to be '{}'</font>", tag));
+                        extras.push(format!("<font color=\"blue\">checked to be '{}'</font>", tag));
                     }
                 }
                 let extras: Vec<String> = extras.iter().map(|ex| format!("<tr><td>{}</td></tr>", ex)).collect();
@@ -126,6 +126,12 @@ impl Crepe {
             }
             for (particle, mut particle_g) in particles {
                 sol_graph.add_child(particle_id(particle), format!("{} : Particle", particle), particle_g);
+            }
+
+            for Leak(leak_s, node, expected, source, tag) in &leaks {
+                if leak_s == s {
+                    sol_graph.add_edge(node_id(source), node_id(node), vec![format!("style=dotted color=red label=<<font color=\"red\">expected '{}', found contradiction '{}'</font>>", expected, tag)]);
+                }
             }
 
             for Edge(es, from_particle, from_id, to_particle, to_id) in &edges {

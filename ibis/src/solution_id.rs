@@ -16,9 +16,15 @@ use std::collections::BTreeSet;
 pub type SolutionIdBackingType = u32;
 
 #[derive(Copy, Clone, PartialOrd, Ord, Eq, PartialEq, Hash, Serialize, Deserialize)]
-#[serde(from = "SolutionIdBackingType")]
+#[serde(from = "SolutionIdBackingType", into = "SolutionIdBackingType")]
 pub struct Sol {
     pub id: SolutionIdBackingType,
+}
+
+impl From<Sol> for SolutionIdBackingType {
+    fn from(sol: Sol) -> Self {
+        sol.id
+    }
 }
 
 impl From<SolutionIdBackingType> for Sol {

@@ -106,7 +106,7 @@ fn create_tagged_type_checked_graphs() {
 
         Subtype(Ent, Ent); // sub, super
 
-        TrustedWithTag(Ent, Ent); // Node, Tag that it can remove
+        TrustedToRemoveTag(Ent, Ent); // Node, Tag that it can remove
 
         Edge(Sol, Ent, Ent);
         Edge(sol, from, to) <- Solution(sol), Node(from, _), Node(to, _), (sol.has_edge(from, to));
@@ -122,7 +122,7 @@ fn create_tagged_type_checked_graphs() {
         Solution(Sol::empty()) <- (true);
 
         HasTag(s, n, n, tag) <- Solution(s), Claim(n, tag);
-        HasTag(s, source, down, tag) <- HasTag(s, source, curr, tag), !TrustedWithTag(curr, tag), Edge(s, curr, down); // Propagate 'downstream'.
+        HasTag(s, source, down, tag) <- HasTag(s, source, curr, tag), !TrustedToRemoveTag(curr, tag), Edge(s, curr, down); // Propagate 'downstream'.
 
         Leak(s, n, t1, source, t2) <-
             LessPrivateThan(t1, t2),
@@ -134,7 +134,7 @@ fn create_tagged_type_checked_graphs() {
 
         LessPrivateThan(Ent::by_name("public"), Ent::by_name("private")) <- (true);
 
-        TrustedWithTag(Ent::by_name("b"), Ent::by_name("private")) <- (true);
+        TrustedToRemoveTag(Ent::by_name("b"), Ent::by_name("private")) <- (true);
 
         Number;
         Int;
@@ -195,7 +195,7 @@ fn create_tagged_type_checked_graphs() {
         _conflicting,
         _leaks,
         _subtypes,
-        _trusted_with,
+        _trusted_to_remove_tag,
         _edge,
         solutions,
     ) = runtime.run();
@@ -204,7 +204,6 @@ fn create_tagged_type_checked_graphs() {
     // assert_eq!(solutions.len(), 1);
     //let _has_tags: Vec<&HasTag> = _has_tags.iter().filter(|HasTag(s, _source, _node, _tag)| s == best).collect();
     //let _leaks: Vec<&Leak> = _leaks.iter().filter(|Leak(s, _node, _expected, _source, _tag2)| s == best).collect();
-    use std::collections::HashMap;
     let mut leak_map: HashMap<Sol, Vec<Leak>> = HashMap::new();
     for sol in &solutions {
         leak_map.insert(*sol, Vec::new());
