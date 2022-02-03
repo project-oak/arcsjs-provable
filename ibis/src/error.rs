@@ -7,14 +7,12 @@ pub enum IbisError {}
 impl fmt::Display for IbisError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "IbisError")?;
-        match self {
-            _ => todo!(),
-        }
+        todo!();
     }
 }
 
 impl Error for IbisError {
-    //fn source(&self) -> Option<&(dyn Error + 'static)> {
-    //Some(&self.side)
-    //}
+    fn source(&self) -> Option<&(dyn Error + 'static)> {
+        todo!()
+    }
 }
