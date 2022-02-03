@@ -1,10 +1,19 @@
+let last = "";
+
 async function loadDot() {
     const dot = await fetch('last.dot');
     const dotContent = await dot.text();
-    document.getElementById('dotContent').innerText = dotContent;
-    document.getElementById('dotImage').data = `last.svg?${new Date().getTime()}`;
+    const dotSvg = await fetch(`last.svg?d=${Date.now()}`);
+    const dotSvgContent = await dotSvg.text();
+    const dotImage = document.getElementById('dotImage');
+    if (last != dotSvgContent) {
+        last = dotSvgContent;
+        // update it
+        document.getElementById('dotContent').innerText = dotContent;
+        dotImage.innerHTML = last;
+    }
 }
 
-//refresh info every 5 seconds//
+//refresh info every 1 second//
 loadDot();
-setInterval('loadDot()', 5000);
+setInterval('loadDot()', 1000);
