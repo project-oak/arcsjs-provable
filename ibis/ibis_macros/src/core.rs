@@ -57,6 +57,10 @@ impl DotGraph {
     }
 }
 
+fn sol_id(sol: &Sol) -> String {
+    format!("sol_{}", &sol.id)
+}
+
 impl Crepe {
     // TODO: Remove clone requirement here
     fn add_data<T: ToInput, Iter: IntoIterator<Item=T>>(&mut self, data: Iter) where Crepe: Extend<T::U> {
@@ -94,8 +98,9 @@ impl Crepe {
         }
         // let solutions = best;
         for s in &solutions {
-            let particle_id = |particle| format!("s{}_{}", &s.id, particle);
-            let node_id = |node| format!("s{}_{}", &s.id, node);
+            let s_id = sol_id(s);
+            let particle_id = |particle| format!("{}_p{}", &s_id, particle);
+            let node_id = |node| format!("{}_h{}", &s_id, node);
             let mut sol_graph = DotGraph::default();
             let mut particles = HashMap::new();
             for Node(particle, node, ty) in &nodes {
@@ -146,7 +151,15 @@ impl Crepe {
                     vec![]
                 );
             }
-            g.add_child(format!("sol_{}", &s.id), format!("Solution {}", &s.id), sol_graph);
+            #[cfg(feature = "ancestors")]
+            {
+                let solution_head = |sol| format!("{}_head", sol_id(sol));
+                sol_graph.add_node(format!("{}[style=invis]", solution_head(s)));
+                for ancestor in &s.ancestors() {
+                    g.add_edge(solution_head(&s), solution_head(ancestor), vec!["color=grey style=dotted".to_string()]);
+                }
+            }
+            g.add_child(s_id.clone(), format!("Solution {}", &s.id), sol_graph);
         }
         g
     }

@@ -87,7 +87,6 @@ impl Sol {
     fn add_ancestor(&self, ctx: &mut Ctx, parent: Sol) {
         ctx.ancestors
             .get_mut(self)
-            .cloned()
             .expect("All solutions should have ancestors")
             .insert(parent);
     }

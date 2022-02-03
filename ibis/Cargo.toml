@@ -8,7 +8,7 @@ name = "ibis"
 path = "src/lib.rs"
 
 [features]
-default = []
+default = [] # "ancestors"]
 ancestors = [] # Support the tracking of ancestor solutions
 
 [dependencies]
