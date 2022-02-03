@@ -33,6 +33,12 @@ impl From<SolutionIdBackingType> for Sol {
     }
 }
 
+impl Default for Sol {
+    fn default() -> Self {
+        Self::empty()
+    }
+}
+
 impl Sol {
     fn new_with_id(ctx: &mut Ctx, sol: Sol, solution: Solution) -> Self {
         ctx.id_to_solution.insert(sol, solution);
