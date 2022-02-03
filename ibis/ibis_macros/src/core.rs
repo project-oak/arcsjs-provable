@@ -37,7 +37,7 @@ impl DotGraph {
     }
 
     fn to_dot(self) -> String {
-        format!("digraph solutions {{ {} }}", self.to_dot_items())
+        format!("digraph solutions {{compound=true; {} }}", self.to_dot_items())
     }
 
     fn to_dot_items(self) -> String {
@@ -154,9 +154,9 @@ impl Crepe {
             #[cfg(feature = "ancestors")]
             {
                 let solution_head = |sol| format!("{}_head", sol_id(sol));
-                sol_graph.add_node(format!("{}[style=invis]", solution_head(s)));
+                sol_graph.add_node(format!("{}[style=invis height = 0 width = 0 label=\"\"]", solution_head(s)));
                 for ancestor in &s.ancestors() {
-                    g.add_edge(solution_head(&s), solution_head(ancestor), vec!["color=grey style=dotted".to_string()]);
+                    g.add_edge(solution_head(&s), solution_head(ancestor), vec![format!("ltail=cluster_{} lhead=cluster_{}", &s_id, sol_id(ancestor))]);
                 }
             }
             g.add_child(s_id.clone(), format!("Solution {}", &s.id), sol_graph);
