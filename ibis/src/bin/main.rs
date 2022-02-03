@@ -1,4 +1,4 @@
-use ibis::{IbisError, ibis, Ent};
+use ibis::{ibis, Ent, IbisError};
 
 fn main() -> Result<(), IbisError> {
     ibis! {

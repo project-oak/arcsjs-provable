@@ -4,11 +4,11 @@
 // license that can be found in the LICENSE file or at
 // https://developers.google.com/open-source/licenses/bsd
 
-use serde::{Deserialize, Serialize};
 use super::context::{Ctx, CTX};
 use super::ent::*;
 use super::solution::*;
 use super::util::*;
+use serde::{Deserialize, Serialize};
 use std::borrow::Borrow;
 #[cfg(feature = "ancestors")]
 use std::collections::BTreeSet;
