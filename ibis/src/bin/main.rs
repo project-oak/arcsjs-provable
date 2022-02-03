@@ -1,22 +1,4 @@
 use ibis::{IbisError, ibis, Ent};
-use serde_json::Value;
-
-fn get_array<T: Sized, F: Fn(&Value) -> T>(value: &Value, func: &F) -> Vec<T> {
-    match value {
-        Value::Array(value) => value.iter().map(func).collect(),
-        _ => {
-            eprintln!("Expected array of relations, found {:?}", value);
-            vec![]
-        }
-    }
-}
-
-fn get_str(value: &Value) -> &str {
-    match value {
-        Value::String(value) => value,
-        _ => panic!("Expected string, found {:?}", value),
-    }
-}
 
 fn main() -> Result<(), IbisError> {
     ibis! {
@@ -76,92 +58,34 @@ fn main() -> Result<(), IbisError> {
         public;
     }
 
+    // use serde::{Deserialize, Serialize};
+    #[derive(Default, Debug, Serialize, Deserialize)]
+    #[serde(default, deny_unknown_fields)]
+    struct Recipe {
+        metadata: serde_json::Value,
+        types: Vec<Type>,
+        subtypes: Vec<Subtype>,
+        nodes: Vec<Node>,
+        claims: Vec<Claim>,
+        checks: Vec<Check>,
+        less_private_than: Vec<LessPrivateThan>,
+        trusted_with_tag: Vec<TrustedWithTag>,
+    }
+
     let mut runtime = Ibis::new();
 
     let data = include_str!("../../demo.json");
-    let v: Value = serde_json::from_str(data).expect("JSON Error?");
-    let relations = match v {
-        Value::Object(relations) => relations,
-        _ => panic!("Expected object, found {:?}", v),
-    };
-    for (relation_name, values) in relations {
-        match relation_name.as_str() {
-            "types" => {
-                let values = get_array(&values, &|typename| {
-                    let typename = get_str(typename);
-                    Type(Ent::by_name(typename))
-                });
-                runtime.add_data(values);
-            }
-            "subtypes" => {
-                let values = get_array(&values, &|subtype| {
-                    let values: Vec<Ent> = get_array(subtype, &|s| Ent::by_name(get_str(s)));
-                    if let [sub, sup] = &values[..] {
-                        Subtype(*sub, *sup)
-                    } else {
-                        panic!("Expected 2-tuple for subtypes, found {:?}", subtype);
-                    }
-                });
-                runtime.add_data(values);
-            }
-            "nodes" => {
-                let values = get_array(&values, &|node| {
-                    let values: Vec<Ent> = get_array(node, &|s| Ent::by_name(get_str(s)));
-                    if let [particle, node, ty] = &values[..] {
-                        Node(*particle, *node, *ty)
-                    } else {
-                        panic!("Expected 3-tuple for node, found {:?}", node);
-                    }
-                });
-                runtime.add_data(values);
-            }
-            "claims" => {
-                let values = get_array(&values, &|claim| {
-                    let values: Vec<Ent> = get_array(claim, &|s| Ent::by_name(get_str(s)));
-                    if let [node, label] = &values[..] {
-                        Claim(*node, *label)
-                    } else {
-                        panic!("Expected 2-tuple for claim, found {:?}", claim);
-                    }
-                });
-                runtime.add_data(values);
-            }
-            "checks" => {
-                let values = get_array(&values, &|check| {
-                    let values: Vec<Ent> = get_array(check, &|s| Ent::by_name(get_str(s)));
-                    if let [node, label] = &values[..] {
-                        Check(*node, *label)
-                    } else {
-                        panic!("Expected 2-tuple for check, found {:?}", check);
-                    }
-                });
-                runtime.add_data(values);
-            }
-            "less_private_than" => {
-                let values = get_array(&values, &|less_private_than| {
-                    let values: Vec<Ent> = get_array(less_private_than, &|s| Ent::by_name(get_str(s)));
-                    if let [sublabel, suplabel] = &values[..] {
-                        LessPrivateThan(*sublabel, *suplabel)
-                    } else {
-                        panic!("Expected 2-tuple for less_private_than, found {:?}", less_private_than);
-                    }
-                });
-                runtime.add_data(values);
-            }
-            "trusted_with_tag" => {
-                let values = get_array(&values, &|trusted_with| {
-                    let values: Vec<Ent> = get_array(trusted_with, &|s| Ent::by_name(get_str(s)));
-                    if let [node, label] = &values[..] {
-                        TrustedWithTag(*node, *label)
-                    } else {
-                        panic!("Expected 2-tuple for trusted_with, found {:?}", trusted_with);
-                    }
-                });
-                runtime.add_data(values);
-            }
-            _ => eprintln!("Unknown relation named {:?}", relation_name),
-        }
-    }
+    let recipe: Recipe = serde_json::from_str(data).expect("JSON Error?");
+
+    dbg!(&recipe.metadata);
+
+    runtime.add_data(recipe.types);
+    runtime.add_data(recipe.subtypes);
+    runtime.add_data(recipe.nodes);
+    runtime.add_data(recipe.claims);
+    runtime.add_data(recipe.checks);
+    runtime.add_data(recipe.less_private_than);
+    runtime.add_data(recipe.trusted_with_tag);
 
     eprintln!("Preparing graph...");
     let g = runtime.solve_graph();

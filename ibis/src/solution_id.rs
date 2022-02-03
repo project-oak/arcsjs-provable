@@ -4,6 +4,7 @@
 // license that can be found in the LICENSE file or at
 // https://developers.google.com/open-source/licenses/bsd
 
+use serde::{Deserialize, Serialize};
 use super::context::{Ctx, CTX};
 use super::ent::*;
 use super::solution::*;
@@ -14,9 +15,16 @@ use std::collections::BTreeSet;
 
 pub type SolutionIdBackingType = u32;
 
-#[derive(Copy, Clone, PartialOrd, Ord, Eq, PartialEq, Hash)]
+#[derive(Copy, Clone, PartialOrd, Ord, Eq, PartialEq, Hash, Serialize, Deserialize)]
+#[serde(from = "SolutionIdBackingType")]
 pub struct Sol {
     pub id: SolutionIdBackingType,
+}
+
+impl From<SolutionIdBackingType> for Sol {
+    fn from(id: SolutionIdBackingType) -> Self {
+        Self { id }
+    }
 }
 
 impl Sol {

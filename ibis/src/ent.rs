@@ -4,14 +4,22 @@
 // license that can be found in the LICENSE file or at
 // https://developers.google.com/open-source/licenses/bsd
 
+use serde::{Deserialize, Serialize};
 use super::context::{Ctx, CTX};
 use std::borrow::Borrow;
 
 pub type EntityIdBackingType = u64;
 
-#[derive(Copy, Clone, PartialOrd, Ord, Eq, PartialEq, Hash)]
+#[derive(Copy, Clone, PartialOrd, Ord, Eq, PartialEq, Hash, Serialize, Deserialize)]
+#[serde(from = "String")]
 pub struct Ent {
     pub id: EntityIdBackingType,
+}
+
+impl From<String> for Ent {
+    fn from(id: String) -> Self {
+        Self::by_name(&id)
+    }
 }
 
 impl Ent {

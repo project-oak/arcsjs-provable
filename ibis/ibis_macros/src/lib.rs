@@ -141,7 +141,8 @@ impl IbisBuilder {
             #[derive(Debug, Ord, PartialOrd)]
             struct {name}Input{args};
             @output
-            #[derive(Debug, Ord, PartialOrd)]
+
+            #[derive(Debug, Ord, PartialOrd, Serialize, Deserialize)]
             struct {name}{args};
 
             {name}({arg_names}) <- {claim_name}({arg_names});
@@ -172,7 +173,8 @@ impl IbisBuilder {
 
     fn build(self) -> TokenStream {
         format!(
-            "use crepe::crepe;
+            "use serde::{{Deserialize, Serialize}};
+            use crepe::crepe;
         crepe!{{
             {definitions}
         }};
