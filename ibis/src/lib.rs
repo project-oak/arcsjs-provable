@@ -7,16 +7,20 @@
 mod context;
 mod ent;
 mod error;
-mod solution;
+mod solution_data;
 mod solution_id;
 mod util;
+pub mod dot;
+pub mod recipies;
 extern crate ibis_macros;
 
 pub use ent::Ent;
 pub use error::IbisError;
 pub use ibis_macros::*;
 pub use solution_id::Sol;
+pub use solution_data::SolutionData;
 pub use util::*;
+pub use recipies::*;
 
 #[macro_export]
 macro_rules! facts {
@@ -57,3 +61,17 @@ macro_rules! is_a {
         ($type.name().starts_with(&($parent.name() + "(")) && $type.name().ends_with(")"))
     };
 }
+
+pub trait ToInput {
+    type U;
+    fn to_claim(self) -> Self::U;
+}
+
+impl <T: ToInput + Clone> ToInput for &T {
+    type U = T::U;
+
+    fn to_claim(self) -> Self::U {
+        self.clone().to_claim()
+    }
+}
+

@@ -6,7 +6,7 @@
 
 use super::context::{Ctx, CTX};
 use super::ent::*;
-use super::solution::*;
+use super::solution_data::SolutionData;
 use super::util::*;
 use serde::{Deserialize, Serialize};
 use std::borrow::Borrow;
@@ -35,19 +35,25 @@ impl From<SolutionIdBackingType> for Sol {
 
 impl Default for Sol {
     fn default() -> Self {
-        Self::empty()
+        Self::empty() // TODO: This is probably wrong...
     }
 }
 
 impl Sol {
-    fn new_with_id(ctx: &mut Ctx, sol: Sol, solution: Solution) -> Self {
+    fn new_with_id(ctx: &mut Ctx, sol: Sol, solution: SolutionData) -> Self {
         ctx.id_to_solution.insert(sol, solution);
         #[cfg(feature = "ancestors")]
         ctx.ancestors.insert(sol, BTreeSet::default());
         sol
     }
 
-    fn new(ctx: &mut Ctx, solution: Solution) -> Self {
+    pub fn new_blocking(solution: SolutionData) -> Self {
+        let guard = CTX.lock().expect("Shouldn't fail");
+        let mut ctx = (*guard).borrow_mut();
+        Sol::new(&mut ctx, solution)
+    }
+
+    fn new(ctx: &mut Ctx, solution: SolutionData) -> Self {
         ctx.solution_id += 1;
         let sol = Sol {
             id: ctx.solution_id,
@@ -61,10 +67,10 @@ impl Sol {
         let id = Sol { id: 0 };
         // The following inserts the 'default' Sol with the 'zero' id, clobbering the old data
         // This is safe because we only ever insert the 'default'
-        Sol::new_with_id(&mut ctx, id, Solution::default())
+        Sol::new_with_id(&mut ctx, id, SolutionData::default())
     }
 
-    fn get_solution(&self, ctx: &Ctx) -> Solution {
+    fn get_solution(&self, ctx: &Ctx) -> SolutionData {
         ctx.borrow()
             .id_to_solution
             .get(self)
@@ -72,7 +78,7 @@ impl Sol {
             .expect("All solution ids should have a solution")
     }
 
-    pub fn solution(&self) -> Solution {
+    pub fn solution(&self) -> SolutionData {
         let guard = CTX.lock().expect("Shouldn't fail");
         let ctx = (*guard).borrow();
         self.get_solution(&ctx)
@@ -97,7 +103,7 @@ impl Sol {
             .insert(parent);
     }
 
-    pub fn make_child(&self, update: &dyn Fn(&Solution) -> Solution) -> Sol {
+    pub fn make_child(&self, update: &dyn Fn(&SolutionData) -> SolutionData) -> Sol {
         let guard = CTX.lock().expect("Shouldn't fail");
         let mut ctx = (*guard).borrow_mut();
         let new_solution = update(&self.get_solution(&ctx));
