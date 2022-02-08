@@ -12,7 +12,9 @@ ibis! {
     Node(Sol, Ent, Ent, Ent); // sol, particle-identifier, identifier, type
     Claim(Sol, Ent, Ent); // sol, identifier, tag
     Check(Sol, Ent, Ent); // sol, identifier, tag
-    TrustedToRemoveTag(Sol, Ent, Ent); // Node, Tag that it can remove
+    TrustedToRemoveTag(Sol, Ent, Ent); // sol, Node, Tag that it can remove
+
+    // Feedback
     HasTag(
         Sol, // solution
         Ent, // source node
@@ -74,6 +76,8 @@ pub struct Feedback {
     leaks: Vec<Leak>,
     #[serde(default, skip_serializing_if="Vec::is_empty")]
     type_errors: Vec<TypeError>,
+    #[serde(default, skip_serializing_if="Vec::is_empty")]
+    has_tags: Vec<HasTag>,
 }
 
 fn starting_recipies() -> Vec<Recipe> {
@@ -106,8 +110,6 @@ pub struct Recipe {
     #[serde(default, skip_serializing_if="Vec::is_empty")]
     checks: Vec<Check>,
     #[serde(default, skip_serializing_if="Vec::is_empty")]
-    has_tags: Vec<HasTag>,
-    #[serde(default, skip_serializing_if="Vec::is_empty")]
     trusted_to_remove_tag: Vec<TrustedToRemoveTag>,
     #[serde(default, skip_serializing_if="Vec::is_empty")]
     edges: Vec<(Ent, Ent)>,
@@ -116,11 +118,43 @@ pub struct Recipe {
     ancestors: Vec<Sol>,
 }
 
+impl Recipe {
+    pub fn from_sol(sol: Sol) -> Self {
+        let solution = sol.solution();
+        Recipe {
+            id: Some(sol),
+            feedback: None,
+            metadata: serde_json::Value::Null,
+            nodes: solution.nodes.iter().map(|node|{
+                let particle = solution.node_to_particle.get(node).unwrap();
+                let ty = solution.node_types.get(node).unwrap();
+                Node(sol, *particle, *node, *ty)
+            }).collect(),
+            claims: solution.claims.iter().map(|(node, tag)|{
+                Claim(sol, *node, *tag)
+            }).collect(),
+            checks: solution.checks.iter().map(|(node, tag)|{
+                Check(sol, *node, *tag)
+            }).collect(),
+            trusted_to_remove_tag: solution.trusted_to_remove_tag.iter().map(|(node, tag)|{
+                TrustedToRemoveTag(sol, *node, *tag)
+            }).collect(),
+            edges: solution.edges.iter().cloned().collect(),
+        }
+    }
+
+    pub fn with_feedback(mut self, feedback: Feedback) -> Self {
+        self.feedback = Some(feedback);
+        self
+    }
+}
+
 fn sol_id(sol: &Sol) -> String {
     format!("sol_{}", &sol.id)
 }
 
 impl Recipies {
+
     pub fn to_dot(self: &Self) -> String {
         self.to_dot_repr().to_dot()
     }
@@ -143,20 +177,18 @@ impl Recipies {
             vec![best.expect("Expected a 'best' solution")]
         };
         for s in solutions {
-            let s_id_number = &s.id.expect("Every recipe should have an id?");
-            let s_id = sol_id(s_id_number);
+            let sol = &s.id.expect("Every recipe should have an id?");
+            let s_id = sol_id(sol);
             let sol_graph = s.to_dot_repr();
+            g.add_child(s_id.clone(), format!("Solution {}", &sol.id), sol_graph);
             #[cfg(feature = "ancestors")]
-            let sol_graph = {
+            {
                 let solution_head = |sol| format!("{}_head", sol_id(sol));
-                let mut sol_graph = sol_graph;
                 sol_graph.add_node(format!("{}[style=invis height = 0 width = 0 label=\"\"]", solution_head(s)));
                 for ancestor in &s.ancestors() {
                     g.add_edge(solution_head(&s), solution_head(ancestor), vec![format!("ltail=cluster_{} lhead=cluster_{}", &s_id, sol_id(ancestor))]);
                 }
-                sol_graph
-            };
-            g.add_child(s_id.clone(), format!("Solution {}", &s_id_number), sol_graph);
+            }
         }
         g
     }
@@ -176,19 +208,19 @@ impl Recipies {
 
 impl Recipe {
     fn to_dot_repr(self: &Self) -> DotGraph {
-        let mut g = DotGraph::default();
-
-        let s_id_number = &self.id.expect("Every recipe should have an id?");
-        let s_id = sol_id(s_id_number);
+        let sol = &self.id.expect("Every recipe should have an id?");
+        let s_id = sol_id(sol);
         let particle_id = |particle| format!("{}_p{}", &s_id, particle);
         let node_id = |node| format!("{}_h{}", &s_id, node);
         let mut sol_graph = DotGraph::default();
         let mut particles = HashMap::new();
         for Node(_node_s, particle, node, ty) in &self.nodes {
             let mut extras: Vec<String> = vec![];
-            for HasTag(_hts, source, sink, tag) in &self.has_tags {
-                if sink == node && source != node {
-                    extras.push(format!("'{}' from {}", tag, source));
+            if let Some(feedback) = &self.feedback {
+                for HasTag(_hts, source, sink, tag) in &feedback.has_tags {
+                    if sink == node && source != node {
+                        extras.push(format!("'{}' from {}", tag, source));
+                    }
                 }
             }
             for TrustedToRemoveTag(_trusted_s, trusted_n, tag) in &self.trusted_to_remove_tag {
@@ -233,16 +265,7 @@ impl Recipe {
                 vec![]
             );
         }
-        #[cfg(feature = "ancestors")]
-        {
-            let solution_head = |sol| format!("{}_head", sol_id(sol));
-            sol_graph.add_node(format!("{}[style=invis height = 0 width = 0 label=\"\"]", solution_head(s)));
-            for ancestor in &s.ancestors() {
-                g.add_edge(solution_head(&s), solution_head(ancestor), vec![format!("ltail=cluster_{} lhead=cluster_{}", &s_id, sol_id(ancestor))]);
-            }
-        }
-        g.add_child(s_id.clone(), format!("Solution {}", &s_id_number), sol_graph);
-        g
+        sol_graph
     }
 }
 
@@ -255,6 +278,10 @@ impl Ibis {
 
     pub fn add_data<T>(&mut self, data: Vec<T>) where Ibis: Extend<T> {
         self.extend(data);
+    }
+
+    pub fn add_solution(&mut self, sol: Sol) {
+        self.extend(vec![Solution(sol)]);
     }
 
     pub fn add_recipies(&mut self, recipies: Recipies) {
@@ -270,19 +297,25 @@ impl Ibis {
         // Convert the recipe to its 'solution data'
         let solution = SolutionData {
             edges: recipe.edges.iter().cloned().collect(),
+            checks: recipe.checks.iter().map(|Check(_sol, node, tag)|(*node, *tag)).collect(),
+            claims: recipe.claims.iter().map(|Claim(_sol, node, tag)|(*node, *tag)).collect(),
+            node_to_particle: recipe.nodes.iter().map(|Node(_sol, particle, node, _ty)|(*node, *particle)).collect(),
+            node_types: recipe.nodes.iter().map(|Node(_sol, _particle, node, ty)|(*node, *ty)).collect(),
+            nodes: recipe.nodes.iter().map(|Node(_sol, _particle, node, _ty)|*node).collect(),
+            trusted_to_remove_tag: recipe.trusted_to_remove_tag.iter().map(|TrustedToRemoveTag(_sol, node, tag)|(*node, *tag)).collect(),
         };
         // Get an id to represent that.
         let id = Sol::new_blocking(solution);
-
-        self.add_data(recipe.nodes);
-        self.add_data(recipe.claims);
-        self.add_data(recipe.checks);
-        if let Some(feedback) = recipe.feedback {
-            self.add_data(feedback.leaks);
-            self.add_data(feedback.type_errors);
-        }
-        self.add_data(recipe.has_tags);
-        self.add_data(recipe.trusted_to_remove_tag);
+        self.add_solution(id);
+        // self.add_data(recipe.nodes);
+        // self.add_data(recipe.claims);
+        // self.add_data(recipe.checks);
+        // if let Some(feedback) = recipe.feedback {
+            // self.add_data(feedback.leaks);
+            // self.add_data(feedback.type_errors);
+            // self.add_data(feedback.has_tags);
+        // }
+        // self.add_data(recipe.trusted_to_remove_tag);
     }
 
     pub fn extract_solutions(self) -> Recipies {
@@ -291,33 +324,24 @@ impl Ibis {
             mut types,
             mut less_private_than,
             mut subtypes,
-            nodes,
-            claims,
-            checks,
-            trusted_to_remove_tag,
+            _nodes,
+            _claims,
+            _checks,
+            _trusted_to_remove_tag,
             has_tags,
             leaks,
             type_errors
         ) = self.inner.run();
-        let mut recipies = vec![];
-        for Solution(s) in solutions {
-
-            let r = Recipe {
-                id: Some(s),
-                metadata: serde_json::Value::default(),
-                feedback: Some(Feedback {
-                    leaks: leaks.iter().filter(|Leak(leak_s, _, _, _, _)| leak_s == &s).cloned().collect(),
-                    type_errors: type_errors.iter().cloned().collect(),
-                }),
-                nodes: nodes.iter().cloned().collect(),
-                claims: claims.iter().cloned().collect(),
-                checks: checks.iter().cloned().collect(),
-                has_tags: has_tags.iter().cloned().collect(),
-                trusted_to_remove_tag: trusted_to_remove_tag.iter().cloned().collect(),
-                edges: s.edges().iter().cloned().collect(),
-            };
-            recipies.push(r);
-        }
+        let recipies = solutions.iter().map(|Solution(s)| {
+            Recipe::from_sol(*s)
+                .with_feedback(
+                    Feedback {
+                        leaks: leaks.iter().filter(|Leak(leak_s, _, _, _, _)| leak_s == s).cloned().collect(),
+                        type_errors: type_errors.iter().cloned().collect(),
+                        has_tags: has_tags.iter().cloned().collect(),
+                    }
+                )
+        }).collect();
         Recipies {
             config: Config {
                 metadata: serde_json::Value::Null,

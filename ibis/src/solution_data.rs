@@ -5,7 +5,6 @@
 // https://developers.google.com/open-source/licenses/bsd
 
 use std::collections::{BTreeSet, BTreeMap};
-use crate::util::BiMap;
 use crate::ent::*;
 
 #[derive(Clone, PartialEq, Eq, Ord, PartialOrd, Hash, Default)]
@@ -13,9 +12,9 @@ pub struct SolutionData {
     pub edges: BTreeSet<(Ent, Ent)>, // from, to
     pub nodes: BTreeSet<Ent>,
     pub node_types: BTreeMap<Ent, Ent>, // node, type
-    pub node_to_particle: BiMap<Ent, Ent>, // particle, node
-    pub claim: BTreeSet<(Ent, Ent)>, // node, tag
-    pub check: BTreeSet<(Ent, Ent)>, // node, tag
+    pub node_to_particle: BTreeMap<Ent, Ent>, // node, particle
+    pub claims: BTreeSet<(Ent, Ent)>, // node, tag
+    pub checks: BTreeSet<(Ent, Ent)>, // node, tag
     pub trusted_to_remove_tag: BTreeSet<(Ent, Ent)>, // node, tag
 }
 
@@ -33,6 +32,8 @@ impl SolutionData {
     pub fn add_node(&self, particle: Ent, node: Ent, ty: Ent) -> SolutionData {
         let mut n = SolutionData { ..self.clone() };
         n.nodes.insert(node);
+        n.node_to_particle.insert(node, particle);
+        n.node_types.insert(node, ty);
         n
     }
 }

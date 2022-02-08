@@ -36,6 +36,7 @@ server () {
   python3 -m http.server &> ./watch/http.server.log
 }
 
+clear
 spawn_watcher
 echo "open http://localhost:8000/watch to view the output"
 server
