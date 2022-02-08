@@ -9,6 +9,7 @@ mod ent;
 mod error;
 mod solution_data;
 mod solution_id;
+#[macro_use]
 mod util;
 pub mod dot;
 pub mod recipies;
