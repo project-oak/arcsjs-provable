@@ -4,7 +4,7 @@
 // license that can be found in the LICENSE file or at
 // https://developers.google.com/open-source/licenses/bsd
 
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 use std::hash::Hash;
 
 #[macro_export]
@@ -31,12 +31,13 @@ impl std::fmt::Debug for Raw {
     }
 }
 
+#[derive(Clone, PartialEq, Eq, Ord, PartialOrd, Hash)]
 pub struct BiMap<T, U> {
-    forward: HashMap<T, U>,
-    back: HashMap<U, T>,
+    forward: BTreeMap<T, U>,
+    back: BTreeMap<U, T>,
 }
 
-impl<T: Eq + Hash + Clone, U: Eq + Hash + Clone> Default for BiMap<T, U> {
+impl<T: Ord + Eq + Hash + Clone, U: Ord + Eq + Hash + Clone> Default for BiMap<T, U> {
     // Implement Default for BiMap manually to avoid incorrect trait bounds T: Default and
     // U: Default.
     // For more info see: https://github.com/rust-lang/rust/issues/26925
@@ -45,11 +46,11 @@ impl<T: Eq + Hash + Clone, U: Eq + Hash + Clone> Default for BiMap<T, U> {
     }
 }
 
-impl<T: Eq + Hash + Clone, U: Eq + Hash + Clone> BiMap<T, U> {
+impl<T: Ord + Eq + Hash + Clone, U: Ord + Eq + Hash + Clone> BiMap<T, U> {
     pub fn new() -> Self {
         Self {
-            forward: HashMap::new(),
-            back: HashMap::new(),
+            forward: BTreeMap::new(),
+            back: BTreeMap::new(),
         }
     }
 
@@ -65,7 +66,7 @@ impl<T: Eq + Hash + Clone, U: Eq + Hash + Clone> BiMap<T, U> {
     pub fn get_back<Q: ?Sized>(&self, u: &Q) -> Option<&T>
     where
         U: std::borrow::Borrow<Q>,
-        Q: Hash + Eq,
+        Q: Ord + Hash + Eq,
     {
         self.back.get(u)
     }

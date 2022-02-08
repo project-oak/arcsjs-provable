@@ -4,15 +4,15 @@
 // license that can be found in the LICENSE file or at
 // https://developers.google.com/open-source/licenses/bsd
 
-use std::collections::BTreeSet;
-
+use std::collections::{BTreeSet, BTreeMap};
+use crate::util::BiMap;
 use crate::ent::*;
 
 #[derive(Clone, PartialEq, Eq, Ord, PartialOrd, Hash, Default)]
 pub struct SolutionData {
     pub edges: BTreeSet<(Ent, Ent)>, // from, to
     pub nodes: BTreeSet<Ent>,
-    pub node_types: HashMap<Ent, Ent>, // node, type
+    pub node_types: BTreeMap<Ent, Ent>, // node, type
     pub node_to_particle: BiMap<Ent, Ent>, // particle, node
     pub claim: BTreeSet<(Ent, Ent)>, // node, tag
     pub check: BTreeSet<(Ent, Ent)>, // node, tag
