@@ -8,9 +8,41 @@ use std::collections::BTreeMap;
 use std::hash::Hash;
 
 #[macro_export]
+macro_rules! bimap {
+    () => {
+        crate::util::BiMap::new()
+    };
+    ( $( $key: expr => $value: expr ),* $(,)?) => {
+        {
+            let mut st = bimap!();
+            $(
+                st.insert( $arg, $value );
+            )*
+            st
+        }
+    };
+}
+
+#[macro_export]
+macro_rules! map {
+    () => {
+        std::collections::BTreeMap::new()
+    };
+    ( $( $key: expr => $value: expr ),* $(,)?) => {
+        {
+            let mut st = map!();
+            $(
+                st.insert( $arg, $value );
+            )*
+            st
+        }
+    };
+}
+
+#[macro_export]
 macro_rules! set {
     () => {
-        std::collections::HashSet::new()
+        std::collections::BTreeSet::new()
     };
     ( $( $arg: expr ),* $(,)?) => {
         {
