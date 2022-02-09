@@ -19,23 +19,30 @@ impl DotGraph {
     }
 
     pub fn to_dot(self) -> String {
-        format!("digraph solutions {{compound=true; {} }}", self.to_dot_items())
+        format!(
+            "digraph solutions {{compound=true; {} }}",
+            self.to_dot_items()
+        )
     }
 
     pub fn to_dot_items(self) -> String {
         let mut items: Vec<String> = vec![];
 
         for node in self.nodes {
-            items.push(node+";");
+            items.push(node + ";");
         }
 
         for edge in self.edges {
             items.push(format!("{} -> {}[{}];", edge.0, edge.1, edge.2.join(" ")));
         }
         for (name, label, child) in self.children {
-            items.push(format!("subgraph cluster_{name} {{ {} color=\"#00000070\"; label=\"{label}\"}}", child.to_dot_items(), name=name, label=label));
+            items.push(format!(
+                "subgraph cluster_{name} {{ {} color=\"#00000070\"; label=\"{label}\"}}",
+                child.to_dot_items(),
+                name = name,
+                label = label
+            ));
         }
         items.join("")
     }
 }
-

@@ -18,10 +18,10 @@ extern crate ibis_macros;
 pub use ent::Ent;
 pub use error::IbisError;
 pub use ibis_macros::*;
-pub use solution_id::Sol;
-pub use solution_data::SolutionData;
-pub use util::*;
 pub use recipies::*;
+pub use solution_data::SolutionData;
+pub use solution_id::Sol;
+pub use util::*;
 
 #[macro_export]
 macro_rules! facts {
@@ -68,11 +68,10 @@ pub trait ToInput {
     fn to_claim(self) -> Self::U;
 }
 
-impl <T: ToInput + Clone> ToInput for &T {
+impl<T: ToInput + Clone> ToInput for &T {
     type U = T::U;
 
     fn to_claim(self) -> Self::U {
         self.clone().to_claim()
     }
 }
-

@@ -1,7 +1,7 @@
+use crate::dot::*;
+use crate::{ibis, Ent, Sol, SolutionData, ToInput};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use crate::dot::*;
-use crate::{ibis, Ent, Sol, ToInput, SolutionData};
 
 ibis! {
     Solution(Sol);
@@ -50,28 +50,27 @@ ibis! {
     Subtype(x, z) <- Subtype(x, y), Subtype(y, z)
 }
 
-
 #[derive(Default, Debug, Serialize, Deserialize, Eq, PartialEq)]
 #[serde(deny_unknown_fields)]
 pub struct Config {
     #[serde(default)]
     metadata: serde_json::Value,
-    #[serde(default, skip_serializing_if="Vec::is_empty")]
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
     types: Vec<Type>,
-    #[serde(default, skip_serializing_if="Vec::is_empty")]
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
     subtypes: Vec<Subtype>,
-    #[serde(default, skip_serializing_if="Vec::is_empty")]
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
     less_private_than: Vec<LessPrivateThan>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Eq, PartialEq)]
 #[serde(deny_unknown_fields)]
 pub struct Feedback {
-    #[serde(default, skip_serializing_if="Vec::is_empty")]
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
     leaks: Vec<Leak>,
-    #[serde(default, skip_serializing_if="Vec::is_empty")]
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
     type_errors: Vec<TypeError>,
-    #[serde(default, skip_serializing_if="Vec::is_empty")]
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
     has_tags: Vec<HasTag>,
 }
 
@@ -84,7 +83,7 @@ fn starting_recipies() -> Vec<Recipe> {
 pub struct Ibis {
     #[serde(flatten)]
     config: Config,
-    #[serde(default = "starting_recipies", skip_serializing_if="Vec::is_empty")]
+    #[serde(default = "starting_recipies", skip_serializing_if = "Vec::is_empty")]
     recipies: Vec<Recipe>,
 }
 
@@ -98,18 +97,18 @@ pub struct Recipe {
     // Do not deserialize the feedback on a recipe: Re-generate it each time for consistency.
     #[serde(skip_deserializing, flatten)]
     feedback: Option<Feedback>,
-    #[serde(default, skip_serializing_if="Vec::is_empty")]
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
     nodes: Vec<Node>,
-    #[serde(default, skip_serializing_if="Vec::is_empty")]
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
     claims: Vec<Claim>,
-    #[serde(default, skip_serializing_if="Vec::is_empty")]
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
     checks: Vec<Check>,
-    #[serde(default, skip_serializing_if="Vec::is_empty")]
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
     trusted_to_remove_tag: Vec<TrustedToRemoveTag>,
-    #[serde(default, skip_serializing_if="Vec::is_empty")]
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
     edges: Vec<(Ent, Ent)>,
     #[cfg(feature = "ancestors")]
-    #[serde(default, skip_serializing_if="Vec::is_empty")]
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
     ancestors: Vec<Sol>,
 }
 
@@ -120,20 +119,30 @@ impl Recipe {
             id: Some(sol),
             feedback: None,
             metadata: serde_json::Value::Null,
-            nodes: solution.nodes.iter().map(|node|{
-                let particle = solution.node_to_particle.get(node).unwrap();
-                let ty = solution.node_types.get(node).unwrap();
-                Node(sol, *particle, *node, *ty)
-            }).collect(),
-            claims: solution.claims.iter().map(|(node, tag)|{
-                Claim(sol, *node, *tag)
-            }).collect(),
-            checks: solution.checks.iter().map(|(node, tag)|{
-                Check(sol, *node, *tag)
-            }).collect(),
-            trusted_to_remove_tag: solution.trusted_to_remove_tag.iter().map(|(node, tag)|{
-                TrustedToRemoveTag(sol, *node, *tag)
-            }).collect(),
+            nodes: solution
+                .nodes
+                .iter()
+                .map(|node| {
+                    let particle = solution.node_to_particle.get(node).unwrap();
+                    let ty = solution.node_types.get(node).unwrap();
+                    Node(sol, *particle, *node, *ty)
+                })
+                .collect(),
+            claims: solution
+                .claims
+                .iter()
+                .map(|(node, tag)| Claim(sol, *node, *tag))
+                .collect(),
+            checks: solution
+                .checks
+                .iter()
+                .map(|(node, tag)| Check(sol, *node, *tag))
+                .collect(),
+            trusted_to_remove_tag: solution
+                .trusted_to_remove_tag
+                .iter()
+                .map(|(node, tag)| TrustedToRemoveTag(sol, *node, *tag))
+                .collect(),
             edges: solution.edges.iter().cloned().collect(),
         }
     }
@@ -149,7 +158,6 @@ fn sol_id(sol: &Sol) -> String {
 }
 
 impl Ibis {
-
     pub fn to_dot(self: &Self) -> String {
         self.to_dot_repr().to_dot()
     }
@@ -179,9 +187,20 @@ impl Ibis {
             #[cfg(feature = "ancestors")]
             {
                 let solution_head = |sol| format!("{}_head", sol_id(sol));
-                sol_graph.add_node(format!("{}[style=invis height = 0 width = 0 label=\"\"]", solution_head(s)));
+                sol_graph.add_node(format!(
+                    "{}[style=invis height = 0 width = 0 label=\"\"]",
+                    solution_head(s)
+                ));
                 for ancestor in &s.ancestors() {
-                    g.add_edge(solution_head(&s), solution_head(ancestor), vec![format!("ltail=cluster_{} lhead=cluster_{}", &s_id, sol_id(ancestor))]);
+                    g.add_edge(
+                        solution_head(&s),
+                        solution_head(ancestor),
+                        vec![format!(
+                            "ltail=cluster_{} lhead=cluster_{}",
+                            &s_id,
+                            sol_id(ancestor)
+                        )],
+                    );
                 }
             }
         }
@@ -203,12 +222,36 @@ impl From<&Recipe> for SolutionData {
     fn from(recipe: &Recipe) -> Self {
         Self {
             edges: recipe.edges.iter().cloned().collect(),
-            checks: recipe.checks.iter().map(|Check(_sol, node, tag)|(*node, *tag)).collect(),
-            claims: recipe.claims.iter().map(|Claim(_sol, node, tag)|(*node, *tag)).collect(),
-            node_to_particle: recipe.nodes.iter().map(|Node(_sol, particle, node, _ty)|(*node, *particle)).collect(),
-            node_types: recipe.nodes.iter().map(|Node(_sol, _particle, node, ty)|(*node, *ty)).collect(),
-            nodes: recipe.nodes.iter().map(|Node(_sol, _particle, node, _ty)|*node).collect(),
-            trusted_to_remove_tag: recipe.trusted_to_remove_tag.iter().map(|TrustedToRemoveTag(_sol, node, tag)|(*node, *tag)).collect(),
+            checks: recipe
+                .checks
+                .iter()
+                .map(|Check(_sol, node, tag)| (*node, *tag))
+                .collect(),
+            claims: recipe
+                .claims
+                .iter()
+                .map(|Claim(_sol, node, tag)| (*node, *tag))
+                .collect(),
+            node_to_particle: recipe
+                .nodes
+                .iter()
+                .map(|Node(_sol, particle, node, _ty)| (*node, *particle))
+                .collect(),
+            node_types: recipe
+                .nodes
+                .iter()
+                .map(|Node(_sol, _particle, node, ty)| (*node, *ty))
+                .collect(),
+            nodes: recipe
+                .nodes
+                .iter()
+                .map(|Node(_sol, _particle, node, _ty)| *node)
+                .collect(),
+            trusted_to_remove_tag: recipe
+                .trusted_to_remove_tag
+                .iter()
+                .map(|TrustedToRemoveTag(_sol, node, tag)| (*node, *tag))
+                .collect(),
         }
     }
 }
@@ -220,20 +263,30 @@ impl From<Sol> for Recipe {
             id: Some(sol),
             feedback: None,
             metadata: serde_json::Value::Null,
-            nodes: solution.nodes.iter().map(|node|{
-                let particle = solution.node_to_particle.get(node).unwrap();
-                let ty = solution.node_types.get(node).unwrap();
-                Node(sol, *particle, *node, *ty)
-            }).collect(),
-            claims: solution.claims.iter().map(|(node, tag)|{
-                Claim(sol, *node, *tag)
-            }).collect(),
-            checks: solution.checks.iter().map(|(node, tag)|{
-                Check(sol, *node, *tag)
-            }).collect(),
-            trusted_to_remove_tag: solution.trusted_to_remove_tag.iter().map(|(node, tag)|{
-                TrustedToRemoveTag(sol, *node, *tag)
-            }).collect(),
+            nodes: solution
+                .nodes
+                .iter()
+                .map(|node| {
+                    let particle = solution.node_to_particle.get(node).unwrap();
+                    let ty = solution.node_types.get(node).unwrap();
+                    Node(sol, *particle, *node, *ty)
+                })
+                .collect(),
+            claims: solution
+                .claims
+                .iter()
+                .map(|(node, tag)| Claim(sol, *node, *tag))
+                .collect(),
+            checks: solution
+                .checks
+                .iter()
+                .map(|(node, tag)| Check(sol, *node, *tag))
+                .collect(),
+            trusted_to_remove_tag: solution
+                .trusted_to_remove_tag
+                .iter()
+                .map(|(node, tag)| TrustedToRemoveTag(sol, *node, *tag))
+                .collect(),
             edges: solution.edges.iter().cloned().collect(),
         }
     }
@@ -246,7 +299,6 @@ impl From<SolutionData> for Recipe {
         Recipe::from(sol)
     }
 }
-
 
 impl Recipe {
     fn to_dot_repr(self: &Self) -> DotGraph {
@@ -277,15 +329,25 @@ impl Recipe {
             }
             for Check(_check_s, check_node, tag) in &self.checks {
                 if check_node == node {
-                    extras.push(format!("<font color=\"blue\">checked to be '{}'</font>", tag));
+                    extras.push(format!(
+                        "<font color=\"blue\">checked to be '{}'</font>",
+                        tag
+                    ));
                 }
             }
-            let extras: Vec<String> = extras.iter().map(|ex| format!("<tr><td>{}</td></tr>", ex)).collect();
+            let extras: Vec<String> = extras
+                .iter()
+                .map(|ex| format!("<tr><td>{}</td></tr>", ex))
+                .collect();
             let particle_g = particles.entry(particle).or_insert(DotGraph::default());
             particle_g.add_node(format!("{node_id} [shape=record label=< <table border=\"0\"><tr><td>{node} : {ty}</td></tr>{extras}</table>>]", node_id=node_id(node), node=node, ty=ty, extras=extras.join("")));
         }
         for (particle, particle_g) in particles {
-            sol_graph.add_child(particle_id(particle), format!("{} : Particle", particle), particle_g);
+            sol_graph.add_child(
+                particle_id(particle),
+                format!("{} : Particle", particle),
+                particle_g,
+            );
         }
 
         if let Some(feedback) = &self.feedback {
@@ -301,11 +363,7 @@ impl Recipe {
         for (from_id, to_id) in &self.id.expect("WAT").edges() {
             let from = format!("{}:s", node_id(from_id));
             let to = format!("{}:n", node_id(to_id));
-            sol_graph.add_edge(
-                from.clone(),
-                to.clone(),
-                vec![]
-            );
+            sol_graph.add_edge(from.clone(), to.clone(), vec![]);
         }
         sol_graph
     }
@@ -318,7 +376,13 @@ impl Ibis {
 
     pub fn add_recipies(&mut self, recipies: Ibis) {
         let Ibis {
-            config: Config { metadata: _, types, subtypes, less_private_than },
+            config:
+                Config {
+                    metadata: _,
+                    types,
+                    subtypes,
+                    less_private_than,
+                },
             mut recipies, // Mutation required to move rather than copy the data.
         } = recipies;
         self.config.types.extend(types);
@@ -331,7 +395,12 @@ impl Ibis {
         let mut runtime = Crepe::new();
         runtime.extend(self.config.types.iter().map(|ty| ty.to_claim()));
         runtime.extend(self.config.subtypes.iter().map(|sub_ty| sub_ty.to_claim()));
-        runtime.extend(self.config.less_private_than.iter().map(|lpt| lpt.to_claim()));
+        runtime.extend(
+            self.config
+                .less_private_than
+                .iter()
+                .map(|lpt| lpt.to_claim()),
+        );
         runtime.extend(self.recipies.iter().map(|recipe| {
             // Convert to a solution (via id)
             SolutionInput(Sol::from(recipe))
@@ -348,18 +417,30 @@ impl Ibis {
             _trusted_to_remove_tag,
             has_tags,
             leaks,
-            type_errors
+            type_errors,
         ) = runtime.run();
-        let recipies = solutions.iter().map(|Solution(s)| {
-            Recipe::from_sol(*s)
-                .with_feedback(
-                    Feedback {
-                        leaks: leaks.iter().filter(|Leak(leak_s, _, _, _, _)| leak_s == s).cloned().collect(),
-                        type_errors: type_errors.iter().filter(|TypeError(type_s, _, _, _, _)| type_s == s).cloned().collect(),
-                        has_tags: has_tags.iter().filter(|HasTag(has_tag_s, _, _, _)| has_tag_s == s).cloned().collect(),
-                    }
-                )
-        }).collect();
+        let recipies = solutions
+            .iter()
+            .map(|Solution(s)| {
+                Recipe::from_sol(*s).with_feedback(Feedback {
+                    leaks: leaks
+                        .iter()
+                        .filter(|Leak(leak_s, _, _, _, _)| leak_s == s)
+                        .cloned()
+                        .collect(),
+                    type_errors: type_errors
+                        .iter()
+                        .filter(|TypeError(type_s, _, _, _, _)| type_s == s)
+                        .cloned()
+                        .collect(),
+                    has_tags: has_tags
+                        .iter()
+                        .filter(|HasTag(has_tag_s, _, _, _)| has_tag_s == s)
+                        .cloned()
+                        .collect(),
+                })
+            })
+            .collect();
         Ibis {
             config: Config {
                 metadata: serde_json::Value::Null,
@@ -371,4 +452,3 @@ impl Ibis {
         }
     }
 }
-

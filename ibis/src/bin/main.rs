@@ -4,15 +4,17 @@
 // license that can be found in the LICENSE file or at
 // https://developers.google.com/open-source/licenses/bsd
 
+use ibis::recipies::Ibis;
 use ibis::IbisError;
 use std::io::Read;
-use ibis::recipies::Ibis;
 
 fn main() -> Result<(), IbisError> {
     let mut runtime = Ibis::new();
 
     let mut data = String::new();
-    std::io::stdin().read_to_string(&mut data).expect("IO Error, reading stdin");
+    std::io::stdin()
+        .read_to_string(&mut data)
+        .expect("IO Error, reading stdin");
     // TODO: Use ibis::Error and https://serde.rs/error-handling.html instead of expect.
     let recipies: Ibis = serde_json::from_str(&data).expect("JSON Error?");
 
