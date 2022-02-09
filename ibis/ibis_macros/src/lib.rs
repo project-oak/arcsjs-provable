@@ -124,11 +124,6 @@ impl ToInput for {name} {{
         {claim_name}({arg_names})
     }}
 }}
-impl Extend<{name}> for Ibis {{
-    fn extend<Iter: IntoIterator<Item={name}> >(&mut self, data: Iter) {{
-        self.inner.extend(data.into_iter().map(|datum|datum.to_claim()));
-    }}
-}}
 
 ",
                     name = name,
@@ -142,11 +137,6 @@ impl ToInput for {claim_name} {{
     type U = {claim_name};
     fn to_claim(self) -> {claim_name} {{
         self
-    }}
-}}
-impl Extend<{claim_name}> for Ibis {{
-    fn extend<Iter: IntoIterator<Item={claim_name}> >(&mut self, data: Iter) {{
-        self.inner.extend(data.into_iter());
     }}
 }}
 
@@ -196,9 +186,6 @@ impl Extend<{claim_name}> for Ibis {{
 use crepe::crepe;
 crepe!{{
 {definitions}
-}}
-pub struct Ibis {{
-    inner: Crepe,
 }}
 {trait_impls}
 {atoms}

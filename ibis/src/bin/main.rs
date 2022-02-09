@@ -6,7 +6,6 @@
 
 use ibis::IbisError;
 use std::io::Read;
-use ibis::recipies::*;
 use ibis::recipies::Ibis;
 
 fn main() -> Result<(), IbisError> {
@@ -15,7 +14,7 @@ fn main() -> Result<(), IbisError> {
     let mut data = String::new();
     std::io::stdin().read_to_string(&mut data).expect("IO Error, reading stdin");
     // TODO: Use ibis::Error and https://serde.rs/error-handling.html instead of expect.
-    let recipies: Recipies = serde_json::from_str(&data).expect("JSON Error?");
+    let recipies: Ibis = serde_json::from_str(&data).expect("JSON Error?");
 
     runtime.add_recipies(recipies);
 
