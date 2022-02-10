@@ -8,11 +8,10 @@ ibis! {
     Type(Ent); // type
     LessPrivateThan(Ent, Ent); // tag, tag
     Subtype(Ent, Ent); // sub, super
-
-    Node(Sol, Ent, Ent, Ent); // sol, particle-identifier, identifier, type
-    Claim(Sol, Ent, Ent); // sol, identifier, tag
-    Check(Sol, Ent, Ent); // sol, identifier, tag
-    TrustedToRemoveTag(Sol, Ent, Ent); // sol, Node, Tag that it can remove
+    Node(Ent, Ent, Ent); // particle-identifier, identifier, type
+    Claim(Ent, Ent); // identifier, tag
+    Check(Ent, Ent); // identifier, tag
+    TrustedToRemoveTag(Ent, Ent); // Node, Tag that it can remove
 
     // Feedback
     HasTag(Sol, Ent, Ent, Ent); // solution, source node, node with tag, tag
@@ -21,28 +20,29 @@ ibis! {
 
     Solution(parent.add_edge(from, to)) <-
         Solution(parent),
-        Node(parent, from_particle, from, from_type),
-        Node(parent, to_particle, to, to_type),
+        Node(from_particle, from, from_type),
+        Node(to_particle, to, to_type),
         Subtype(from_type, to_type),
         (from != to),
         (!parent.has_edge(from, to));
-    HasTag(s, n, n, tag) <- Solution(s), Claim(s, n, tag);
+    HasTag(s, n, n, tag) <- Solution(s), Claim(n, tag);
     HasTag(s, source, down, tag) <-
         Solution(s),
-        Node(s, _curr_particle, curr, _),
-        Node(s, _down_particle, down, _),
+        Node(_curr_particle, curr, _),
+        Node(_down_particle, down, _),
         HasTag(s, source, curr, tag),
         (s.has_edge(curr, down)),
-        !TrustedToRemoveTag(s, down, tag); // Propagate 'downstream'.
+        !TrustedToRemoveTag(down, tag); // Propagate 'downstream'.
 
     Leak(s, n, t1, source, t2) <-
         LessPrivateThan(t1, t2),
-        Check(s, n, t1),
+        Check(n, t1),
         HasTag(s, source, n, t2); // Check failed, node has a 'more private' tag i.e. is leaking.
 
     TypeError(s, from, from_ty, to, to_ty) <-
-        Node(s, _from_p, from, from_ty),
-        Node(s, _to_p, to, to_ty),
+        Node(_from_p, from, from_ty),
+        Node(_to_p, to, to_ty),
+        Solution(s),
         (s.has_edge(from, to)),
         !Subtype(from_ty, to_ty); // Check failed, from writes an incompatible type into to
 
@@ -127,23 +127,23 @@ impl Recipe {
                 .map(|node| {
                     let particle = solution.node_to_particle.get(node).unwrap();
                     let ty = solution.node_types.get(node).unwrap();
-                    Node(sol, *particle, *node, *ty)
+                    Node(*particle, *node, *ty)
                 })
                 .collect(),
             claims: solution
                 .claims
                 .iter()
-                .map(|(node, tag)| Claim(sol, *node, *tag))
+                .map(|(node, tag)| Claim(*node, *tag))
                 .collect(),
             checks: solution
                 .checks
                 .iter()
-                .map(|(node, tag)| Check(sol, *node, *tag))
+                .map(|(node, tag)| Check(*node, *tag))
                 .collect(),
             trusted_to_remove_tag: solution
                 .trusted_to_remove_tag
                 .iter()
-                .map(|(node, tag)| TrustedToRemoveTag(sol, *node, *tag))
+                .map(|(node, tag)| TrustedToRemoveTag(*node, *tag))
                 .collect(),
             edges: solution.edges.iter().cloned().collect(),
         }
@@ -232,18 +232,18 @@ impl From<&Recipe> for SolutionData {
     fn from(recipe: &Recipe) -> Self {
         Self {
             edges: make(&recipe.edges, Clone::clone),
-            checks: make(&recipe.checks, |Check(_sol, node, tag)| (*node, *tag)),
-            claims: make(&recipe.claims, |Claim(_sol, node, tag)| (*node, *tag)),
-            node_to_particle: make(&recipe.nodes, |Node(_sol, particle, node, _ty)| {
+            checks: make(&recipe.checks, |Check(node, tag)| (*node, *tag)),
+            claims: make(&recipe.claims, |Claim(node, tag)| (*node, *tag)),
+            node_to_particle: make(&recipe.nodes, |Node(particle, node, _ty)| {
                 (*node, *particle)
             }),
-            node_types: make(&recipe.nodes, |Node(_sol, _particle, node, ty)| {
+            node_types: make(&recipe.nodes, |Node(_particle, node, ty)| {
                 (*node, *ty)
             }),
-            nodes: make(&recipe.nodes, |Node(_sol, _particle, node, _ty)| *node),
+            nodes: make(&recipe.nodes, |Node(_particle, node, _ty)| *node),
             trusted_to_remove_tag: make(
                 &recipe.trusted_to_remove_tag,
-                |TrustedToRemoveTag(_sol, node, tag)| (*node, *tag),
+                |TrustedToRemoveTag(node, tag)| (*node, *tag),
             ),
         }
     }
@@ -259,12 +259,12 @@ impl From<Sol> for Recipe {
             nodes: make(&solution.nodes, |node| {
                 let particle = solution.node_to_particle.get(node).unwrap();
                 let ty = solution.node_types.get(node).unwrap();
-                Node(sol, *particle, *node, *ty)
+                Node(*particle, *node, *ty)
             }),
-            claims: make(&solution.claims, |(node, tag)| Claim(sol, *node, *tag)),
-            checks: make(&solution.checks, |(node, tag)| Check(sol, *node, *tag)),
+            claims: make(&solution.claims, |(node, tag)| Claim(*node, *tag)),
+            checks: make(&solution.checks, |(node, tag)| Check(*node, *tag)),
             trusted_to_remove_tag: make(&solution.trusted_to_remove_tag, |(node, tag)| {
-                TrustedToRemoveTag(sol, *node, *tag)
+                TrustedToRemoveTag(*node, *tag)
             }),
             edges: make(&solution.edges, Clone::clone),
         }
@@ -284,11 +284,11 @@ impl Recipe {
     fn to_dot_repr(self: &Self) -> DotGraph {
         let sol = &self.id.expect("Every recipe should have an id?");
         let s_id = sol_id(sol);
-        let particle_id = |particle| format!("{}_p{}", &s_id, particle);
-        let node_id = |node| format!("{}_h{}", &s_id, node);
+        let particle_id = |particle| format!("{}_p_{}", &s_id, particle);
+        let node_id = |node| format!("{}_h_{}", &s_id, node);
         let mut sol_graph = DotGraph::default();
         let mut particles = HashMap::new();
-        for Node(_node_s, particle, node, ty) in &self.nodes {
+        for Node(particle, node, ty) in &self.nodes {
             let mut extras: Vec<String> = vec![];
             if let Some(feedback) = &self.feedback {
                 for HasTag(_hts, source, sink, tag) in &feedback.has_tags {
@@ -297,17 +297,17 @@ impl Recipe {
                     }
                 }
             }
-            for TrustedToRemoveTag(_trusted_s, trusted_n, tag) in &self.trusted_to_remove_tag {
+            for TrustedToRemoveTag(trusted_n, tag) in &self.trusted_to_remove_tag {
                 if trusted_n == node {
                     extras.push(format!("trusted to remove tag '{}'", tag));
                 }
             }
-            for Claim(_claim_s, claim_node, tag) in &self.claims {
+            for Claim(claim_node, tag) in &self.claims {
                 if claim_node == node {
                     extras.push(format!("claims to be '{}'", tag));
                 }
             }
-            for Check(_check_s, check_node, tag) in &self.checks {
+            for Check(check_node, tag) in &self.checks {
                 if check_node == node {
                     extras.push(format!(
                         "<font color=\"blue\">checked to be '{}'</font>",
