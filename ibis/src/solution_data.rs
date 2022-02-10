@@ -10,6 +10,8 @@ use std::collections::{BTreeMap, BTreeSet};
 #[derive(Clone, PartialEq, Eq, Ord, PartialOrd, Hash, Default)]
 pub struct SolutionData {
     pub edges: BTreeSet<(Ent, Ent)>, // from, to
+
+    // Starting data
     pub nodes: BTreeSet<Ent>,
     pub node_types: BTreeMap<Ent, Ent>,              // node, type
     pub node_to_particle: BTreeMap<Ent, Ent>,        // node, particle

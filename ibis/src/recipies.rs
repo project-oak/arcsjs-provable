@@ -384,8 +384,14 @@ impl Ibis {
         runtime.extend(self.recipies.iter().map(|recipe| {
             // Convert to a solution (via id)
             SolutionInput(Sol::from(recipe))
-            // TODO: inject the nodes!!!
         }));
+
+        for recipe in self.recipies {
+            runtime.extend(recipe.nodes.iter().map(|node|{
+                node.to_claim()
+            }));
+        }
+
         let (
             solutions,
             mut types,
