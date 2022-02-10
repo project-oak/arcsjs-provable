@@ -116,6 +116,8 @@ impl Recipe {
     pub fn from_sol(sol: Sol) -> Self {
         let solution = sol.solution();
         Recipe {
+            #[cfg(feature = "ancestors")]
+            ancestors: vec![],
             id: Some(sol),
             feedback: None,
             metadata: serde_json::Value::Null,
@@ -158,11 +160,11 @@ fn sol_id(sol: &Sol) -> String {
 }
 
 impl Ibis {
-    pub fn to_dot(self: &Self) -> String {
+    pub fn to_dot(&self) -> String {
         self.to_dot_repr().to_dot()
     }
 
-    fn to_dot_repr(self: &Self) -> DotGraph {
+    fn to_dot_repr(&self) -> DotGraph {
         let mut g = DotGraph::default();
 
         let solutions = if true {
@@ -179,13 +181,14 @@ impl Ibis {
             }
             vec![best.expect("Expected a 'best' solution")]
         };
-        for s in solutions {
-            let sol = &s.id.expect("Every recipe should have an id?");
+        for recipe in solutions {
+            let sol = &recipe.id.expect("Every recipe should have an id?");
             let s_id = sol_id(sol);
-            let sol_graph = s.to_dot_repr();
+            let sol_graph = recipe.to_dot_repr();
             g.add_child(s_id.clone(), format!("Solution {}", &sol.id), sol_graph);
             #[cfg(feature = "ancestors")]
             {
+                let s = Sol::from(recipe);
                 let solution_head = |sol| format!("{}_head", sol_id(sol));
                 sol_graph.add_node(format!(
                     "{}[style=invis height = 0 width = 0 label=\"\"]",
@@ -218,40 +221,30 @@ impl From<&Recipe> for Sol {
     }
 }
 
+fn make<'a, T: 'a, Iter: IntoIterator<Item = &'a T>, U, F: Fn(&'a T) -> U, Res: FromIterator<U>>(
+    items: Iter,
+    f: F,
+) -> Res {
+    items.into_iter().map(f).collect()
+}
+
 impl From<&Recipe> for SolutionData {
     fn from(recipe: &Recipe) -> Self {
         Self {
-            edges: recipe.edges.iter().cloned().collect(),
-            checks: recipe
-                .checks
-                .iter()
-                .map(|Check(_sol, node, tag)| (*node, *tag))
-                .collect(),
-            claims: recipe
-                .claims
-                .iter()
-                .map(|Claim(_sol, node, tag)| (*node, *tag))
-                .collect(),
-            node_to_particle: recipe
-                .nodes
-                .iter()
-                .map(|Node(_sol, particle, node, _ty)| (*node, *particle))
-                .collect(),
-            node_types: recipe
-                .nodes
-                .iter()
-                .map(|Node(_sol, _particle, node, ty)| (*node, *ty))
-                .collect(),
-            nodes: recipe
-                .nodes
-                .iter()
-                .map(|Node(_sol, _particle, node, _ty)| *node)
-                .collect(),
-            trusted_to_remove_tag: recipe
-                .trusted_to_remove_tag
-                .iter()
-                .map(|TrustedToRemoveTag(_sol, node, tag)| (*node, *tag))
-                .collect(),
+            edges: make(&recipe.edges, Clone::clone),
+            checks: make(&recipe.checks, |Check(_sol, node, tag)| (*node, *tag)),
+            claims: make(&recipe.claims, |Claim(_sol, node, tag)| (*node, *tag)),
+            node_to_particle: make(&recipe.nodes, |Node(_sol, particle, node, _ty)| {
+                (*node, *particle)
+            }),
+            node_types: make(&recipe.nodes, |Node(_sol, _particle, node, ty)| {
+                (*node, *ty)
+            }),
+            nodes: make(&recipe.nodes, |Node(_sol, _particle, node, _ty)| *node),
+            trusted_to_remove_tag: make(
+                &recipe.trusted_to_remove_tag,
+                |TrustedToRemoveTag(_sol, node, tag)| (*node, *tag),
+            ),
         }
     }
 }
@@ -263,34 +256,21 @@ impl From<Sol> for Recipe {
             id: Some(sol),
             feedback: None,
             metadata: serde_json::Value::Null,
-            nodes: solution
-                .nodes
-                .iter()
-                .map(|node| {
-                    let particle = solution.node_to_particle.get(node).unwrap();
-                    let ty = solution.node_types.get(node).unwrap();
-                    Node(sol, *particle, *node, *ty)
-                })
-                .collect(),
-            claims: solution
-                .claims
-                .iter()
-                .map(|(node, tag)| Claim(sol, *node, *tag))
-                .collect(),
-            checks: solution
-                .checks
-                .iter()
-                .map(|(node, tag)| Check(sol, *node, *tag))
-                .collect(),
-            trusted_to_remove_tag: solution
-                .trusted_to_remove_tag
-                .iter()
-                .map(|(node, tag)| TrustedToRemoveTag(sol, *node, *tag))
-                .collect(),
-            edges: solution.edges.iter().cloned().collect(),
+            nodes: make(&solution.nodes, |node| {
+                let particle = solution.node_to_particle.get(node).unwrap();
+                let ty = solution.node_types.get(node).unwrap();
+                Node(sol, *particle, *node, *ty)
+            }),
+            claims: make(&solution.claims, |(node, tag)| Claim(sol, *node, *tag)),
+            checks: make(&solution.checks, |(node, tag)| Check(sol, *node, *tag)),
+            trusted_to_remove_tag: make(&solution.trusted_to_remove_tag, |(node, tag)| {
+                TrustedToRemoveTag(sol, *node, *tag)
+            }),
+            edges: make(&solution.edges, Clone::clone),
         }
     }
 }
+
 impl From<SolutionData> for Recipe {
     fn from(solution: SolutionData) -> Self {
         // Get an id for the solution data.
