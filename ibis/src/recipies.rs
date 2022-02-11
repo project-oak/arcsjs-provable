@@ -26,11 +26,9 @@ ibis! {
         (!parent.has_edge(from, to));
 
     HasTag(s, n, n, tag) <- Solution(s), Claim(n, tag);
-    HasTag(s, source, down, tag) <-
-        Solution(s),
-        Node(_curr_particle, curr, _),
-        Node(_down_particle, down, _),
+    HasTag(s, source, down, tag) <- // Propagate tags 'downstream'
         HasTag(s, source, curr, tag),
+        Node(_down_particle, down, _),
         (s.has_edge(curr, down)),
         (!s.is_trusted_to_remove_tag(down, tag));
 
@@ -41,8 +39,8 @@ ibis! {
         (!s.is_trusted_to_remove_tag(down, tag));
 
     Leak(s, n, t1, source, t2) <-
-        LessPrivateThan(t1, t2),
         Check(n, t1),
+        LessPrivateThan(t1, t2),
         HasTag(s, source, n, t2); // Check failed, node has a 'more private' tag i.e. is leaking.
 
     TypeError(s, from, from_ty, to, to_ty) <-
