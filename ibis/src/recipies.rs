@@ -448,7 +448,7 @@ impl Ibis {
             }
             recipies
                 .drain(0..)
-                .filter(|recipe| recipe.edges.len() > max - loss)
+                .filter(|recipe| recipe.edges.len() >= max - loss)
                 .collect()
         } else {
             recipies
