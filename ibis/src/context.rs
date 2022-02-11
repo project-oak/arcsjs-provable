@@ -5,7 +5,7 @@
 // https://developers.google.com/open-source/licenses/bsd
 
 use super::ent::*;
-use super::solution::*;
+use super::solution_data::SolutionData;
 use super::solution_id::*;
 use super::util::BiMap;
 use lazy_static::lazy_static;
@@ -19,7 +19,7 @@ pub struct Ctx {
     pub solution_id: SolutionIdBackingType,
     // TODO: Consider using https://docs.rs/bimap/latest/bimap/
     pub id_to_name: BiMap<Ent, String>,
-    pub id_to_solution: BiMap<Sol, Solution>,
+    pub id_to_solution: BiMap<Sol, SolutionData>,
     #[cfg(feature = "ancestors")]
     pub ancestors: HashMap<Sol, BTreeSet<Sol>>,
 }

@@ -19,7 +19,7 @@ impl IbisBuilder {
         // This is an atom definition;
         let lower_name = format!("{}", name).to_lowercase();
         self.atoms += &format!(
-            "let {lower_name} = Ent::by_name(\"{name}\");",
+            "static {lower_name}: Ent = Ent::by_name(\"{name}\");",
             lower_name = lower_name,
             name = name
         );
@@ -74,6 +74,7 @@ impl IbisBuilder {
                 arg_names.push(format!("arg{}", arity));
             };
 
+            let mut new_args = vec![];
             match &args {
                 Group(stream) => {
                     for token in stream.stream() {
@@ -85,7 +86,14 @@ impl IbisBuilder {
                                     continue;
                                 }
                             }
-                            _arg => {}
+                            arg => {
+                                let arg = format!("{}", &arg);
+                                if &arg == "Sol" {
+                                    new_args.push("#[serde(skip, default)]Sol".to_string());
+                                } else {
+                                    new_args.push(arg);
+                                }
+                            }
                         }
                         curr_arg = true;
                     }
@@ -108,48 +116,49 @@ impl IbisBuilder {
 
             if name != claim_name {
                 self.trait_impls += &format!(
-                    "
-                    impl ToInput for {name} {{
-                        type U = {claim_name};
-                        fn to_claim(self) -> {claim_name} {{
-                            let {name}({arg_names}) = self;
-                            {claim_name}({arg_names})
-                        }}
-                    }}
-                ",
+"
+impl ToInput for {name} {{
+    type U = {claim_name};
+    fn to_claim(self) -> {claim_name} {{
+        let {name}({arg_names}) = self;
+        {claim_name}({arg_names})
+    }}
+}}
+
+",
                     name = name,
                     claim_name = claim_name,
                     arg_names = arg_names.join(", ")
                 );
             }
             self.trait_impls += &format!(
-                "
-                impl ToInput for {claim_name} {{
-                    type U = {claim_name};
-                    fn to_claim(self) -> {claim_name} {{
-                        self
-                    }}
-                }}
-            ",
+"
+impl ToInput for {claim_name} {{
+    type U = {claim_name};
+    fn to_claim(self) -> {claim_name} {{
+        self
+    }}
+}}
+
+",
                 claim_name = claim_name
             );
 
             // this is a struct definition
             self.definitions += &format!(
-                "
-            @input
-            #[derive(Debug, Ord, PartialOrd)]
-            struct {name}Input{args};
-            @output
+"
+    @input
+    #[derive(Debug, Ord, PartialOrd, Serialize, Deserialize)]
+    pub struct {name}Input({args});
+    @output
 
-            #[derive(Debug, Ord, PartialOrd, Serialize, Deserialize)]
-            struct {name}{args};
+    #[derive(Debug, Ord, PartialOrd, Serialize, Deserialize)]
+    pub struct {name}({args});
 
-            {name}({arg_names}) <- {claim_name}({arg_names});
-            ",
+    {name}({arg_names}) <- {claim_name}({arg_names});",
                 name = name,
                 claim_name = claim_name,
-                args = args,
+                args = new_args.join(", "),
                 arg_names = arg_names.join(", ")
             );
 
@@ -173,22 +182,17 @@ impl IbisBuilder {
 
     fn build(self) -> TokenStream {
         format!(
-            "use serde::{{Deserialize, Serialize}};
-            use crepe::crepe;
-        crepe!{{
-            {definitions}
-        }};
-
-        {core}
-
-        {trait_impls}
-
-        {atoms}
-        ",
+"
+use crepe::crepe;
+crepe!{{
+{definitions}
+}}
+{trait_impls}
+{atoms}
+",
             definitions = self.definitions,
             atoms = self.atoms,
             trait_impls = self.trait_impls,
-            core = include_str!("core.rs"),
         )
         .parse()
         .unwrap()

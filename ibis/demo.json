@@ -17,24 +17,33 @@
     ["Number", "number_or_string"],
     ["String", "number_or_string"]
   ],
-  "nodes": [
-    ["p_a", "a", "Int"],
-    ["p_b", "b", "Number"],
-    ["p_c", "c", "String"],
-    ["p_de", "d", "Serializable"],
-    ["p_de", "e", "number_or_string"]
-  ],
-  "claims": [
-    ["a", "private"]
-  ],
-  "checks": [
-    ["e", "public"],
-    ["e", "public"]
-  ],
   "less_private_than": [
     ["public", "private"]
   ],
-  "trusted_to_remove_tag": [
-    ["b", "private"]
+  "recipies": [
+    {
+      "metadata": {
+        "name": "demo"
+      },
+      "nodes": [
+        ["p_a", "a", "Int"],
+        ["p_b", "b", "Number"],
+        ["p_c", "c", "String"],
+        ["p_de", "d", "Serializable"],
+        ["p_de", "e", "number_or_string"]
+      ],
+      "edges": [
+        ["b", "e"]
+      ],
+      "claims": [
+        ["a", "private"]
+      ],
+      "checks": [
+        ["e", "public"]
+      ],
+      "trusted_to_remove_tag": [
+        ["b", "private"]
+      ]
+    }
   ]
 }

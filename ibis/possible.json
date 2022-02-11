@@ -1,0 +1,40 @@
+{
+  "metadata": {
+    "author": "jopra@google.com",
+    "date": "03/02/2020"
+  },
+  "recipies": [
+    {
+      "edges": [
+        ["a", "c"]
+      ],
+      "nodes": [
+        ["p_a", "a"],
+        ["p_b", "b"],
+        ["p_c", "c"],
+        ["p_de", "d"],
+        ["p_de", "e"]
+      ],
+      "invariants": [
+        ["a", "Int"],
+        ["a", "private"],
+        ["b", "Number"],
+        ["c", "String"],
+        ["d", "Serializable"],
+        ["e", "Either(Number, String)"],
+        ["e", "public"]
+      ],
+      "trusted_to_convert": [
+        ["b", "private", "public"]
+      ]
+    }
+  ],
+  "subtypes": [
+    ["Int", "Number"],
+    ["Int", "Serializable"],
+    ["String", "Serializable"],
+    ["Number", "Either(Number, String)"],
+    ["String", "Either(Number, String)"],
+    ["Tag(public)", "Tag(private)"]
+  ]
+}

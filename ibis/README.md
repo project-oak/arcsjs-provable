@@ -11,7 +11,7 @@ For the following you'll need [git]() and [cargo](https://rustup.rs).
 # Assuming git and cargo are already installed
 git clone https://github.com/project-oak/arcsjs-provable.git
 cd arcsjs-provable/ibis
-cargo run -- demo.json > out.dot
+cat demo.json | cargo run > out.dot
 ```
 
 ### Optional tools & dependencies

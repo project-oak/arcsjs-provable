@@ -28,7 +28,7 @@ always_render() {
 }
 
 spawn_watcher () {
-  cargo watch -q -x run | always_render &
+  cargo watch -q -s "cat demo.json | cargo run" | always_render &
   WATCH_PID="$!"
 }
 
@@ -36,6 +36,7 @@ server () {
   python3 -m http.server &> ./watch/http.server.log
 }
 
+clear
 spawn_watcher
 echo "open http://localhost:8000/watch to view the output"
 server
