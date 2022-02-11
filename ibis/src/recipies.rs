@@ -430,7 +430,18 @@ impl Ibis {
                         .collect(),
                 })
             })
+            .filter(|recipe| {
+                (recipe.feedback.as_ref().map(|f| f.leaks.len() + f.type_errors.len() == 0)).unwrap_or(false)
+            })
             .collect();
+        let mut max = 0;
+        for r in &recipies {
+            let l = r.edges.len();
+            if max < l {
+                max = l;
+            }
+        }
+        let recipies: Vec<Recipe> = recipies.drain(0..).filter(|recipe| recipe.edges.len() > max-2).collect();
         Ibis {
             config: Config {
                 metadata: serde_json::Value::Null,
