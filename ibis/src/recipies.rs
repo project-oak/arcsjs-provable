@@ -386,6 +386,12 @@ impl Ibis {
         }));
 
         for recipe in self.recipies {
+            runtime.extend(recipe.checks.iter().map(|check|{
+                check.to_claim()
+            }));
+            runtime.extend(recipe.claims.iter().map(|claim|{
+                claim.to_claim()
+            }));
             runtime.extend(recipe.nodes.iter().map(|node|{
                 node.to_claim()
             }));
