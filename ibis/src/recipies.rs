@@ -144,11 +144,7 @@ impl Recipe {
                 .iter()
                 .map(|(node, tag)| Check(*node, *tag))
                 .collect(),
-            trusted_to_remove_tag: solution
-                .trusted_to_remove_tag
-                .iter()
-                .cloned()
-                .collect(),
+            trusted_to_remove_tag: solution.trusted_to_remove_tag.iter().cloned().collect(),
             edges: solution.edges.iter().cloned().collect(),
         }
     }
@@ -241,9 +237,7 @@ impl From<&Recipe> for SolutionData {
             node_to_particle: make(&recipe.nodes, |Node(particle, node, _ty)| {
                 (*node, *particle)
             }),
-            node_types: make(&recipe.nodes, |Node(_particle, node, ty)| {
-                (*node, *ty)
-            }),
+            node_types: make(&recipe.nodes, |Node(_particle, node, ty)| (*node, *ty)),
             nodes: make(&recipe.nodes, |Node(_particle, node, _ty)| *node),
             trusted_to_remove_tag: make(&recipe.trusted_to_remove_tag, Clone::clone),
         }
@@ -386,15 +380,9 @@ impl Ibis {
         }));
 
         for recipe in self.recipies {
-            runtime.extend(recipe.checks.iter().map(|check|{
-                check.to_claim()
-            }));
-            runtime.extend(recipe.claims.iter().map(|claim|{
-                claim.to_claim()
-            }));
-            runtime.extend(recipe.nodes.iter().map(|node|{
-                node.to_claim()
-            }));
+            runtime.extend(recipe.checks.iter().map(|check| check.to_claim()));
+            runtime.extend(recipe.claims.iter().map(|claim| claim.to_claim()));
+            runtime.extend(recipe.nodes.iter().map(|node| node.to_claim()));
         }
 
         let (
@@ -431,7 +419,11 @@ impl Ibis {
                 })
             })
             .filter(|recipe| {
-                (recipe.feedback.as_ref().map(|f| f.leaks.len() + f.type_errors.len() == 0)).unwrap_or(false)
+                (recipe
+                    .feedback
+                    .as_ref()
+                    .map(|f| f.leaks.len() + f.type_errors.len() == 0))
+                .unwrap_or(false)
             })
             .collect();
         let mut max = 0;
@@ -441,7 +433,10 @@ impl Ibis {
                 max = l;
             }
         }
-        let recipies: Vec<Recipe> = recipies.drain(0..).filter(|recipe| recipe.edges.len() > max-2).collect();
+        let recipies: Vec<Recipe> = recipies
+            .drain(0..)
+            .filter(|recipe| recipe.edges.len() > max - 2)
+            .collect();
         Ibis {
             config: Config {
                 metadata: serde_json::Value::Null,
