@@ -121,7 +121,7 @@ impl Recipe {
         let solution = sol.solution();
         Recipe {
             #[cfg(feature = "ancestors")]
-            ancestors: vec![],
+            ancestors: sol.ancestors().iter().cloned().collect(),
             id: Some(sol),
             feedback: None,
             metadata: serde_json::Value::Null,
@@ -184,15 +184,15 @@ impl Ibis {
         for recipe in solutions {
             let sol = &recipe.id.expect("Every recipe should have an id?");
             let s_id = sol_id(sol);
-            let sol_graph = recipe.to_dot_repr();
-            g.add_child(s_id.clone(), format!("Solution {}", &sol.id), sol_graph);
+            #[allow(unused_mut)]
+            let mut sol_graph = recipe.to_dot_repr();
             #[cfg(feature = "ancestors")]
             {
                 let s = Sol::from(recipe);
                 let solution_head = |sol| format!("{}_head", sol_id(sol));
                 sol_graph.add_node(format!(
                     "{}[style=invis height = 0 width = 0 label=\"\"]",
-                    solution_head(s)
+                    solution_head(&s)
                 ));
                 for ancestor in &s.ancestors() {
                     g.add_edge(
@@ -206,6 +206,7 @@ impl Ibis {
                     );
                 }
             }
+            g.add_child(s_id.clone(), format!("Solution {}", &sol.id), sol_graph);
         }
         g
     }
@@ -260,6 +261,8 @@ impl From<Sol> for Recipe {
             checks: make(&solution.checks, |(node, tag)| Check(*node, *tag)),
             trusted_to_remove_tag: make(&solution.trusted_to_remove_tag, Clone::clone),
             edges: make(&solution.edges, Clone::clone),
+            #[cfg(feature = "ancestors")]
+            ancestors: sol.ancestors().iter().cloned().collect(),
         }
     }
 }
@@ -274,7 +277,7 @@ impl From<SolutionData> for Recipe {
 }
 
 impl Recipe {
-    fn to_dot_repr(self: &Self) -> DotGraph {
+    fn to_dot_repr(&self) -> DotGraph {
         let sol = &self.id.expect("Every recipe should have an id?");
         let s_id = sol_id(sol);
         let particle_id = |particle| format!("{}_p_{}", &s_id, particle);
