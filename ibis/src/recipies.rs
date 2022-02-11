@@ -50,21 +50,22 @@ ibis! {
         (s.has_edge(from, to)),
         !Subtype(from_ty, to_ty); // Check failed, from writes an incompatible type into to
 
-    Subtype(x, x) <- Type(x);
-    Subtype(x, z) <- Subtype(x, y), Subtype(y, z)
+    Type(x) <- Node(_par, _node, x); // Infer types that are used in the recipies.
+    Subtype(x, x) <- Type(x); // Infer simple subtyping.
+    Subtype(x, z) <- Subtype(x, y), Subtype(y, z) // Infer the transitivity of subtyping.
 }
 
 #[derive(Default, Debug, Serialize, Deserialize, Eq, PartialEq)]
 #[serde(deny_unknown_fields)]
 pub struct Config {
     #[serde(default)]
-    metadata: serde_json::Value,
+    pub metadata: serde_json::Value,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    types: Vec<Type>,
+    pub types: Vec<Type>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    subtypes: Vec<Subtype>,
+    pub subtypes: Vec<Subtype>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    less_private_than: Vec<LessPrivateThan>,
+    pub less_private_than: Vec<LessPrivateThan>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Eq, PartialEq)]
@@ -86,34 +87,34 @@ fn starting_recipies() -> Vec<Recipe> {
 #[serde(deny_unknown_fields)]
 pub struct Ibis {
     #[serde(flatten)]
-    config: Config,
+    pub config: Config,
     #[serde(default = "starting_recipies", skip_serializing_if = "Vec::is_empty")]
-    recipies: Vec<Recipe>,
+    pub recipies: Vec<Recipe>,
 }
 
 #[derive(Default, Debug, Serialize, Deserialize, Eq, PartialEq)]
 #[serde(deny_unknown_fields)]
 pub struct Recipe {
     #[serde(default)]
-    metadata: serde_json::Value,
+    pub metadata: serde_json::Value,
     #[serde(skip, default)]
-    id: Option<Sol>,
+    pub id: Option<Sol>,
     // Do not deserialize the feedback on a recipe: Re-generate it each time for consistency.
     #[serde(skip_deserializing, flatten)]
-    feedback: Option<Feedback>,
+    pub feedback: Option<Feedback>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    nodes: Vec<Node>,
+    pub nodes: Vec<Node>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    claims: Vec<Claim>,
+    pub claims: Vec<Claim>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    checks: Vec<Check>,
+    pub checks: Vec<Check>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    trusted_to_remove_tag: Vec<(Ent, Ent)>,
+    pub trusted_to_remove_tag: Vec<(Ent, Ent)>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    edges: Vec<(Ent, Ent)>,
+    pub edges: Vec<(Ent, Ent)>,
     #[cfg(feature = "ancestors")]
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    ancestors: Vec<Sol>,
+    pub ancestors: Vec<Sol>,
 }
 
 impl Recipe {
@@ -366,7 +367,16 @@ impl Ibis {
         self.recipies.extend(recipies.drain(0..));
     }
 
+
     pub fn extract_solutions(self) -> Ibis {
+        self.extract_solutions_with_loss(None)
+    }
+
+    pub fn extract_best_solutions(self) -> Ibis {
+        self.extract_solutions_with_loss(Some(0))
+    }
+
+    pub fn extract_solutions_with_loss(self, loss: Option<usize>) -> Ibis {
         let mut runtime = Crepe::new();
         runtime.extend(self.config.types.iter().map(|ty| ty.to_claim()));
         runtime.extend(self.config.subtypes.iter().map(|sub_ty| sub_ty.to_claim()));
@@ -428,17 +438,21 @@ impl Ibis {
                 .unwrap_or(false)
             })
             .collect();
-        let mut max = 0;
-        for r in &recipies {
-            let l = r.edges.len();
-            if max < l {
-                max = l;
+        let recipies = if let Some(loss) = loss {
+            let mut max = 0;
+            for r in &recipies {
+                let l = r.edges.len();
+                if max < l {
+                    max = l;
+                }
             }
-        }
-        let recipies: Vec<Recipe> = recipies
-            .drain(0..)
-            .filter(|recipe| recipe.edges.len() > max - 2)
-            .collect();
+            recipies
+                .drain(0..)
+                .filter(|recipe| recipe.edges.len() > max - loss)
+                .collect()
+        } else {
+            recipies
+        };
         Ibis {
             config: Config {
                 metadata: serde_json::Value::Null,
