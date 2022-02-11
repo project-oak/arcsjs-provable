@@ -32,11 +32,13 @@
         ["p_de", "d", "Serializable"],
         ["p_de", "e", "number_or_string"]
       ],
+      "edges": [
+        ["b", "e"]
+      ],
       "claims": [
         ["a", "private"]
       ],
       "checks": [
-        ["e", "public"],
         ["e", "public"]
       ],
       "trusted_to_remove_tag": [
