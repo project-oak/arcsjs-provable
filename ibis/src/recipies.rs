@@ -11,7 +11,6 @@ ibis! {
     Node(Ent, Ent, Ent); // particle-identifier, identifier, type
     Claim(Ent, Ent); // identifier, tag
     Check(Ent, Ent); // identifier, tag
-    TrustedToRemoveTag(Ent, Ent); // Node, Tag that it can remove
 
     // Feedback
     HasTag(Sol, Ent, Ent, Ent); // solution, source node, node with tag, tag
@@ -25,6 +24,7 @@ ibis! {
         Subtype(from_type, to_type),
         (from != to),
         (!parent.has_edge(from, to));
+
     HasTag(s, n, n, tag) <- Solution(s), Claim(n, tag);
     HasTag(s, source, down, tag) <-
         Solution(s),
@@ -32,7 +32,13 @@ ibis! {
         Node(_down_particle, down, _),
         HasTag(s, source, curr, tag),
         (s.has_edge(curr, down)),
-        !TrustedToRemoveTag(down, tag); // Propagate 'downstream'.
+        (!s.is_trusted_to_remove_tag(down, tag));
+
+    HasTag(s, source, down, tag) <- // Propagate tags 'across stream' (i.e. inside a particle)
+        HasTag(s, source, curr, tag),
+        Node(particle, curr, _),
+        Node(particle, down, _),
+        (!s.is_trusted_to_remove_tag(down, tag));
 
     Leak(s, n, t1, source, t2) <-
         LessPrivateThan(t1, t2),
@@ -104,7 +110,7 @@ pub struct Recipe {
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     checks: Vec<Check>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    trusted_to_remove_tag: Vec<TrustedToRemoveTag>,
+    trusted_to_remove_tag: Vec<(Ent, Ent)>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     edges: Vec<(Ent, Ent)>,
     #[cfg(feature = "ancestors")]
@@ -143,7 +149,7 @@ impl Recipe {
             trusted_to_remove_tag: solution
                 .trusted_to_remove_tag
                 .iter()
-                .map(|(node, tag)| TrustedToRemoveTag(*node, *tag))
+                .cloned()
                 .collect(),
             edges: solution.edges.iter().cloned().collect(),
         }
@@ -241,10 +247,7 @@ impl From<&Recipe> for SolutionData {
                 (*node, *ty)
             }),
             nodes: make(&recipe.nodes, |Node(_particle, node, _ty)| *node),
-            trusted_to_remove_tag: make(
-                &recipe.trusted_to_remove_tag,
-                |TrustedToRemoveTag(node, tag)| (*node, *tag),
-            ),
+            trusted_to_remove_tag: make(&recipe.trusted_to_remove_tag, Clone::clone),
         }
     }
 }
@@ -263,9 +266,7 @@ impl From<Sol> for Recipe {
             }),
             claims: make(&solution.claims, |(node, tag)| Claim(*node, *tag)),
             checks: make(&solution.checks, |(node, tag)| Check(*node, *tag)),
-            trusted_to_remove_tag: make(&solution.trusted_to_remove_tag, |(node, tag)| {
-                TrustedToRemoveTag(*node, *tag)
-            }),
+            trusted_to_remove_tag: make(&solution.trusted_to_remove_tag, Clone::clone),
             edges: make(&solution.edges, Clone::clone),
         }
     }
@@ -297,7 +298,7 @@ impl Recipe {
                     }
                 }
             }
-            for TrustedToRemoveTag(trusted_n, tag) in &self.trusted_to_remove_tag {
+            for (trusted_n, tag) in &self.trusted_to_remove_tag {
                 if trusted_n == node {
                     extras.push(format!("trusted to remove tag '{}'", tag));
                 }
@@ -400,12 +401,11 @@ impl Ibis {
             _nodes,
             _claims,
             _checks,
-            _trusted_to_remove_tag,
             has_tags,
             leaks,
             type_errors,
         ) = runtime.run();
-        let recipies = solutions
+        let mut recipies: Vec<Recipe> = solutions
             .iter()
             .map(|Solution(s)| {
                 Recipe::from_sol(*s).with_feedback(Feedback {
