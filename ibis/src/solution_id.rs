@@ -131,6 +131,10 @@ impl Sol {
         self.solution().has_edge(from, to)
     }
 
+    pub fn is_trusted_to_remove_tag(&self, node: Ent, tag: Ent) -> bool {
+        self.solution().is_trusted_to_remove_tag(node, tag)
+    }
+
     #[cfg(feature = "ancestors")]
     fn ancestor_string(&self) -> String {
         let ancestors: Vec<String> = self

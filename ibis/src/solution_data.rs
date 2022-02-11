@@ -38,4 +38,8 @@ impl SolutionData {
         n.node_types.insert(node, ty);
         n
     }
+
+    pub fn is_trusted_to_remove_tag(&self, node: Ent, tag: Ent) -> bool {
+        self.trusted_to_remove_tag.contains(&(node, tag))
+    }
 }
