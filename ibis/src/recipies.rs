@@ -217,8 +217,7 @@ impl From<&Recipe> for Sol {
         // Convert the recipe to its 'solution data'
         let solution = SolutionData::from(recipe);
         // Get an id to represent that.
-        let sol = Sol::new_blocking(solution);
-        sol
+        Sol::new_blocking(solution)
     }
 }
 
@@ -315,7 +314,7 @@ impl Recipe {
                 .iter()
                 .map(|ex| format!("<tr><td>{}</td></tr>", ex))
                 .collect();
-            let particle_g = particles.entry(particle).or_insert(DotGraph::default());
+            let particle_g = particles.entry(particle).or_insert_with(DotGraph::default);
             particle_g.add_node(format!("{node_id} [shape=record label=< <table border=\"0\"><tr><td>{node} : {ty}</td></tr>{extras}</table>>]", node_id=node_id(node), node=node, ty=ty, extras=extras.join("")));
         }
         for (particle, particle_g) in particles {
@@ -332,7 +331,7 @@ impl Recipe {
             }
 
             for TypeError(_error_s, from, from_ty, to, to_ty) in &feedback.type_errors {
-                sol_graph.add_edge(node_id(&from), node_id(&to), vec![format!("style=dotted color=red label=<<font color=\"red\">expected '{}', found incompatible type '{}'</font>>", to_ty, from_ty)]);
+                sol_graph.add_edge(node_id(from), node_id(to), vec![format!("style=dotted color=red label=<<font color=\"red\">expected '{}', found incompatible type '{}'</font>>", to_ty, from_ty)]);
             }
         }
 
