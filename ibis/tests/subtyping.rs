@@ -33,15 +33,22 @@ fn static_subtyping_socretes_is_mortal() {
     runtime.add_recipies(recipies);
 
     let solutions = runtime.extract_solutions_with_loss(Some(0));
-    let solutions: Vec<String> = solutions.recipies.iter().map(|recipe| {
-        let mut in_nodes: Vec<String> = (&recipe.edges).iter().map(|(from, to)| format!("{} is {}", &from, &to)).collect();
-        in_nodes.sort();
-        in_nodes.join(", ")
-    }).collect();
-    let expected: Vec<String> = vec!["man is mortal, plato is man, plato is mortal, socretes is man, socretes is mortal".to_string()];
+    let solutions: Vec<String> = solutions
+        .recipies
+        .iter()
+        .map(|recipe| {
+            let mut in_nodes: Vec<String> = (&recipe.edges)
+                .iter()
+                .map(|(from, to)| format!("{} is {}", &from, &to))
+                .collect();
+            in_nodes.sort();
+            in_nodes.join(", ")
+        })
+        .collect();
+    let expected: Vec<String> = vec![
+        "man is mortal, plato is man, plato is mortal, socretes is man, socretes is mortal"
+            .to_string(),
+    ];
 
-    assert_eq!(
-        solutions,
-        expected
-    );
+    assert_eq!(solutions, expected);
 }

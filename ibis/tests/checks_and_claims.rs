@@ -49,11 +49,19 @@ fn create_tagged_type_checked_graphs() {
 
     runtime.add_recipies(recipies);
 
-    let mut solutions: Vec<String> = runtime.extract_solutions().recipies.iter().map(|recipe| {
-        let mut in_nodes: Vec<String> = (&recipe.edges).iter().map(|(from, to)| format!("{} -> {}", from, to)).collect();
-        in_nodes.sort();
-        in_nodes.join(", ")
-    }).collect();
+    let mut solutions: Vec<String> = runtime
+        .extract_solutions()
+        .recipies
+        .iter()
+        .map(|recipe| {
+            let mut in_nodes: Vec<String> = (&recipe.edges)
+                .iter()
+                .map(|(from, to)| format!("{} -> {}", from, to))
+                .collect();
+            in_nodes.sort();
+            in_nodes.join(", ")
+        })
+        .collect();
     let expected: Vec<String> = vec![
         "",
         "a -> b",
@@ -70,7 +78,7 @@ fn create_tagged_type_checked_graphs() {
         "b -> e, c -> e",
         "c -> d",
         "c -> d, c -> e",
-        "c -> e"
+        "c -> e",
     ]
     .iter()
     .map(|s| s.to_string())

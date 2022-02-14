@@ -383,7 +383,6 @@ impl Ibis {
         self.recipies.extend(recipies.drain(0..));
     }
 
-
     pub fn extract_solutions(self) -> Ibis {
         self.extract_solutions_with_loss(None)
     }

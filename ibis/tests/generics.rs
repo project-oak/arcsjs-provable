@@ -36,11 +36,19 @@ fn precomputed_subtypes() {
 
     runtime.add_recipies(recipies);
 
-    let mut solutions: Vec<String> = runtime.extract_solutions_with_loss(Some(0)).recipies.iter().map(|recipe| {
-        let mut in_nodes: Vec<String> = (&recipe.edges).iter().map(|(from, to)| format!("{} -> {}", from, to)).collect();
-        in_nodes.sort();
-        in_nodes.join(", ")
-    }).collect();
+    let mut solutions: Vec<String> = runtime
+        .extract_solutions_with_loss(Some(0))
+        .recipies
+        .iter()
+        .map(|recipe| {
+            let mut in_nodes: Vec<String> = (&recipe.edges)
+                .iter()
+                .map(|(from, to)| format!("{} -> {}", from, to))
+                .collect();
+            in_nodes.sort();
+            in_nodes.join(", ")
+        })
+        .collect();
     let expected: Vec<String> = vec!["a -> b, a -> c, a -> d, b -> d, c -> d".to_string()];
 
     solutions.sort();
@@ -74,11 +82,19 @@ fn generics_are_not_necessarily_abstractable() {
 
     runtime.add_recipies(recipies);
 
-    let mut solutions: Vec<String> = runtime.extract_solutions_with_loss(Some(0)).recipies.iter().map(|recipe| {
-        let mut in_nodes: Vec<String> = (&recipe.edges).iter().map(|(from, to)| format!("{} -> {}", from, to)).collect();
-        in_nodes.sort();
-        in_nodes.join(", ")
-    }).collect();
+    let mut solutions: Vec<String> = runtime
+        .extract_solutions_with_loss(Some(0))
+        .recipies
+        .iter()
+        .map(|recipe| {
+            let mut in_nodes: Vec<String> = (&recipe.edges)
+                .iter()
+                .map(|(from, to)| format!("{} -> {}", from, to))
+                .collect();
+            in_nodes.sort();
+            in_nodes.join(", ")
+        })
+        .collect();
     let expected: Vec<String> = vec!["".to_string()];
 
     solutions.sort();
@@ -114,12 +130,21 @@ fn dynamic_subtypes() {
 
     runtime.add_recipies(recipies);
 
-    let mut solutions: Vec<String> = runtime.extract_solutions_with_loss(Some(0)).recipies.iter().map(|recipe| {
-        let mut in_nodes: Vec<String> = (&recipe.edges).iter().map(|(from, to)| format!("{} -> {}", from, to)).collect();
-        in_nodes.sort();
-        in_nodes.join(", ")
-    }).collect();
-    let expected: Vec<String> = vec!["a -> b, a -> c, a -> d, a -> e, b -> d, b -> e, c -> d".to_string()];
+    let mut solutions: Vec<String> = runtime
+        .extract_solutions_with_loss(Some(0))
+        .recipies
+        .iter()
+        .map(|recipe| {
+            let mut in_nodes: Vec<String> = (&recipe.edges)
+                .iter()
+                .map(|(from, to)| format!("{} -> {}", from, to))
+                .collect();
+            in_nodes.sort();
+            in_nodes.join(", ")
+        })
+        .collect();
+    let expected: Vec<String> =
+        vec!["a -> b, a -> c, a -> d, a -> e, b -> d, b -> e, c -> d".to_string()];
 
     solutions.sort();
     assert_eq!(solutions, expected);
@@ -150,11 +175,19 @@ fn all_subtype_the_universal_type() {
 
     runtime.add_recipies(recipies);
 
-    let mut solutions: Vec<String> = runtime.extract_solutions_with_loss(Some(0)).recipies.iter().map(|recipe| {
-        let mut in_nodes: Vec<String> = (&recipe.edges).iter().map(|(from, to)| format!("{} -> {}", from, to)).collect();
-        in_nodes.sort();
-        in_nodes.join(", ")
-    }).collect();
+    let mut solutions: Vec<String> = runtime
+        .extract_solutions_with_loss(Some(0))
+        .recipies
+        .iter()
+        .map(|recipe| {
+            let mut in_nodes: Vec<String> = (&recipe.edges)
+                .iter()
+                .map(|(from, to)| format!("{} -> {}", from, to))
+                .collect();
+            in_nodes.sort();
+            in_nodes.join(", ")
+        })
+        .collect();
     let expected: Vec<String> = vec!["a -> b".to_string()];
 
     solutions.sort();

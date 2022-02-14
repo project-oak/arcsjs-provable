@@ -33,15 +33,23 @@ fn create_combinations() {
 
     runtime.add_recipies(recipies);
 
-    let mut solutions: Vec<String> = runtime.extract_solutions().recipies.iter().map(|recipe| {
-        let mut in_nodes: Vec<String> = (&recipe.edges).iter().map(|(from, _to)| from.name().clone()).collect();
-        in_nodes.sort();
-        in_nodes.join("")
-    }).collect();
+    let mut solutions: Vec<String> = runtime
+        .extract_solutions()
+        .recipies
+        .iter()
+        .map(|recipe| {
+            let mut in_nodes: Vec<String> = (&recipe.edges)
+                .iter()
+                .map(|(from, _to)| from.name().clone())
+                .collect();
+            in_nodes.sort();
+            in_nodes.join("")
+        })
+        .collect();
     let mut expected: Vec<String> = vec!["", "a", "b", "c", "ab", "bc", "ac", "abc"]
-    .iter()
-    .map(|s| s.to_string())
-    .collect();
+        .iter()
+        .map(|s| s.to_string())
+        .collect();
 
     solutions.sort();
     expected.sort();
@@ -67,15 +75,23 @@ fn create_edges() {
 
     runtime.add_recipies(recipies);
 
-    let mut solutions: Vec<String> = runtime.extract_solutions().recipies.iter().map(|recipe| {
-        let mut in_nodes: Vec<String> = (&recipe.edges).iter().map(|(from, to)| format!("{} -> {}", from, to)).collect();
-        in_nodes.sort();
-        in_nodes.join(", ")
-    }).collect();
+    let mut solutions: Vec<String> = runtime
+        .extract_solutions()
+        .recipies
+        .iter()
+        .map(|recipe| {
+            let mut in_nodes: Vec<String> = (&recipe.edges)
+                .iter()
+                .map(|(from, to)| format!("{} -> {}", from, to))
+                .collect();
+            in_nodes.sort();
+            in_nodes.join(", ")
+        })
+        .collect();
     let mut expected: Vec<String> = vec!["", "a -> b", "b -> a", "a -> b, b -> a"]
-    .iter()
-    .map(|s| s.to_string())
-    .collect();
+        .iter()
+        .map(|s| s.to_string())
+        .collect();
 
     solutions.sort();
     expected.sort();
@@ -102,15 +118,23 @@ fn create_typed_edges() {
 
     runtime.add_recipies(recipies);
 
-    let mut solutions: Vec<String> = runtime.extract_solutions().recipies.iter().map(|recipe| {
-        let mut in_nodes: Vec<String> = (&recipe.edges).iter().map(|(from, to)| format!("{} -> {}", from, to)).collect();
-        in_nodes.sort();
-        in_nodes.join(", ")
-    }).collect();
+    let mut solutions: Vec<String> = runtime
+        .extract_solutions()
+        .recipies
+        .iter()
+        .map(|recipe| {
+            let mut in_nodes: Vec<String> = (&recipe.edges)
+                .iter()
+                .map(|(from, to)| format!("{} -> {}", from, to))
+                .collect();
+            in_nodes.sort();
+            in_nodes.join(", ")
+        })
+        .collect();
     let mut expected: Vec<String> = vec!["", "a -> b", "b -> a", "a -> b, b -> a"]
-    .iter()
-    .map(|s| s.to_string())
-    .collect();
+        .iter()
+        .map(|s| s.to_string())
+        .collect();
 
     solutions.sort();
     expected.sort();
