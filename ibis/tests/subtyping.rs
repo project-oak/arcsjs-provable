@@ -4,128 +4,51 @@
 // license that can be found in the LICENSE file or at
 // https://developers.google.com/open-source/licenses/bsd
 
-use crepe::crepe;
-use ibis::{facts, set, Ent};
+use ibis::Ibis;
 use pretty_assertions::assert_eq;
 
 #[test]
 fn static_subtyping_socretes_is_mortal() {
-    crepe! {
-        @input
-        #[derive(Debug)]
-        struct SubtypeInput(Ent, Ent);
-        @output
-        #[derive(Debug)]
-        struct Subtype(Ent, Ent);
-        Subtype(x,y) <- SubtypeInput(x, y);
+    let mut runtime = Ibis::new();
 
-        @input
-        #[derive(Debug)]
-        struct HasTagInput(Ent, Ent);
-        @output
-        #[derive(Debug)]
-        struct HasTag(Ent, Ent);
-        HasTag(x,y) <- HasTagInput(x, y);
-
-        Subtype(x,x) <- Subtype(x, _);
-        Subtype(x,x) <- Subtype(_, x);
-        Subtype(x, z) <- Subtype(x, y), Subtype(y, z);
-        HasTag(x, z) <- Subtype(x, y), HasTag(y, z);
+    let data = r#"
+{
+  "subtypes": [
+    ["plato", "man"],
+    ["socretes", "man"],
+    ["man", "mortal"]
+  ],
+  "recipies": [
+    {
+      "nodes": [
+        ["p_a", "socretes", "socretes"],
+        ["p_b", "plato", "plato"],
+        ["p_c", "man", "man"],
+        ["p_out", "mortal", "mortal"]
+      ]
     }
+  ]
+}"#;
+    let recipies: Ibis = serde_json::from_str(data).expect("JSON Error?");
+    runtime.add_recipies(recipies);
 
-    let mut runtime = Crepe::new();
+    let solutions = runtime.extract_solutions_with_loss(Some(0));
+    let solutions: Vec<String> = solutions
+        .recipies
+        .iter()
+        .map(|recipe| {
+            let mut in_nodes: Vec<String> = (&recipe.edges)
+                .iter()
+                .map(|(from, to)| format!("{} is {}", &from, &to))
+                .collect();
+            in_nodes.sort();
+            in_nodes.join(", ")
+        })
+        .collect();
+    let expected: Vec<String> = vec![
+        "man is mortal, plato is man, plato is mortal, socretes is man, socretes is mortal"
+            .to_string(),
+    ];
 
-    let plato = Ent::by_name("plato");
-    let socretes = Ent::by_name("socretes");
-    let man = Ent::by_name("man");
-    let mortal = Ent::by_name("mortal");
-
-    // specify all the 'dynamic' facts
-    facts!(
-        runtime,
-        Subtype(plato, man),
-        Subtype(socretes, man),
-        HasTag(man, mortal)
-    );
-
-    let (subtypes, tags) = &runtime.run();
-    assert_eq!(
-        subtypes,
-        &set![
-            Subtype(man, man),
-            Subtype(socretes, socretes),
-            Subtype(socretes, man),
-            Subtype(plato, plato),
-            Subtype(plato, man)
-        ]
-    );
-
-    assert_eq!(
-        tags,
-        &set![
-            HasTag(man, mortal),
-            HasTag(socretes, mortal),
-            HasTag(plato, mortal)
-        ]
-    );
-}
-
-#[test]
-fn dynamic_subtyping_mr_socretes_is_mortal() {
-    crepe! {
-        @input
-        #[derive(Debug)]
-        struct SubtypeInput(Ent, Ent);
-        @output
-        #[derive(Debug)]
-        struct Subtype(Ent, Ent);
-        Subtype(x,y) <- SubtypeInput(x, y);
-
-        @input
-        #[derive(Debug)]
-        struct InstanceInput(Ent, Ent);
-        @output
-        #[derive(Debug)]
-        struct Instance(Ent, Ent);
-        Instance(x,y) <- InstanceInput(x, y);
-
-        @output
-        #[derive(Debug)]
-        struct Man(Ent);
-        Man(x) <- Instance(x, Ent::by_name("man"));
-
-        Man(Ent::by_name(&("Mr. ".to_string()+&y.name()))) <- Man(y), ((&y.name()).starts_with("Mr. "));
-        Subtype(x, z) <- Subtype(x, y), Subtype(y, z);
-        Instance(x, z) <- Instance(x, y), Subtype(y, z);
-    }
-
-    let mut runtime = Crepe::new();
-
-    let plato = Ent::by_name("plato");
-    let socretes = Ent::by_name("socretes");
-    let man = Ent::by_name("man");
-    let mortal = Ent::by_name("mortal");
-
-    // specify all the 'dynamic' facts
-    facts!(
-        runtime,
-        Subtype(man, mortal),
-        Instance(plato, man),
-        Instance(socretes, man)
-    );
-
-    let (subtypes, instances, men) = &runtime.run();
-    assert_eq!(subtypes, &set![Subtype(man, mortal)]);
-
-    assert_eq!(
-        instances,
-        &set![
-            Instance(socretes, man),
-            Instance(plato, man),
-            Instance(socretes, mortal),
-            Instance(plato, mortal)
-        ]
-    );
-
-    assert_eq!(men, &set![Man(socretes), Man(plato)]);
+    assert_eq!(solutions, expected);
 }

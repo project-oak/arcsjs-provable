@@ -65,58 +65,58 @@ impl IbisBuilder {
     }
 
     fn add_relation(&mut self, name: TokenTree, args: TokenTree) {
-            let mut arity = 0;
-            let mut arg_names: Vec<String> = vec![];
+        let mut arity = 0;
+        let mut arg_names: Vec<String> = vec![];
 
-            let mut curr_arg = false; // we're not currently in an arg
-            let mut make_arg = || {
-                arity += 1;
-                arg_names.push(format!("arg{}", arity));
-            };
+        let mut curr_arg = false; // we're not currently in an arg
+        let mut make_arg = || {
+            arity += 1;
+            arg_names.push(format!("arg{}", arity));
+        };
 
-            let mut new_args = vec![];
-            match &args {
-                Group(stream) => {
-                    for token in stream.stream() {
-                        match token {
-                            Punct(ch) => {
-                                if ch == ',' {
-                                    make_arg();
-                                    curr_arg = false; // we're not currently in an arg
-                                    continue;
-                                }
-                            }
-                            arg => {
-                                let arg = format!("{}", &arg);
-                                if &arg == "Sol" {
-                                    new_args.push("#[serde(skip, default)]Sol".to_string());
-                                } else {
-                                    new_args.push(arg);
-                                }
+        let mut new_args = vec![];
+        match &args {
+            Group(stream) => {
+                for token in stream.stream() {
+                    match token {
+                        Punct(ch) => {
+                            if ch == ',' {
+                                make_arg();
+                                curr_arg = false; // we're not currently in an arg
+                                continue;
                             }
                         }
-                        curr_arg = true;
+                        arg => {
+                            let arg = format!("{}", &arg);
+                            if &arg == "Sol" {
+                                new_args.push("#[serde(skip, default)]Sol".to_string());
+                            } else {
+                                new_args.push(arg);
+                            }
+                        }
                     }
-                }
-                _ => {
-                    panic!("expected {} to be a group", args);
+                    curr_arg = true;
                 }
             }
-            if curr_arg {
-                // finish the arg
-                make_arg();
+            _ => {
+                panic!("expected {} to be a group", args);
             }
+        }
+        if curr_arg {
+            // finish the arg
+            make_arg();
+        }
 
-            let name = format!("{}", name);
-            let claim_name = if name.ends_with("Input") {
-                name.clone()
-            } else {
-                format!("{}Input", &name)
-            };
+        let name = format!("{}", name);
+        let claim_name = if name.ends_with("Input") {
+            name.clone()
+        } else {
+            format!("{}Input", &name)
+        };
 
-            if name != claim_name {
-                self.trait_impls += &format!(
-"
+        if name != claim_name {
+            self.trait_impls += &format!(
+                "
 impl ToInput for {name} {{
     type U = {claim_name};
     fn to_claim(self) -> {claim_name} {{
@@ -126,13 +126,13 @@ impl ToInput for {name} {{
 }}
 
 ",
-                    name = name,
-                    claim_name = claim_name,
-                    arg_names = arg_names.join(", ")
-                );
-            }
-            self.trait_impls += &format!(
-"
+                name = name,
+                claim_name = claim_name,
+                arg_names = arg_names.join(", ")
+            );
+        }
+        self.trait_impls += &format!(
+            "
 impl ToInput for {claim_name} {{
     type U = {claim_name};
     fn to_claim(self) -> {claim_name} {{
@@ -141,12 +141,12 @@ impl ToInput for {claim_name} {{
 }}
 
 ",
-                claim_name = claim_name
-            );
+            claim_name = claim_name
+        );
 
-            // this is a struct definition
-            self.definitions += &format!(
-"
+        // this is a struct definition
+        self.definitions += &format!(
+            "
     @input
     #[derive(Debug, Ord, PartialOrd, Serialize, Deserialize)]
     pub struct {name}Input({args});
@@ -156,12 +156,11 @@ impl ToInput for {claim_name} {{
     pub struct {name}({args});
 
     {name}({arg_names}) <- {claim_name}({arg_names});",
-                name = name,
-                claim_name = claim_name,
-                args = new_args.join(", "),
-                arg_names = arg_names.join(", ")
-            );
-
+            name = name,
+            claim_name = claim_name,
+            args = new_args.join(", "),
+            arg_names = arg_names.join(", ")
+        );
     }
 
     fn add_definition(&mut self, definition: &mut Vec<TokenTree>) {
@@ -182,7 +181,7 @@ impl ToInput for {claim_name} {{
 
     fn build(self) -> TokenStream {
         format!(
-"
+            "
 use crepe::crepe;
 crepe!{{
 {definitions}

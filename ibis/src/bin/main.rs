@@ -21,7 +21,7 @@ fn main() -> Result<(), IbisError> {
     runtime.add_recipies(recipies);
 
     eprintln!("Preparing graph...");
-    let solutions = runtime.extract_solutions();
+    let solutions = runtime.extract_best_solutions();
     eprintln!("Done");
     println!("{}", solutions.to_dot());
     Ok(())
