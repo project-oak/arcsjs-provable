@@ -1,5 +1,5 @@
 use crate::dot::*;
-use crate::{ibis, Ent, Sol, SolutionData, ToInput};
+use crate::{apply, ent, ibis, Ent, Sol, SolutionData, ToInput};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
@@ -24,6 +24,19 @@ ibis! {
         Subtype(from_type, to_type),
         (from != to),
         (!parent.has_edge(from, to));
+
+    Subtype(
+        apply!(x_generic, x_arg),
+        apply!(y_generic, y_arg)
+    ) <-
+        Subtype(x_generic, ent!("ibis::GenericType")),
+        Subtype(x_generic, ent!("ibis::InductiveType")),
+        Subtype(y_generic, ent!("ibis::GenericType")),
+        Subtype(y_generic, ent!("ibis::InductiveType")),
+        Subtype(x_generic, y_generic),
+        Subtype(x_arg, y_arg),
+        Type(apply!(x_generic, x_arg)),
+        Type(apply!(y_generic, y_arg));
 
     HasTag(s, n, n, tag) <- Solution(s), Claim(n, tag);
     HasTag(s, source, down, tag) <- // Propagate tags 'downstream'
@@ -51,6 +64,9 @@ ibis! {
         !Subtype(from_ty, to_ty); // Check failed, from writes an incompatible type into to
 
     Type(x) <- Node(_par, _node, x); // Infer types that are used in the recipies.
+    Type(x) <- Subtype(x, _);
+    Type(y) <- Subtype(_, y);
+    Subtype(x, ent!("ibis::UniversalType")) <- Type(x); // Create a universal type.
     Subtype(x, x) <- Type(x); // Infer simple subtyping.
     Subtype(x, z) <- Subtype(x, y), Subtype(y, z) // Infer the transitivity of subtyping.
 }
