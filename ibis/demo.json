@@ -8,14 +8,22 @@
     "Int",
     "String",
     "Serializable",
-    "number_or_string"
+    "number_or_string",
+    "name: String",
+    "age: Int",
+    "ibis::ProductType(name: String, age: Int)"
   ],
   "subtypes": [
     ["Int", "Number"],
     ["Int", "Serializable"],
     ["String", "Serializable"],
     ["Number", "number_or_string"],
-    ["String", "number_or_string"]
+    ["String", "number_or_string"],
+    ["Entity { name }", "Entity"],
+    ["Entity { name: String }", "Entity { name }"],
+    ["Entity { age: Int }", "Entity { age }"],
+    ["Entity { name: String, age: Int }", "Entity { name: String }"],
+    ["Entity { name: String, age: Int }", "Entity { age: Int }"]
   ],
   "less_private_than": [
     ["public", "private"]
@@ -30,7 +38,12 @@
         ["p_b", "b", "Number"],
         ["p_c", "c", "String"],
         ["p_de", "d", "Serializable"],
-        ["p_de", "e", "number_or_string"]
+        ["p_de", "e", "number_or_string"],
+        ["p_f", "f", "Entity { name: String, age: Int }"],
+        ["p_g", "g", "Entity { name }"],
+        ["p_h", "h", "ibis::ProductType(name: String, age: Int)"],
+        ["p_i", "i", "name: String"],
+        ["p_j", "j", "age: Int"]
       ],
       "edges": [
         ["b", "e"]

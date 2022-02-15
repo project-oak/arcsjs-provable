@@ -1,5 +1,5 @@
 use crate::util::make;
-use crate::{apply, ent, ibis, Ent, Sol, SolutionData, ToInput};
+use crate::{apply, arg, ent, ibis, is_a, Ent, Sol, SolutionData, ToInput};
 use serde::{Deserialize, Serialize};
 
 ibis! {
@@ -17,12 +17,33 @@ ibis! {
     TypeError(Sol, Ent, Ent, Ent, Ent); // sol, node, ty, source, ty
 
     Solution(parent.add_edge(from, to)) <-
-        Solution(parent),
         Node(from_particle, from, from_type),
         Node(to_particle, to, to_type),
-        Subtype(from_type, to_type),
         (from != to),
+        Subtype(from_type, to_type),
+        Solution(parent),
         (!parent.has_edge(from, to));
+
+    Subtype(
+        prod,
+        arg!(prod, 0)
+    ) <-
+        Type(prod),
+        (is_a!(prod, ent!("ibis::ProductType")));
+
+    Subtype(
+        prod,
+        arg!(prod, 1)
+    ) <-
+        Type(prod),
+        (is_a!(prod, ent!("ibis::ProductType")));
+
+    Subtype(
+        labelled,
+        arg!(labelled, 1)
+    ) <-
+        Type(labelled),
+        (is_a!(labelled, ent!("ibis::Labelled")));
 
     Subtype(
         apply!(x_generic, x_arg),
@@ -290,27 +311,27 @@ impl Ibis {
             leaks,
             type_errors,
         ) = runtime.run();
-        let mut recipies: Vec<Recipe> = solutions
-            .iter()
-            .map(|Solution(s)| {
-                Recipe::from_sol(*s).with_feedback(Feedback {
-                    leaks: leaks
-                        .iter()
-                        .filter(|Leak(leak_s, _, _, _, _)| leak_s == s)
-                        .cloned()
-                        .collect(),
-                    type_errors: type_errors
-                        .iter()
-                        .filter(|TypeError(type_s, _, _, _, _)| type_s == s)
-                        .cloned()
-                        .collect(),
-                    has_tags: has_tags
-                        .iter()
-                        .filter(|HasTag(has_tag_s, _, _, _)| has_tag_s == s)
-                        .cloned()
-                        .collect(),
-                })
+        let all_recipies = solutions.iter().map(|Solution(s)| {
+            Recipe::from_sol(*s).with_feedback(Feedback {
+                leaks: leaks
+                    .iter()
+                    .filter(|Leak(leak_s, _, _, _, _)| leak_s == s)
+                    .cloned()
+                    .collect(),
+                type_errors: type_errors
+                    .iter()
+                    .filter(|TypeError(type_s, _, _, _, _)| type_s == s)
+                    .cloned()
+                    .collect(),
+                has_tags: has_tags
+                    .iter()
+                    .filter(|HasTag(has_tag_s, _, _, _)| has_tag_s == s)
+                    .cloned()
+                    .collect(),
             })
+        });
+        let all_recipies_len = all_recipies.len();
+        let mut recipies: Vec<Recipe> = all_recipies
             .filter(|recipe| {
                 (recipe
                     .feedback
@@ -319,6 +340,7 @@ impl Ibis {
                 .unwrap_or(false)
             })
             .collect();
+        let recipies_len = recipies.len();
         let recipies = if let Some(loss) = loss {
             let mut max = 0;
             for r in &recipies {
@@ -334,6 +356,12 @@ impl Ibis {
         } else {
             recipies
         };
+        eprintln!(
+            "Selected {} of {} valid solutions. (Generated {} solutions)",
+            recipies.len(),
+            recipies_len,
+            all_recipies_len
+        );
         Ibis {
             config: Config {
                 metadata: serde_json::Value::Null,
