@@ -4,14 +4,14 @@
 // license that can be found in the LICENSE file or at
 // https://developers.google.com/open-source/licenses/bsd
 
-use ibis::Ibis;
+mod utils;
 use pretty_assertions::assert_eq;
+use utils::all_edges;
 
 #[test]
 fn static_subtyping_socretes_is_mortal() {
-    let mut runtime = Ibis::new();
-
-    let data = r#"
+    let solutions = all_edges(
+        r#"
 {
   "subtypes": [
     ["plato", "man"],
@@ -28,27 +28,11 @@ fn static_subtyping_socretes_is_mortal() {
       ]
     }
   ]
-}"#;
-    let recipies: Ibis = serde_json::from_str(data).expect("JSON Error?");
-    runtime.add_recipies(recipies);
-
-    let solutions = runtime.extract_solutions_with_loss(Some(0));
-    let solutions: Vec<String> = solutions
-        .recipies
-        .iter()
-        .map(|recipe| {
-            let mut in_nodes: Vec<String> = (&recipe.edges)
-                .iter()
-                .map(|(from, to)| format!("{} is {}", &from, &to))
-                .collect();
-            in_nodes.sort();
-            in_nodes.join(", ")
-        })
-        .collect();
+}"#,
+    );
     let expected: Vec<String> = vec![
-        "man is mortal, plato is man, plato is mortal, socretes is man, socretes is mortal"
+        "man -> mortal, plato -> man, plato -> mortal, socretes -> man, socretes -> mortal"
             .to_string(),
     ];
-
     assert_eq!(solutions, expected);
 }
