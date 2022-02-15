@@ -4,6 +4,8 @@
 // license that can be found in the LICENSE file or at
 // https://developers.google.com/open-source/licenses/bsd
 
+#[cfg(feature = "dot")]
+use ibis::dot::ToDot;
 use ibis::recipies::Ibis;
 use ibis::IbisError;
 use std::io::Read;
@@ -23,7 +25,10 @@ fn main() -> Result<(), IbisError> {
     eprintln!("Preparing graph...");
     let solutions = runtime.extract_best_solutions();
     eprintln!("Done");
+    #[cfg(feature = "dot")]
     println!("{}", solutions.to_dot());
+    #[cfg(not(feature = "dot"))]
+    println!("{:?}", solutions);
     Ok(())
 }
 

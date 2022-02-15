@@ -89,9 +89,9 @@ impl IbisBuilder {
                         arg => {
                             let arg = format!("{}", &arg);
                             if &arg == "Sol" {
-                                new_args.push("#[serde(skip, default)]Sol".to_string());
+                                new_args.push("#[serde(skip, default)]pub Sol".to_string());
                             } else {
-                                new_args.push(arg);
+                                new_args.push(format!("pub {}", arg));
                             }
                         }
                     }

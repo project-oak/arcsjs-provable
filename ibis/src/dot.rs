@@ -5,6 +5,13 @@ pub struct DotGraph {
     children: Vec<(String, String, DotGraph)>,
 }
 
+pub trait ToDot {
+    fn to_dot_repr(&self) -> DotGraph;
+    fn to_dot(&self) -> String {
+        self.to_dot_repr().to_dot()
+    }
+}
+
 impl DotGraph {
     pub fn add_node(&mut self, node: String) {
         self.nodes.push(node);
