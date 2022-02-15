@@ -1,7 +1,5 @@
-use crate::dot::*;
 use crate::{apply, ent, ibis, Ent, Sol, SolutionData, ToInput};
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 
 ibis! {
     Solution(Sol);
@@ -88,11 +86,11 @@ pub struct Config {
 #[serde(deny_unknown_fields)]
 pub struct Feedback {
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    leaks: Vec<Leak>,
+    pub leaks: Vec<Leak>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    type_errors: Vec<TypeError>,
+    pub type_errors: Vec<TypeError>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    has_tags: Vec<HasTag>,
+    pub has_tags: Vec<HasTag>,
 }
 
 fn starting_recipies() -> Vec<Recipe> {
@@ -172,63 +170,6 @@ impl Recipe {
     }
 }
 
-fn sol_id(sol: &Sol) -> String {
-    format!("sol_{}", &sol.id)
-}
-
-impl Ibis {
-    pub fn to_dot(&self) -> String {
-        self.to_dot_repr().to_dot()
-    }
-
-    fn to_dot_repr(&self) -> DotGraph {
-        let mut g = DotGraph::default();
-
-        let solutions = if true {
-            self.recipies.iter().collect()
-        } else {
-            let mut max = 0;
-            let mut best = None;
-            for s in &self.recipies {
-                let l = s.edges.len();
-                if l > max {
-                    best = Some(s);
-                    max = l;
-                }
-            }
-            vec![best.expect("Expected a 'best' solution")]
-        };
-        for recipe in solutions {
-            let sol = &recipe.id.expect("Every recipe should have an id?");
-            let s_id = sol_id(sol);
-            #[allow(unused_mut)]
-            let mut sol_graph = recipe.to_dot_repr();
-            #[cfg(feature = "ancestors")]
-            {
-                let s = Sol::from(recipe);
-                let solution_head = |sol| format!("{}_head", sol_id(sol));
-                sol_graph.add_node(format!(
-                    "{}[style=invis height = 0 width = 0 label=\"\"]",
-                    solution_head(&s)
-                ));
-                for ancestor in &s.ancestors() {
-                    g.add_edge(
-                        solution_head(&s),
-                        solution_head(ancestor),
-                        vec![format!(
-                            "ltail=cluster_{} lhead=cluster_{}",
-                            &s_id,
-                            sol_id(ancestor)
-                        )],
-                    );
-                }
-            }
-            g.add_child(s_id.clone(), format!("Solution {}", &sol.id), sol_graph);
-        }
-        g
-    }
-}
-
 impl From<&Recipe> for Sol {
     fn from(recipe: &Recipe) -> Self {
         // Convert the recipe to its 'solution data'
@@ -289,75 +230,6 @@ impl From<SolutionData> for Recipe {
         let sol = Sol::new_blocking(solution);
         // Convert that id and solution data to a recipe.
         Recipe::from(sol)
-    }
-}
-
-impl Recipe {
-    fn to_dot_repr(&self) -> DotGraph {
-        let sol = &self.id.expect("Every recipe should have an id?");
-        let s_id = sol_id(sol);
-        let particle_id = |particle| format!("{}_p_{}", &s_id, particle);
-        let node_id = |node| format!("{}_h_{}", &s_id, node);
-        let mut sol_graph = DotGraph::default();
-        let mut particles = HashMap::new();
-        for Node(particle, node, ty) in &self.nodes {
-            let mut extras: Vec<String> = vec![];
-            if let Some(feedback) = &self.feedback {
-                for HasTag(_hts, source, sink, tag) in &feedback.has_tags {
-                    if sink == node && source != node {
-                        extras.push(format!("'{}' from {}", tag, source));
-                    }
-                }
-            }
-            for (trusted_n, tag) in &self.trusted_to_remove_tag {
-                if trusted_n == node {
-                    extras.push(format!("trusted to remove tag '{}'", tag));
-                }
-            }
-            for Claim(claim_node, tag) in &self.claims {
-                if claim_node == node {
-                    extras.push(format!("claims to be '{}'", tag));
-                }
-            }
-            for Check(check_node, tag) in &self.checks {
-                if check_node == node {
-                    extras.push(format!(
-                        "<font color=\"blue\">checked to be '{}'</font>",
-                        tag
-                    ));
-                }
-            }
-            let extras: Vec<String> = extras
-                .iter()
-                .map(|ex| format!("<tr><td>{}</td></tr>", ex))
-                .collect();
-            let particle_g = particles.entry(particle).or_insert_with(DotGraph::default);
-            particle_g.add_node(format!("{node_id} [shape=record label=< <table border=\"0\"><tr><td>{node} : {ty}</td></tr>{extras}</table>>]", node_id=node_id(node), node=node, ty=ty, extras=extras.join("")));
-        }
-        for (particle, particle_g) in particles {
-            sol_graph.add_child(
-                particle_id(particle),
-                format!("{} : Particle", particle),
-                particle_g,
-            );
-        }
-
-        if let Some(feedback) = &self.feedback {
-            for Leak(_leak_s, node, expected, source, tag) in &feedback.leaks {
-                sol_graph.add_edge(node_id(source), node_id(node), vec![format!("style=dotted color=red label=<<font color=\"red\">expected '{}', found contradiction '{}'</font>>", expected, tag)]);
-            }
-
-            for TypeError(_error_s, from, from_ty, to, to_ty) in &feedback.type_errors {
-                sol_graph.add_edge(node_id(from), node_id(to), vec![format!("style=dotted color=red label=<<font color=\"red\">expected '{}', found incompatible type '{}'</font>>", to_ty, from_ty)]);
-            }
-        }
-
-        for (from_id, to_id) in &self.id.expect("WAT").edges() {
-            let from = format!("{}:s", node_id(from_id));
-            let to = format!("{}:n", node_id(to_id));
-            sol_graph.add_edge(from.clone(), to.clone(), vec![]);
-        }
-        sol_graph
     }
 }
 
