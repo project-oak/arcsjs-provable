@@ -4,14 +4,14 @@
 // license that can be found in the LICENSE file or at
 // https://developers.google.com/open-source/licenses/bsd
 
-use ibis::Ibis;
+mod utils;
 use pretty_assertions::assert_eq;
+use utils::all_solutions;
 
 #[test]
 fn create_tagged_type_checked_graphs() {
-    let mut runtime = Ibis::new();
-
-    let data = r#"
+    let solutions = all_solutions(
+        r#"
 {
   "subtypes": [
     ["Int", "Number"],
@@ -44,24 +44,8 @@ fn create_tagged_type_checked_graphs() {
       ]
     }
   ]
-}"#;
-    let recipies: Ibis = serde_json::from_str(data).expect("JSON Error?");
-
-    runtime.add_recipies(recipies);
-
-    let mut solutions: Vec<String> = runtime
-        .extract_solutions()
-        .recipies
-        .iter()
-        .map(|recipe| {
-            let mut in_nodes: Vec<String> = (&recipe.edges)
-                .iter()
-                .map(|(from, to)| format!("{} -> {}", from, to))
-                .collect();
-            in_nodes.sort();
-            in_nodes.join(", ")
-        })
-        .collect();
+}"#,
+    );
     let expected: Vec<String> = vec![
         "",
         "a -> b",
@@ -83,7 +67,5 @@ fn create_tagged_type_checked_graphs() {
     .iter()
     .map(|s| s.to_string())
     .collect();
-
-    solutions.sort();
     assert_eq!(solutions, expected);
 }

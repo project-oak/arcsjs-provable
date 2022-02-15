@@ -4,14 +4,14 @@
 // license that can be found in the LICENSE file or at
 // https://developers.google.com/open-source/licenses/bsd
 
-use ibis::Ibis;
+mod utils;
 use pretty_assertions::assert_eq;
+use utils::all_edges;
 
 #[test]
 fn precomputed_subtypes() {
-    let mut runtime = Ibis::new();
-
-    let data = r#"
+    let solutions = all_edges(
+        r#"
 {
   "subtypes": [
     ["Man", "Mortal"],
@@ -31,27 +31,9 @@ fn precomputed_subtypes() {
       ]
     }
   ]
-}"#;
-    let recipies: Ibis = serde_json::from_str(data).expect("JSON Error?");
-
-    runtime.add_recipies(recipies);
-
-    let mut solutions: Vec<String> = runtime
-        .extract_solutions_with_loss(Some(0))
-        .recipies
-        .iter()
-        .map(|recipe| {
-            let mut in_nodes: Vec<String> = (&recipe.edges)
-                .iter()
-                .map(|(from, to)| format!("{} -> {}", from, to))
-                .collect();
-            in_nodes.sort();
-            in_nodes.join(", ")
-        })
-        .collect();
+}"#,
+    );
     let expected: Vec<String> = vec!["a -> b, a -> c, a -> d, b -> d, c -> d".to_string()];
-
-    solutions.sort();
     assert_eq!(solutions, expected);
 }
 
@@ -59,9 +41,8 @@ fn precomputed_subtypes() {
 fn generics_are_not_necessarily_abstractable() {
     // i.e. List(a) is not necessarily able to be used as any List.
     // That has to be decided for the specific type.
-    let mut runtime = Ibis::new();
-
-    let data = r#"
+    let solutions = all_edges(
+        r#"
 {
   "subtypes": [
     ["Man", "Mortal"],
@@ -77,35 +58,16 @@ fn generics_are_not_necessarily_abstractable() {
       ]
     }
   ]
-}"#;
-    let recipies: Ibis = serde_json::from_str(data).expect("JSON Error?");
-
-    runtime.add_recipies(recipies);
-
-    let mut solutions: Vec<String> = runtime
-        .extract_solutions_with_loss(Some(0))
-        .recipies
-        .iter()
-        .map(|recipe| {
-            let mut in_nodes: Vec<String> = (&recipe.edges)
-                .iter()
-                .map(|(from, to)| format!("{} -> {}", from, to))
-                .collect();
-            in_nodes.sort();
-            in_nodes.join(", ")
-        })
-        .collect();
+}"#,
+    );
     let expected: Vec<String> = vec!["".to_string()];
-
-    solutions.sort();
     assert_eq!(solutions, expected);
 }
 
 #[test]
 fn dynamic_subtypes() {
-    let mut runtime = Ibis::new();
-
-    let data = r#"
+    let solutions = all_edges(
+        r#"
 {
   "subtypes": [
     ["Man", "Mortal"],
@@ -125,36 +87,17 @@ fn dynamic_subtypes() {
       ]
     }
   ]
-}"#;
-    let recipies: Ibis = serde_json::from_str(data).expect("JSON Error?");
-
-    runtime.add_recipies(recipies);
-
-    let mut solutions: Vec<String> = runtime
-        .extract_solutions_with_loss(Some(0))
-        .recipies
-        .iter()
-        .map(|recipe| {
-            let mut in_nodes: Vec<String> = (&recipe.edges)
-                .iter()
-                .map(|(from, to)| format!("{} -> {}", from, to))
-                .collect();
-            in_nodes.sort();
-            in_nodes.join(", ")
-        })
-        .collect();
+}"#,
+    );
     let expected: Vec<String> =
         vec!["a -> b, a -> c, a -> d, a -> e, b -> d, b -> e, c -> d".to_string()];
-
-    solutions.sort();
     assert_eq!(solutions, expected);
 }
 
 #[test]
 fn all_subtype_the_universal_type() {
-    let mut runtime = Ibis::new();
-
-    let data = r#"
+    let solutions = all_edges(
+        r#"
 {
   "subtypes": [
     ["Man", "Mortal"],
@@ -170,26 +113,8 @@ fn all_subtype_the_universal_type() {
       ]
     }
   ]
-}"#;
-    let recipies: Ibis = serde_json::from_str(data).expect("JSON Error?");
-
-    runtime.add_recipies(recipies);
-
-    let mut solutions: Vec<String> = runtime
-        .extract_solutions_with_loss(Some(0))
-        .recipies
-        .iter()
-        .map(|recipe| {
-            let mut in_nodes: Vec<String> = (&recipe.edges)
-                .iter()
-                .map(|(from, to)| format!("{} -> {}", from, to))
-                .collect();
-            in_nodes.sort();
-            in_nodes.join(", ")
-        })
-        .collect();
+}"#,
+    );
     let expected: Vec<String> = vec!["a -> b".to_string()];
-
-    solutions.sort();
     assert_eq!(solutions, expected);
 }

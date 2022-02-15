@@ -4,14 +4,14 @@
 // license that can be found in the LICENSE file or at
 // https://developers.google.com/open-source/licenses/bsd
 
-use ibis::Ibis;
+mod utils;
 use pretty_assertions::assert_eq;
+use utils::{all_solutions, map_all_solutions};
 
 #[test]
 fn create_combinations() {
-    let mut runtime = Ibis::new();
-
-    let data = r#"
+    let solutions = map_all_solutions(
+        r#"
 {
   "subtypes": [
     ["Char_a", "Unit"],
@@ -28,39 +28,27 @@ fn create_combinations() {
       ]
     }
   ]
-}"#;
-    let recipies: Ibis = serde_json::from_str(data).expect("JSON Error?");
-
-    runtime.add_recipies(recipies);
-
-    let mut solutions: Vec<String> = runtime
-        .extract_solutions()
-        .recipies
-        .iter()
-        .map(|recipe| {
+}"#,
+        &|recipe| {
             let mut in_nodes: Vec<String> = (&recipe.edges)
                 .iter()
                 .map(|(from, _to)| from.name().clone())
                 .collect();
             in_nodes.sort();
             in_nodes.join("")
-        })
-        .collect();
-    let mut expected: Vec<String> = vec!["", "a", "b", "c", "ab", "bc", "ac", "abc"]
+        },
+    );
+    let expected: Vec<String> = vec!["", "a", "ab", "abc", "ac", "b", "bc", "c"]
         .iter()
         .map(|s| s.to_string())
         .collect();
-
-    solutions.sort();
-    expected.sort();
     assert_eq!(solutions, expected);
 }
 
 #[test]
 fn create_edges() {
-    let mut runtime = Ibis::new();
-
-    let data = r#"
+    let solutions = all_solutions(
+        r#"
 {
   "recipies": [
     {
@@ -70,39 +58,19 @@ fn create_edges() {
       ]
     }
   ]
-}"#;
-    let recipies: Ibis = serde_json::from_str(data).expect("JSON Error?");
-
-    runtime.add_recipies(recipies);
-
-    let mut solutions: Vec<String> = runtime
-        .extract_solutions()
-        .recipies
-        .iter()
-        .map(|recipe| {
-            let mut in_nodes: Vec<String> = (&recipe.edges)
-                .iter()
-                .map(|(from, to)| format!("{} -> {}", from, to))
-                .collect();
-            in_nodes.sort();
-            in_nodes.join(", ")
-        })
-        .collect();
-    let mut expected: Vec<String> = vec!["", "a -> b", "b -> a", "a -> b, b -> a"]
+}"#,
+    );
+    let expected: Vec<String> = vec!["", "a -> b", "a -> b, b -> a", "b -> a"]
         .iter()
         .map(|s| s.to_string())
         .collect();
-
-    solutions.sort();
-    expected.sort();
     assert_eq!(solutions, expected);
 }
 
 #[test]
 fn create_typed_edges() {
-    let mut runtime = Ibis::new();
-
-    let data = r#"
+    let solutions = all_solutions(
+        r#"
 {
   "recipies": [
     {
@@ -113,31 +81,12 @@ fn create_typed_edges() {
       ]
     }
   ]
-}"#;
-    let recipies: Ibis = serde_json::from_str(data).expect("JSON Error?");
-
-    runtime.add_recipies(recipies);
-
-    let mut solutions: Vec<String> = runtime
-        .extract_solutions()
-        .recipies
-        .iter()
-        .map(|recipe| {
-            let mut in_nodes: Vec<String> = (&recipe.edges)
-                .iter()
-                .map(|(from, to)| format!("{} -> {}", from, to))
-                .collect();
-            in_nodes.sort();
-            in_nodes.join(", ")
-        })
-        .collect();
-    let mut expected: Vec<String> = vec!["", "a -> b", "b -> a", "a -> b, b -> a"]
+}"#,
+    );
+    let expected: Vec<String> = vec!["", "a -> b", "a -> b, b -> a", "b -> a"]
         .iter()
         .map(|s| s.to_string())
         .collect();
-
-    solutions.sort();
-    expected.sort();
     assert_eq!(solutions, expected);
 }
 
@@ -150,9 +99,8 @@ fn create_all_directed_graphs_with_4_nodes() {
     // 2^12 = 4096 graphs
     // Note: Do not try with larger graphs, the |results| are O(2^(n*(n-1))).
     // e.g. for 5 nodes theres over a trillion results to calculate.
-    let mut runtime = Ibis::new();
-
-    let data = r#"
+    let solutions = all_solutions(
+        r#"
 {
   "recipies": [
     {
@@ -164,9 +112,7 @@ fn create_all_directed_graphs_with_4_nodes() {
       ]
     }
   ]
-}"#;
-    let recipies: Ibis = serde_json::from_str(data).expect("JSON Error?");
-    runtime.add_recipies(recipies);
-    let solutions = runtime.extract_solutions().recipies;
+}"#,
+    );
     assert_eq!(solutions.len(), 4096);
 }
