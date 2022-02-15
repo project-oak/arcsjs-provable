@@ -8,8 +8,9 @@ name = "ibis"
 path = "src/lib.rs"
 
 [features]
-default = [] # "ancestors"]
+default = [ "dot" ]
 ancestors = [] # Support the tracking of ancestor solutions
+dot = [] # Support the generation of dot graphs (for debugging)
 
 [dependencies]
 paste = "1.0.6"

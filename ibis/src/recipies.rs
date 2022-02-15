@@ -1,7 +1,9 @@
-use crate::dot::*;
 use crate::{apply, ent, ibis, Ent, Sol, SolutionData, ToInput};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+
+#[cfg(feature = "dot")]
+use crate::dot::{DotGraph};
 
 ibis! {
     Solution(Sol);
@@ -176,6 +178,7 @@ fn sol_id(sol: &Sol) -> String {
     format!("sol_{}", &sol.id)
 }
 
+#[cfg(feature = "dot")]
 impl Ibis {
     pub fn to_dot(&self) -> String {
         self.to_dot_repr().to_dot()
@@ -292,6 +295,7 @@ impl From<SolutionData> for Recipe {
     }
 }
 
+#[cfg(feature = "dot")]
 impl Recipe {
     fn to_dot_repr(&self) -> DotGraph {
         let sol = &self.id.expect("Every recipe should have an id?");

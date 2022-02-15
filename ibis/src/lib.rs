@@ -11,6 +11,7 @@ mod solution_data;
 mod solution_id;
 #[macro_use]
 mod util;
+#[cfg(feature = "dot")]
 pub mod dot;
 pub mod recipies;
 extern crate ibis_macros;
