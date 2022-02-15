@@ -1,5 +1,6 @@
 use crate::{apply, ent, ibis, Ent, Sol, SolutionData, ToInput};
 use serde::{Deserialize, Serialize};
+use crate::util::make;
 
 ibis! {
     Solution(Sol);
@@ -177,13 +178,6 @@ impl From<&Recipe> for Sol {
         // Get an id to represent that.
         Sol::new_blocking(solution)
     }
-}
-
-fn make<'a, T: 'a, Iter: IntoIterator<Item = &'a T>, U, F: Fn(&'a T) -> U, Res: FromIterator<U>>(
-    items: Iter,
-    f: F,
-) -> Res {
-    items.into_iter().map(f).collect()
 }
 
 impl From<&Recipe> for SolutionData {

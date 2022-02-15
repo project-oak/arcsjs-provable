@@ -46,3 +46,10 @@ impl std::fmt::Debug for Raw {
         write!(f, "{}", self.0)
     }
 }
+
+pub fn make<'a, T: 'a, Iter: IntoIterator<Item = &'a T>, U, F: Fn(&'a T) -> U, Res: FromIterator<U>>(
+    items: Iter,
+    f: F,
+) -> Res {
+    items.into_iter().map(f).collect()
+}
