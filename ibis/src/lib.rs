@@ -38,8 +38,14 @@ macro_rules! ent {
 
 #[macro_export]
 macro_rules! apply {
-    ($type: expr, $arg: expr) => {
-        ent!("{}({})", $type, $arg)
+    ($fmt: expr) => {
+        ent!($fmt)
+    };
+    ($type: expr, $($arg: expr),*) => {
+        {
+            let args: Vec<String> = vec![$($arg.name(),)*];
+            ent!(&format!("{}({})", $type.name(), args.join(", ")))
+        }
     };
 }
 
