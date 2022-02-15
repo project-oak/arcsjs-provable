@@ -27,22 +27,6 @@ pub use solution_id::Sol;
 pub use util::*;
 
 #[macro_export]
-macro_rules! facts {
-    ($runtime: expr $(, $name: ident ($($arg: expr ),*) )* $(,)? ) => {
-        {
-            use paste::paste;
-            $(
-                $runtime.extend(&[
-                    paste!( [< $name Input >]) (
-                        $($arg, )*
-                    ),
-                ]);
-            )*
-        }
-    }
-}
-
-#[macro_export]
 macro_rules! ent {
     ($fmt: expr) => {
         Ent::by_name($fmt)
@@ -56,13 +40,6 @@ macro_rules! ent {
 macro_rules! apply {
     ($type: expr, $arg: expr) => {
         ent!("{}({})", $type, $arg)
-    };
-}
-
-#[macro_export]
-macro_rules! is_a {
-    ($type: expr, $parent: expr) => {
-        ($type.name().starts_with(&($parent.name() + "(")) && $type.name().ends_with(")"))
     };
 }
 
