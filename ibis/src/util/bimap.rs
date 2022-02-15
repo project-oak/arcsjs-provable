@@ -23,46 +23,6 @@ macro_rules! bimap {
     };
 }
 
-#[macro_export]
-macro_rules! map {
-    () => {
-        std::collections::BTreeMap::new()
-    };
-    ( $( $key: expr => $value: expr ),* $(,)?) => {
-        {
-            let mut st = map!();
-            $(
-                st.insert( $arg, $value );
-            )*
-            st
-        }
-    };
-}
-
-#[macro_export]
-macro_rules! set {
-    () => {
-        std::collections::BTreeSet::new()
-    };
-    ( $( $arg: expr ),* $(,)?) => {
-        {
-            let mut st = set!();
-            $(
-                st.insert( $arg );
-            )*
-            st
-        }
-    };
-}
-
-pub struct Raw(pub String);
-
-impl std::fmt::Debug for Raw {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.0)
-    }
-}
-
 #[derive(Clone, PartialEq, Eq, Ord, PartialOrd, Hash)]
 pub struct BiMap<T, U> {
     forward: BTreeMap<T, U>,
