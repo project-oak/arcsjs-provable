@@ -36,6 +36,8 @@ impl DotGraph {
         let mut items: Vec<String> = vec![];
 
         for node in self.nodes {
+            // Work around for node containing Dot symbols.
+            let node = node.replace("{", "\\{").replace("}", "\\}");
             items.push(node + ";");
         }
 
