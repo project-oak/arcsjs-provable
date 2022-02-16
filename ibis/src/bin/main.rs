@@ -24,7 +24,6 @@ fn main() -> Result<(), IbisError> {
 
     eprintln!("Preparing graph...");
     let solutions = runtime.extract_best_solutions();
-    eprintln!("Done");
     #[cfg(feature = "dot")]
     println!("{}", solutions.to_dot());
     #[cfg(not(feature = "dot"))]
