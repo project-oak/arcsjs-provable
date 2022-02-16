@@ -33,7 +33,7 @@ fn type_args(input: &str) -> IResult<&str, Vec<Type>> {
 fn type_parser(input: &str) -> IResult<&str, Type> {
     let (input, name) = name(input)?;
     let (input, args) = opt(type_args)(input)?;
-    let args = args.unwrap_or(vec![]);
+    let args = args.unwrap_or_default();
 
     Ok((input, Type { name, args }))
 }
@@ -41,7 +41,7 @@ fn type_parser(input: &str) -> IResult<&str, Type> {
 pub fn read_type(input: &str) -> Type {
     // TODO: return errors instead of panics
     let (input, ty) = type_parser(input).finish().expect("Could not parse type");
-    if input != "" {
+    if !input.is_empty() {
         todo!(
             "Did not reach end of input. Read {:?}. Left over {}",
             ty,
