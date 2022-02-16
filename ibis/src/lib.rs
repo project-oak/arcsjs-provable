@@ -61,6 +61,24 @@ macro_rules! apply {
     };
 }
 
+#[macro_export]
+macro_rules! is_a {
+    ($type: expr, $parent: expr) => {
+        ($type.name().starts_with(&($parent.name() + "(")) && $type.name().ends_with(")"))
+    };
+}
+
+#[macro_export]
+macro_rules! arg {
+    ($type: expr, $ind: expr) => {{
+        use crate::type_parser::read_type;
+        let name = $type.name();
+        let ty = read_type(&name);
+        dbg!(&ty.args);
+        ent!(&format!("{}", ty.args[$ind]))
+    }};
+}
+
 pub trait ToInput {
     type U;
     fn to_claim(self) -> Self::U;
