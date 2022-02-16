@@ -9,8 +9,8 @@ mod ent;
 mod error;
 mod solution_data;
 mod solution_id;
-mod type_struct;
 mod type_parser;
+mod type_struct;
 #[macro_use]
 mod util;
 #[cfg(feature = "dot")]
