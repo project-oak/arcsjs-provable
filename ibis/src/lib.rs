@@ -27,19 +27,35 @@ pub use solution_id::Sol;
 pub use util::*;
 
 #[macro_export]
-macro_rules! ent {
+macro_rules! ent_by_name {
     ($fmt: expr) => {
         Ent::by_name($fmt)
     };
     ($fmt: expr, $($names: expr),*) => {
-        Ent::by_name(&format!($fmt, $( $names.name(), )*))
+        Ent::by_name(&format!($fmt, $( $names, )*))
+    }
+}
+
+#[macro_export]
+macro_rules! ent {
+    ($fmt: expr) => {
+        crate::ent_by_name!($fmt)
+    };
+    ($fmt: expr, $($names: expr),*) => {
+        ent_by_name!($fmt, $( $names.name(), )*)
     }
 }
 
 #[macro_export]
 macro_rules! apply {
-    ($type: expr, $arg: expr) => {
-        ent!("{}({})", $type, $arg)
+    ($type: expr) => {
+        crate::ent_by_name!($type)
+    };
+    ($type: expr, $($arg: expr),*) => {
+        {
+            let args: Vec<String> = vec![$($arg.name(),)*];
+            crate::ent_by_name!("{}({})", $type, args.join(", "))
+        }
     };
 }
 
