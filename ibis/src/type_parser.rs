@@ -9,6 +9,7 @@ use nom::{
     bytes::complete::{tag, take_while},
     combinator::opt,
     multi::separated_list0,
+    sequence::tuple,
     Finish, IResult,
 };
 
@@ -23,19 +24,20 @@ fn name(input: &str) -> IResult<&str, &str> {
 }
 
 fn type_args(input: &str) -> IResult<&str, Vec<Type>> {
-    let (input, _) = tag("(")(input)?;
-    let (input, args) = separated_list0(tag(", "), type_parser)(input)?;
-    let (input, _) = tag(")")(input)?;
-
+    let (input, (_, args, _)) =
+        tuple((tag("("), separated_list0(tag(", "), type_parser), tag(")")))(input)?;
     Ok((input, args))
 }
 
 fn type_parser(input: &str) -> IResult<&str, Type> {
-    let (input, name) = name(input)?;
-    let (input, args) = opt(type_args)(input)?;
-    let args = args.unwrap_or_default();
-
-    Ok((input, Type { name, args }))
+    let (input, (name, args)) = tuple((name, opt(type_args)))(input)?;
+    Ok((
+        input,
+        Type {
+            name,
+            args: args.unwrap_or_default(),
+        },
+    ))
 }
 
 pub fn read_type(input: &str) -> Type {
