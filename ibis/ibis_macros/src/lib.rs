@@ -11,19 +11,9 @@ use proc_macro::{TokenStream, TokenTree, TokenTree::*};
 struct IbisBuilder {
     definitions: String,
     trait_impls: String,
-    atoms: String,
 }
 
 impl IbisBuilder {
-    fn add_atom(&mut self, name: TokenTree) {
-        // This is an atom definition;
-        let lower_name = format!("{}", name).to_lowercase();
-        self.atoms += &format!(
-            "static {lower_name}: Ent = Ent::by_name(\"{name}\");",
-            lower_name = lower_name,
-            name = name
-        );
-    }
     fn add_rule(&mut self, name: TokenTree, args: TokenTree, definition: &mut Vec<TokenTree>) {
         match definition.pop() {
             Some(Punct(ch)) => {
@@ -169,9 +159,6 @@ impl ToInput for {claim_name} {{
         }
         definition.reverse();
         let name = definition.pop().expect("Definition must have a name");
-        if definition.is_empty() {
-            return self.add_atom(name);
-        }
         let args = definition.pop().expect("Definition must have args");
         if definition.is_empty() {
             return self.add_relation(name, args);
@@ -187,10 +174,8 @@ crepe!{{
 {definitions}
 }}
 {trait_impls}
-{atoms}
 ",
             definitions = self.definitions,
-            atoms = self.atoms,
             trait_impls = self.trait_impls,
         )
         .parse()
