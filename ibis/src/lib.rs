@@ -53,9 +53,12 @@ macro_rules! apply {
 
 #[macro_export]
 macro_rules! is_a {
-    ($type: expr, $parent: expr) => {
-        ($type.name().starts_with(&($parent.name() + "(")) && $type.name().ends_with(")"))
-    };
+    ($type: expr, $parent: expr) => {{
+        use crate::type_parser::read_type;
+        let name = $type.name();
+        let ty = read_type(&name);
+        ty.name == $parent.name()
+    }};
 }
 
 #[macro_export]

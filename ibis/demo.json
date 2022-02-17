@@ -40,7 +40,7 @@
         ["p_de", "d", "read", "Serializable"],
         ["p_de", "e", "read", "number_or_string"],
         ["p_f", "f", "write", "ibis.ProductType(name: String, age: Int)"],
-        ["p_g", "g", "read", "name: ibis.UniversalType"],
+        ["p_g", "g", "read", "name: *"],
         ["p_h", "h", "read", "ibis.ProductType(name: String, age: Int)"],
         ["p_i", "i", "read", "name: String"],
         ["p_j", "j", "read", "age: Int"]

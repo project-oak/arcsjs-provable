@@ -46,7 +46,15 @@ impl<'a> std::fmt::Display for Type<'a> {
         // write!(f, "{}: ", self.args[0])?;
         // format_arg_set(f, " & ", &self.args[1..])
         } else {
-            let res = write!(f, "{}", self.name)?;
+            let res = write!(
+                f,
+                "{}",
+                if self.name == "ibis.UniversalType" {
+                    "*"
+                } else {
+                    self.name
+                }
+            )?;
             if self.args.is_empty() {
                 Ok(res)
             } else {
