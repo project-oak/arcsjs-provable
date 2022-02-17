@@ -8,7 +8,7 @@ ibis! {
     LessPrivateThan(Ent, Ent); // tag, tag
     Capability(Ent, Ent); // cap from, cap to
     Subtype(Ent, Ent); // sub, super
-    Node(Ent, Ent, Ent, Ent); // particle-identifier, identifier, type
+    Node(Ent, Ent, Ent, Ent); // particle-identifier, identifier, capability, type
     Claim(Ent, Ent); // identifier, tag
     Check(Ent, Ent); // identifier, tag
 
