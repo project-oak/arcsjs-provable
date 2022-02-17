@@ -59,6 +59,14 @@ ibis! {
         (is_a!(labelled, ent!("ibis.Labelled")));
 
     Subtype(
+        labelled,
+        apply!("ibis.Labelled", arg!(labelled, 0), sup)
+    ) <-
+        KnownType(labelled),
+        (is_a!(labelled, ent!("ibis.Labelled"))),
+        Subtype(arg!(labelled, 1), sup);
+
+    Subtype(
         apply!(x_generic, x_arg),
         apply!(y_generic, y_arg)
     ) <-
