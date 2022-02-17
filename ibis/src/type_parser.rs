@@ -36,7 +36,10 @@ fn type_args(input: &str) -> IResult<&str, Vec<Type>> {
 }
 
 fn type_structure(input: &str) -> IResult<&str, Type> {
-    let (input, (name, args)) = tuple((name, opt(type_args)))(input)?;
+    let (input, (mut name, args)) = tuple((name, opt(type_args)))(input)?;
+    if name == "*" {
+        name = "ibis.UniversalType";
+    }
     Ok((input, Type::new(name, args.unwrap_or_default())))
 }
 
