@@ -3,6 +3,11 @@
     "author": "jopra@google.com",
     "date": "03/02/2020"
   },
+  "capabilities": [
+    ["write", "read"],
+    ["any", "read"],
+    ["write", "any"]
+  ],
   "types": [
     "Number",
     "Int",
@@ -34,16 +39,16 @@
         "name": "demo"
       },
       "nodes": [
-        ["p_a", "a", "Int"],
-        ["p_b", "b", "Number"],
-        ["p_c", "c", "String"],
-        ["p_de", "d", "Serializable"],
-        ["p_de", "e", "number_or_string"],
-        ["p_f", "f", "Entity { name: String, age: Int }"],
-        ["p_g", "g", "Entity { name }"],
-        ["p_h", "h", "ibis::ProductType(name: String, age: Int)"],
-        ["p_i", "i", "name: String"],
-        ["p_j", "j", "age: Int"]
+        ["p_a", "a", "write", "Int"],
+        ["p_b", "b", "any", "Number"],
+        ["p_c", "c", "write", "String"],
+        ["p_de", "d", "read", "Serializable"],
+        ["p_de", "e", "read", "number_or_string"],
+        ["p_f", "f", "write", "Entity { name: String, age: Int }"],
+        ["p_g", "g", "read", "Entity { name }"],
+        ["p_h", "h", "write", "ibis::ProductType(name: String, age: Int)"],
+        ["p_i", "i", "read", "name: String"],
+        ["p_j", "j", "read", "age: Int"]
       ],
       "edges": [
         ["b", "e"]

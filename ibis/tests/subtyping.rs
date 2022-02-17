@@ -13,6 +13,9 @@ fn static_subtyping_socretes_is_mortal() {
     let solutions = all_edges(
         r#"
 {
+  "capabilities": [
+    ["any", "any"]
+  ],
   "subtypes": [
     ["plato", "man"],
     ["socretes", "man"],
@@ -21,10 +24,10 @@ fn static_subtyping_socretes_is_mortal() {
   "recipies": [
     {
       "nodes": [
-        ["p_a", "socretes", "socretes"],
-        ["p_b", "plato", "plato"],
-        ["p_c", "man", "man"],
-        ["p_out", "mortal", "mortal"]
+        ["p_a", "socretes", "any", "socretes"],
+        ["p_b", "plato", "any", "plato"],
+        ["p_c", "man", "any", "man"],
+        ["p_out", "mortal", "any", "mortal"]
       ]
     }
   ]

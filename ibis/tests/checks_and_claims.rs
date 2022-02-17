@@ -13,6 +13,9 @@ fn create_tagged_type_checked_graphs() {
     let solutions = all_solutions(
         r#"
 {
+  "capabilities": [
+    ["any", "any"]
+  ],
   "subtypes": [
     ["Int", "Number"],
     ["Int", "Serializable"],
@@ -36,11 +39,11 @@ fn create_tagged_type_checked_graphs() {
         ["d", "public"]
       ],
       "nodes": [
-        ["p_a", "a", "Int"],
-        ["p_b", "b", "Number"],
-        ["p_c", "c", "String"],
-        ["p_de", "d", "Serializable"],
-        ["p_de", "e", "Or(Number, String)"]
+        ["p_a", "a", "any", "Int"],
+        ["p_b", "b", "any", "Number"],
+        ["p_c", "c", "any", "String"],
+        ["p_de", "d", "any", "Serializable"],
+        ["p_de", "e", "any", "Or(Number, String)"]
       ]
     }
   ]
