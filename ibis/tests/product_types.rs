@@ -103,6 +103,9 @@ fn product_of_products() {
   ]
 }"#,
     );
-    let expected: Vec<String> = vec!["abc -> a, abc -> acb, abc -> b, abc -> c, acb -> a, acb -> abc, acb -> b, acb -> c".to_string()];
+    let expected: Vec<String> = vec![
+        "abc -> a, abc -> acb, abc -> b, abc -> c, acb -> a, acb -> abc, acb -> b, acb -> c"
+            .to_string(),
+    ];
     assert_eq!(solutions, expected);
 }
