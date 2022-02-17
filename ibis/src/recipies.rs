@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 
 ibis! {
     Solution(Sol);
-    Type(Ent); // type
+    KnownType(Ent); // type
     LessPrivateThan(Ent, Ent); // tag, tag
     Capability(Ent, Ent); // cap from, cap to
     Subtype(Ent, Ent); // sub, super
@@ -31,8 +31,8 @@ ibis! {
         x,
         prod
     ) <-
-        Type(x),
-        Type(prod),
+        KnownType(x),
+        KnownType(prod),
         (is_a!(prod, ent!("ibis.ProductType"))),
         Subtype(x, arg!(prod, 0)),
         Subtype(x, arg!(prod, 1));
@@ -41,21 +41,21 @@ ibis! {
         prod,
         arg!(prod, 0)
     ) <-
-        Type(prod),
+        KnownType(prod),
         (is_a!(prod, ent!("ibis.ProductType")));
 
     Subtype(
         prod,
         arg!(prod, 1)
     ) <-
-        Type(prod),
+        KnownType(prod),
         (is_a!(prod, ent!("ibis.ProductType")));
 
     Subtype(
         labelled,
         arg!(labelled, 1)
     ) <-
-        Type(labelled),
+        KnownType(labelled),
         (is_a!(labelled, ent!("ibis.Labelled")));
 
     Subtype(
@@ -68,8 +68,8 @@ ibis! {
         Subtype(y_generic, ent!("ibis.InductiveType")),
         Subtype(x_generic, y_generic),
         Subtype(x_arg, y_arg),
-        Type(apply!(x_generic, x_arg)),
-        Type(apply!(y_generic, y_arg));
+        KnownType(apply!(x_generic, x_arg)),
+        KnownType(apply!(y_generic, y_arg));
 
     HasTag(s, n, n, tag) <- Solution(s), Claim(n, tag);
     HasTag(s, source, down, tag) <- // Propagate tags 'downstream'
@@ -103,11 +103,11 @@ ibis! {
         (s.has_edge(from, to)),
         !Capability(from_capability, to_capability); // Check failed, from writes an incompatible type into to
 
-    Type(x) <- Node(_par, _node, _cap, x); // Infer types that are used in the recipies.
-    Type(x) <- Subtype(x, _);
-    Type(y) <- Subtype(_, y);
-    Subtype(x, ent!("ibis.UniversalType")) <- Type(x); // Create a universal type.
-    Subtype(x, x) <- Type(x); // Infer simple subtyping.
+    KnownType(x) <- Node(_par, _node, _cap, x); // Infer types that are used in the recipies.
+    KnownType(x) <- Subtype(x, _);
+    KnownType(y) <- Subtype(_, y);
+    Subtype(x, ent!("ibis.UniversalType")) <- KnownType(x); // Create a universal type.
+    Subtype(x, x) <- KnownType(x); // Infer simple subtyping.
     Subtype(x, z) <- Subtype(x, y), Subtype(y, z) // Infer the transitivity of subtyping.
 }
 
@@ -121,7 +121,7 @@ pub struct Config {
     #[serde(default)]
     pub metadata: serde_json::Value,
     #[serde(default, skip_serializing_if = "is_default")]
-    pub types: Vec<Type>,
+    pub types: Vec<KnownType>,
     #[serde(default, skip_serializing_if = "is_default")]
     pub subtypes: Vec<Subtype>,
     #[serde(default, skip_serializing_if = "is_default")]
