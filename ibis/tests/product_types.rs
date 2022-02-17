@@ -56,6 +56,7 @@ fn a_type_is_a_subtype_of_products_of_its_super_types() {
     let expected: Vec<String> = vec!["b -> a".to_string()];
     assert_eq!(solutions, expected);
 }
+
 #[test]
 fn a_type_is_equal_to_the_product_of_it_and_its_super_types() {
     let solutions = all_edges(
@@ -78,5 +79,30 @@ fn a_type_is_equal_to_the_product_of_it_and_its_super_types() {
 }"#,
     );
     let expected: Vec<String> = vec!["a -> b, b -> a".to_string()];
+    assert_eq!(solutions, expected);
+}
+
+#[test]
+fn product_of_products() {
+    let solutions = all_edges(
+        r#"
+{
+  "capabilities": [
+    ["any", "any"]
+  ],
+  "recipies": [
+    {
+      "nodes": [
+        ["p_abc", "abc", "any", "ibis::ProductType(A, ibis::ProductType(B, C))"],
+        ["p_acb", "acb", "any", "ibis::ProductType(ibis::ProductType(A, C), B)"],
+        ["p_a", "a", "any", "A"],
+        ["p_b", "b", "any", "B"],
+        ["p_c", "c", "any", "C"]
+      ]
+    }
+  ]
+}"#,
+    );
+    let expected: Vec<String> = vec!["abc -> a, abc -> acb, abc -> b, abc -> c, acb -> a, acb -> abc, acb -> b, acb -> c".to_string()];
     assert_eq!(solutions, expected);
 }
