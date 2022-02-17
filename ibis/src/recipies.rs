@@ -28,6 +28,16 @@ ibis! {
         (!parent.has_edge(from, to));
 
     Subtype(
+        x,
+        prod
+    ) <-
+        Type(x),
+        Type(prod),
+        (is_a!(prod, ent!("ibis::ProductType"))),
+        Subtype(x, arg!(prod, 0)),
+        Subtype(x, arg!(prod, 1));
+
+    Subtype(
         prod,
         arg!(prod, 0)
     ) <-
