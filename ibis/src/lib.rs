@@ -9,6 +9,8 @@ mod ent;
 mod error;
 mod solution_data;
 mod solution_id;
+mod type_parser;
+mod type_struct;
 #[macro_use]
 mod util;
 #[cfg(feature = "dot")]
@@ -57,6 +59,24 @@ macro_rules! apply {
             crate::ent_by_name!("{}({})", $type, args.join(", "))
         }
     };
+}
+
+#[macro_export]
+macro_rules! is_a {
+    ($type: expr, $parent: expr) => {
+        ($type.name().starts_with(&($parent.name() + "(")) && $type.name().ends_with(")"))
+    };
+}
+
+#[macro_export]
+macro_rules! arg {
+    ($type: expr, $ind: expr) => {{
+        use crate::type_parser::read_type;
+        let name = $type.name();
+        let ty = read_type(&name);
+        dbg!(&ty.args);
+        ent!(&format!("{}", ty.args[$ind]))
+    }};
 }
 
 pub trait ToInput {
