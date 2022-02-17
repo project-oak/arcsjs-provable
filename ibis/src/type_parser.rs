@@ -37,10 +37,7 @@ fn type_args(input: &str) -> IResult<&str, Vec<Type>> {
 
 fn type_structure(input: &str) -> IResult<&str, Type> {
     let (input, (name, args)) = tuple((name, opt(type_args)))(input)?;
-    Ok((
-        input,
-        Type::new(name, args.unwrap_or_default())
-    ))
+    Ok((input, Type::new(name, args.unwrap_or_default())))
 }
 
 fn type_parser(input: &str) -> IResult<&str, Type> {
