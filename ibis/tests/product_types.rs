@@ -27,8 +27,7 @@ fn a_product_is_a_subtype_of_its_arguments() {
   ]
 }"#,
     );
-    let expected: Vec<String> =
-        vec!["a -> b, a -> c".to_string()];
+    let expected: Vec<String> = vec!["a -> b, a -> c".to_string()];
     assert_eq!(solutions, expected);
 }
 
@@ -54,8 +53,7 @@ fn a_type_is_a_subtype_of_products_of_its_super_types() {
   ]
 }"#,
     );
-    let expected: Vec<String> =
-        vec!["b -> a".to_string()];
+    let expected: Vec<String> = vec!["b -> a".to_string()];
     assert_eq!(solutions, expected);
 }
 #[test]
@@ -79,7 +77,6 @@ fn a_type_is_equal_to_the_product_of_it_and_its_super_types() {
   ]
 }"#,
     );
-    let expected: Vec<String> =
-        vec!["a -> b, b -> a".to_string()];
+    let expected: Vec<String> = vec!["a -> b, b -> a".to_string()];
     assert_eq!(solutions, expected);
 }
