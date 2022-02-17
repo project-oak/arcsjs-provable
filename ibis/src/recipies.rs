@@ -28,6 +28,16 @@ ibis! {
         (!parent.has_edge(from, to));
 
     Subtype(
+        x,
+        prod
+    ) <-
+        Type(x),
+        Type(prod),
+        (is_a!(prod, ent!("ibis::ProductType"))),
+        Subtype(x, arg!(prod, 0)),
+        Subtype(x, arg!(prod, 1));
+
+    Subtype(
         prod,
         arg!(prod, 0)
     ) <-
@@ -101,31 +111,35 @@ ibis! {
     Subtype(x, z) <- Subtype(x, y), Subtype(y, z) // Infer the transitivity of subtyping.
 }
 
+fn is_default<T: Default + Eq>(v: &T) -> bool {
+    v == &T::default()
+}
+
 #[derive(Default, Debug, Serialize, Deserialize, Eq, PartialEq)]
 #[serde(deny_unknown_fields)]
 pub struct Config {
     #[serde(default)]
     pub metadata: serde_json::Value,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[serde(default, skip_serializing_if = "is_default")]
     pub types: Vec<Type>,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[serde(default, skip_serializing_if = "is_default")]
     pub subtypes: Vec<Subtype>,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[serde(default, skip_serializing_if = "is_default")]
     pub less_private_than: Vec<LessPrivateThan>,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[serde(default, skip_serializing_if = "is_default")]
     pub capabilities: Vec<Capability>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Eq, PartialEq)]
 #[serde(deny_unknown_fields)]
 pub struct Feedback {
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[serde(default, skip_serializing_if = "is_default")]
     pub leaks: Vec<Leak>,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[serde(default, skip_serializing_if = "is_default")]
     pub type_errors: Vec<TypeError>,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[serde(default, skip_serializing_if = "is_default")]
     pub capability_errors: Vec<CapabilityError>,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[serde(default, skip_serializing_if = "is_default")]
     pub has_tags: Vec<HasTag>,
 }
 
@@ -138,7 +152,7 @@ fn starting_recipies() -> Vec<Recipe> {
 pub struct Ibis {
     #[serde(flatten)]
     pub config: Config,
-    #[serde(default = "starting_recipies", skip_serializing_if = "Vec::is_empty")]
+    #[serde(default = "starting_recipies", skip_serializing_if = "is_default")]
     pub recipies: Vec<Recipe>,
 }
 
@@ -152,18 +166,18 @@ pub struct Recipe {
     // Do not deserialize the feedback on a recipe: Re-generate it each time for consistency.
     #[serde(skip_deserializing, flatten)]
     pub feedback: Option<Feedback>,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[serde(default, skip_serializing_if = "is_default")]
     pub nodes: Vec<Node>,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[serde(default, skip_serializing_if = "is_default")]
     pub claims: Vec<Claim>,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[serde(default, skip_serializing_if = "is_default")]
     pub checks: Vec<Check>,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[serde(default, skip_serializing_if = "is_default")]
     pub trusted_to_remove_tag: Vec<(Ent, Ent)>,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[serde(default, skip_serializing_if = "is_default")]
     pub edges: Vec<(Ent, Ent)>,
     #[cfg(feature = "ancestors")]
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[serde(default, skip_serializing_if = "is_default")]
     pub ancestors: Vec<Sol>,
 }
 
