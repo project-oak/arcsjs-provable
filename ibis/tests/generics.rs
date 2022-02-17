@@ -13,6 +13,9 @@ fn precomputed_subtypes() {
     let solutions = all_edges(
         r#"
 {
+  "capabilities": [
+    ["any", "any"]
+  ],
   "subtypes": [
     ["Man", "Mortal"],
     ["List(Man)", "List(Mortal)"],
@@ -24,10 +27,10 @@ fn precomputed_subtypes() {
   "recipies": [
     {
       "nodes": [
-        ["p_a", "a", "List(Man)"],
-        ["p_b", "b", "List(Mortal)"],
-        ["p_c", "c", "Iterable(Man)"],
-        ["p_d", "d", "Iterable(Mortal)"]
+        ["p_a", "a", "any", "List(Man)"],
+        ["p_b", "b", "any", "List(Mortal)"],
+        ["p_c", "c", "any", "Iterable(Man)"],
+        ["p_d", "d", "any", "Iterable(Mortal)"]
       ]
     }
   ]
@@ -44,6 +47,9 @@ fn generics_are_not_necessarily_abstractable() {
     let solutions = all_edges(
         r#"
 {
+  "capabilities": [
+    ["any", "any"]
+  ],
   "subtypes": [
     ["Man", "Mortal"],
     ["List", "Iterable"],
@@ -53,8 +59,8 @@ fn generics_are_not_necessarily_abstractable() {
   "recipies": [
     {
       "nodes": [
-        ["p_a", "a", "List(Man)"],
-        ["p_b", "b", "List"]
+        ["p_a", "a", "any", "List(Man)"],
+        ["p_b", "b", "any", "List"]
       ]
     }
   ]
@@ -69,6 +75,9 @@ fn dynamic_subtypes() {
     let solutions = all_edges(
         r#"
 {
+  "capabilities": [
+    ["any", "any"]
+  ],
   "subtypes": [
     ["Man", "Mortal"],
     ["List", "Iterable"],
@@ -78,12 +87,12 @@ fn dynamic_subtypes() {
   "recipies": [
     {
       "nodes": [
-        ["p_a", "a", "List(Man)"],
-        ["p_b", "b", "List(Mortal)"],
-        ["p_c", "c", "Iterable(Man)"],
-        ["p_d", "d", "Iterable(Mortal)"],
-        ["p_e", "e", "List(ibis::UniversalType)"],
-        ["p_f", "f", "List"]
+        ["p_a", "a", "any", "List(Man)"],
+        ["p_b", "b", "any", "List(Mortal)"],
+        ["p_c", "c", "any", "Iterable(Man)"],
+        ["p_d", "d", "any", "Iterable(Mortal)"],
+        ["p_e", "e", "any", "List(ibis::UniversalType)"],
+        ["p_f", "f", "any", "List"]
       ]
     }
   ]
@@ -99,6 +108,9 @@ fn all_subtype_the_universal_type() {
     let solutions = all_edges(
         r#"
 {
+  "capabilities": [
+    ["any", "any"]
+  ],
   "subtypes": [
     ["Man", "Mortal"],
     ["List", "Iterable"],
@@ -108,8 +120,8 @@ fn all_subtype_the_universal_type() {
   "recipies": [
     {
       "nodes": [
-        ["p_a", "a", "List(Man)"],
-        ["p_b", "b", "List(ibis::UniversalType)"]
+        ["p_a", "a", "any", "List(Man)"],
+        ["p_b", "b", "any", "List(ibis::UniversalType)"]
       ]
     }
   ]

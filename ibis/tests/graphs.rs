@@ -13,18 +13,16 @@ fn create_combinations() {
     let solutions = map_all_solutions(
         r#"
 {
-  "subtypes": [
-    ["Char_a", "Unit"],
-    ["Char_b", "Unit"],
-    ["Char_c", "Unit"]
+  "capabilities": [
+    ["write", "read"]
   ],
   "recipies": [
     {
       "nodes": [
-        ["p_a", "a", "Char_a"],
-        ["p_b", "b", "Char_b"],
-        ["p_c", "c", "Char_c"],
-        ["p_out", "out", "Unit"]
+        ["p_a", "a", "write", "Unit"],
+        ["p_b", "b", "write", "Unit"],
+        ["p_c", "c", "write", "Unit"],
+        ["p_out", "out", "read", "Unit"]
       ]
     }
   ]
@@ -50,11 +48,14 @@ fn create_edges() {
     let solutions = all_solutions(
         r#"
 {
+  "capabilities": [
+    ["any", "any"]
+  ],
   "recipies": [
     {
       "nodes": [
-        ["p_a", "a", "Char"],
-        ["p_b", "b", "Char"]
+        ["p_a", "a", "any", "Char"],
+        ["p_b", "b", "any", "Char"]
       ]
     }
   ]
@@ -72,12 +73,15 @@ fn create_typed_edges() {
     let solutions = all_solutions(
         r#"
 {
+  "capabilities": [
+    ["any", "any"]
+  ],
   "recipies": [
     {
       "nodes": [
-        ["p_a", "a", "Char"],
-        ["p_b", "b", "Char"],
-        ["p_c", "c", "Int"]
+        ["p_a", "a", "any", "Char"],
+        ["p_b", "b", "any", "Char"],
+        ["p_c", "c", "any", "Int"]
       ]
     }
   ]
@@ -102,13 +106,16 @@ fn create_all_directed_graphs_with_4_nodes() {
     let solutions = all_solutions(
         r#"
 {
+  "capabilities": [
+    ["any", "any"]
+  ],
   "recipies": [
     {
       "nodes": [
-        ["p_a", "a", "Char"],
-        ["p_b", "b", "Char"],
-        ["p_c", "c", "Char"],
-        ["p_d", "d", "Char"]
+        ["p_a", "a", "any", "Char"],
+        ["p_b", "b", "any", "Char"],
+        ["p_c", "c", "any", "Char"],
+        ["p_d", "d", "any", "Char"]
       ]
     }
   ]
