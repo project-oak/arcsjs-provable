@@ -8,15 +8,6 @@
     ["any", "read"],
     ["write", "any"]
   ],
-  "types": [
-    "Number",
-    "Int",
-    "String",
-    "Serializable",
-    "name: String",
-    "age: Int",
-    "ibis.ProductType(name: String, age: Int)"
-  ],
   "subtypes": [
     ["Int", "Number"],
     ["Int", "Serializable"],
