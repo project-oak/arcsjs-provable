@@ -13,7 +13,6 @@
     "Int",
     "String",
     "Serializable",
-    "number_or_string",
     "name: String",
     "age: Int",
     "ibis.ProductType(name: String, age: Int)"
@@ -21,9 +20,7 @@
   "subtypes": [
     ["Int", "Number"],
     ["Int", "Serializable"],
-    ["String", "Serializable"],
-    ["Number", "number_or_string"],
-    ["String", "number_or_string"]
+    ["String", "Serializable"]
   ],
   "less_private_than": [
     ["public", "private"]
@@ -38,7 +35,7 @@
         ["p_b", "b", "any", "Number"],
         ["p_c", "c", "write", "String"],
         ["p_de", "d", "read", "Serializable"],
-        ["p_de", "e", "read", "number_or_string"],
+        ["p_de", "e", "read", "ibis.UnionType(Number, String)"],
         ["p_f", "f", "write", "ibis.ProductType(name: String, age: Int)"],
         ["p_g", "g", "read", "name: *"],
         ["p_h", "h", "read", "ibis.ProductType(name: String, age: Int)"],
