@@ -7,6 +7,7 @@
 extern crate nom;
 use nom::{
     bytes::complete::{tag, take_while},
+    character::complete::space0,
     combinator::opt,
     multi::separated_list0,
     sequence::tuple,
@@ -16,11 +17,16 @@ use nom::{
 use crate::type_struct::Type;
 
 fn is_name_char(c: char) -> bool {
-    c != '(' && c != ')' && c != ','
+    c != '(' && c != ')' && c != ',' && c != ':'
 }
 
 fn name(input: &str) -> IResult<&str, &str> {
     take_while(is_name_char)(input)
+}
+
+fn label(input: &str) -> IResult<&str, &str> {
+    let (input, (name, _, _)) = tuple((name, tag(":"), space0))(input)?;
+    Ok((input, name))
 }
 
 fn type_args(input: &str) -> IResult<&str, Vec<Type>> {
@@ -29,15 +35,20 @@ fn type_args(input: &str) -> IResult<&str, Vec<Type>> {
     Ok((input, args))
 }
 
-fn type_parser(input: &str) -> IResult<&str, Type> {
+fn type_structure(input: &str) -> IResult<&str, Type> {
     let (input, (name, args)) = tuple((name, opt(type_args)))(input)?;
     Ok((
         input,
-        Type {
-            name,
-            args: args.unwrap_or_default(),
-        },
+        Type::new(name, args.unwrap_or_default())
     ))
+}
+
+fn type_parser(input: &str) -> IResult<&str, Type> {
+    let (input, (label, mut structure)) = tuple((opt(label), type_structure))(input)?;
+    if let Some(label) = label {
+        structure = Type::new("ibis.Labelled", vec![Type::named(label), structure]);
+    }
+    Ok((input, structure))
 }
 
 pub fn read_type(input: &str) -> Type {
@@ -104,6 +115,26 @@ mod tests {
                     },
                     Type {
                         name: "b",
+                        args: vec![]
+                    },
+                ]
+            }
+        );
+    }
+
+    #[test]
+    fn read_type_with_label() {
+        assert_eq!(
+            read_type("name: Type"),
+            Type {
+                name: "ibis.Labelled",
+                args: vec![
+                    Type {
+                        name: "name",
+                        args: vec![],
+                    },
+                    Type {
+                        name: "Type",
                         args: vec![]
                     },
                 ]

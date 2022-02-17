@@ -33,7 +33,7 @@ ibis! {
     ) <-
         Type(x),
         Type(prod),
-        (is_a!(prod, ent!("ibis::ProductType"))),
+        (is_a!(prod, ent!("ibis.ProductType"))),
         Subtype(x, arg!(prod, 0)),
         Subtype(x, arg!(prod, 1));
 
@@ -42,30 +42,30 @@ ibis! {
         arg!(prod, 0)
     ) <-
         Type(prod),
-        (is_a!(prod, ent!("ibis::ProductType")));
+        (is_a!(prod, ent!("ibis.ProductType")));
 
     Subtype(
         prod,
         arg!(prod, 1)
     ) <-
         Type(prod),
-        (is_a!(prod, ent!("ibis::ProductType")));
+        (is_a!(prod, ent!("ibis.ProductType")));
 
     Subtype(
         labelled,
         arg!(labelled, 1)
     ) <-
         Type(labelled),
-        (is_a!(labelled, ent!("ibis::Labelled")));
+        (is_a!(labelled, ent!("ibis.Labelled")));
 
     Subtype(
         apply!(x_generic, x_arg),
         apply!(y_generic, y_arg)
     ) <-
-        Subtype(x_generic, ent!("ibis::GenericType")),
-        Subtype(x_generic, ent!("ibis::InductiveType")),
-        Subtype(y_generic, ent!("ibis::GenericType")),
-        Subtype(y_generic, ent!("ibis::InductiveType")),
+        Subtype(x_generic, ent!("ibis.GenericType")),
+        Subtype(x_generic, ent!("ibis.InductiveType")),
+        Subtype(y_generic, ent!("ibis.GenericType")),
+        Subtype(y_generic, ent!("ibis.InductiveType")),
         Subtype(x_generic, y_generic),
         Subtype(x_arg, y_arg),
         Type(apply!(x_generic, x_arg)),
@@ -106,7 +106,7 @@ ibis! {
     Type(x) <- Node(_par, _node, _cap, x); // Infer types that are used in the recipies.
     Type(x) <- Subtype(x, _);
     Type(y) <- Subtype(_, y);
-    Subtype(x, ent!("ibis::UniversalType")) <- Type(x); // Create a universal type.
+    Subtype(x, ent!("ibis.UniversalType")) <- Type(x); // Create a universal type.
     Subtype(x, x) <- Type(x); // Infer simple subtyping.
     Subtype(x, z) <- Subtype(x, y), Subtype(y, z) // Infer the transitivity of subtyping.
 }

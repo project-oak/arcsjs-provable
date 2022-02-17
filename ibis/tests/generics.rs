@@ -53,8 +53,8 @@ fn generics_are_not_necessarily_abstractable() {
   "subtypes": [
     ["Man", "Mortal"],
     ["List", "Iterable"],
-    ["Iterable", "ibis::GenericType"],
-    ["Iterable", "ibis::InductiveType"]
+    ["Iterable", "ibis.GenericType"],
+    ["Iterable", "ibis.InductiveType"]
   ],
   "recipies": [
     {
@@ -81,8 +81,8 @@ fn dynamic_subtypes() {
   "subtypes": [
     ["Man", "Mortal"],
     ["List", "Iterable"],
-    ["Iterable", "ibis::GenericType"],
-    ["Iterable", "ibis::InductiveType"]
+    ["Iterable", "ibis.GenericType"],
+    ["Iterable", "ibis.InductiveType"]
   ],
   "recipies": [
     {
@@ -91,7 +91,7 @@ fn dynamic_subtypes() {
         ["p_b", "b", "any", "List(Mortal)"],
         ["p_c", "c", "any", "Iterable(Man)"],
         ["p_d", "d", "any", "Iterable(Mortal)"],
-        ["p_e", "e", "any", "List(ibis::UniversalType)"],
+        ["p_e", "e", "any", "List(ibis.UniversalType)"],
         ["p_f", "f", "any", "List"]
       ]
     }
@@ -114,14 +114,14 @@ fn all_subtype_the_universal_type() {
   "subtypes": [
     ["Man", "Mortal"],
     ["List", "Iterable"],
-    ["Iterable", "ibis::GenericType"],
-    ["Iterable", "ibis::InductiveType"]
+    ["Iterable", "ibis.GenericType"],
+    ["Iterable", "ibis.InductiveType"]
   ],
   "recipies": [
     {
       "nodes": [
         ["p_a", "a", "any", "List(Man)"],
-        ["p_b", "b", "any", "List(ibis::UniversalType)"]
+        ["p_b", "b", "any", "List(ibis.UniversalType)"]
       ]
     }
   ]

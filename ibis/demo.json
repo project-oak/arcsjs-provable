@@ -16,7 +16,7 @@
     "number_or_string",
     "name: String",
     "age: Int",
-    "ibis::ProductType(name: String, age: Int)"
+    "ibis.ProductType(name: String, age: Int)"
   ],
   "subtypes": [
     ["Int", "Number"],
@@ -46,7 +46,7 @@
         ["p_de", "e", "read", "number_or_string"],
         ["p_f", "f", "write", "Entity { name: String, age: Int }"],
         ["p_g", "g", "read", "Entity { name }"],
-        ["p_h", "h", "write", "ibis::ProductType(name: String, age: Int)"],
+        ["p_h", "h", "write", "ibis.ProductType(name: String, age: Int)"],
         ["p_i", "i", "read", "name: String"],
         ["p_j", "j", "read", "age: Int"]
       ],

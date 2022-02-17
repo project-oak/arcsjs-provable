@@ -19,7 +19,7 @@ fn a_product_is_a_subtype_of_its_arguments() {
   "recipies": [
     {
       "nodes": [
-        ["p_a", "a", "any", "ibis::ProductType(Man, Mortal)"],
+        ["p_a", "a", "any", "ibis.ProductType(Man, Mortal)"],
         ["p_b", "b", "any", "Mortal"],
         ["p_c", "c", "any", "Man"]
       ]
@@ -46,7 +46,7 @@ fn a_type_is_a_subtype_of_products_of_its_super_types() {
   "recipies": [
     {
       "nodes": [
-        ["p_a", "a", "any", "ibis::ProductType(Human, Mortal)"],
+        ["p_a", "a", "any", "ibis.ProductType(Human, Mortal)"],
         ["p_b", "b", "any", "Man"]
       ]
     }
@@ -71,7 +71,7 @@ fn a_type_is_equal_to_the_product_of_it_and_its_super_types() {
   "recipies": [
     {
       "nodes": [
-        ["p_a", "a", "any", "ibis::ProductType(Man, Mortal)"],
+        ["p_a", "a", "any", "ibis.ProductType(Man, Mortal)"],
         ["p_b", "b", "any", "Man"]
       ]
     }
@@ -93,8 +93,8 @@ fn product_of_products() {
   "recipies": [
     {
       "nodes": [
-        ["p_abc", "abc", "any", "ibis::ProductType(A, ibis::ProductType(B, C))"],
-        ["p_acb", "acb", "any", "ibis::ProductType(ibis::ProductType(A, C), B)"],
+        ["p_abc", "abc", "any", "ibis.ProductType(A, ibis.ProductType(B, C))"],
+        ["p_acb", "acb", "any", "ibis.ProductType(ibis.ProductType(A, C), B)"],
         ["p_a", "a", "any", "A"],
         ["p_b", "b", "any", "B"],
         ["p_c", "c", "any", "C"]

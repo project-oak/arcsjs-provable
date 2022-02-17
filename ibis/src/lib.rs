@@ -74,7 +74,6 @@ macro_rules! arg {
         use crate::type_parser::read_type;
         let name = $type.name();
         let ty = read_type(&name);
-        dbg!(&ty.args);
         ent!(&format!("{}", ty.args[$ind]))
     }};
 }
