@@ -225,8 +225,12 @@ impl From<&Recipe> for SolutionData {
             node_to_particle: make(&recipe.nodes, |Node(particle, node, _cap, _ty)| {
                 (*node, *particle)
             }),
-            node_types: make(&recipe.nodes, |Node(_particle, node, _cap, ty)| (*node, *ty)),
-            node_capabilities: make(&recipe.nodes, |Node(_particle, node, cap, _ty)| (*node, *cap)),
+            node_types: make(&recipe.nodes, |Node(_particle, node, _cap, ty)| {
+                (*node, *ty)
+            }),
+            node_capabilities: make(&recipe.nodes, |Node(_particle, node, cap, _ty)| {
+                (*node, *cap)
+            }),
             nodes: make(&recipe.nodes, |Node(_particle, node, _cap, _ty)| *node),
             trusted_to_remove_tag: make(&recipe.trusted_to_remove_tag, Clone::clone),
         }
