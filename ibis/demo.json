@@ -23,12 +23,7 @@
     ["Int", "Serializable"],
     ["String", "Serializable"],
     ["Number", "number_or_string"],
-    ["String", "number_or_string"],
-    ["Entity { name }", "Entity"],
-    ["Entity { name: String }", "Entity { name }"],
-    ["Entity { age: Int }", "Entity { age }"],
-    ["Entity { name: String, age: Int }", "Entity { name: String }"],
-    ["Entity { name: String, age: Int }", "Entity { age: Int }"]
+    ["String", "number_or_string"]
   ],
   "less_private_than": [
     ["public", "private"]
@@ -44,9 +39,9 @@
         ["p_c", "c", "write", "String"],
         ["p_de", "d", "read", "Serializable"],
         ["p_de", "e", "read", "number_or_string"],
-        ["p_f", "f", "write", "Entity { name: String, age: Int }"],
-        ["p_g", "g", "read", "Entity { name }"],
-        ["p_h", "h", "write", "ibis.ProductType(name: String, age: Int)"],
+        ["p_f", "f", "write", "ibis.ProductType(name: String, age: Int)"],
+        ["p_g", "g", "read", "name"],
+        ["p_h", "h", "read", "ibis.ProductType(name: String, age: Int)"],
         ["p_i", "i", "read", "name: String"],
         ["p_j", "j", "read", "age: Int"]
       ],
