@@ -52,6 +52,30 @@ ibis! {
         (is_a!(prod, ent!("ibis.ProductType")));
 
     Subtype(
+        union_type,
+        x
+    ) <-
+        KnownType(union_type),
+        (is_a!(union_type, ent!("ibis.UnionType"))),
+        KnownType(x),
+        Subtype(arg!(union_type, 0), x),
+        Subtype(arg!(union_type, 1), x);
+
+    Subtype(
+        arg!(union_type, 0),
+        union_type
+    ) <-
+        KnownType(union_type),
+        (is_a!(union_type, ent!("ibis.UnionType")));
+
+    Subtype(
+        arg!(union_type, 1),
+        union_type
+    ) <-
+        KnownType(union_type),
+        (is_a!(union_type, ent!("ibis.UnionType")));
+
+    Subtype(
         labelled,
         arg!(labelled, 1)
     ) <-
