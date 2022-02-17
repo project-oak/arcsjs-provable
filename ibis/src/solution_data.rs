@@ -14,6 +14,7 @@ pub struct SolutionData {
     // Starting data
     pub nodes: BTreeSet<Ent>,
     pub node_types: BTreeMap<Ent, Ent>,              // node, type
+    pub node_capabilities: BTreeMap<Ent, Ent>,       // node, capability
     pub node_to_particle: BTreeMap<Ent, Ent>,        // node, particle
     pub claims: BTreeSet<(Ent, Ent)>,                // node, tag
     pub checks: BTreeSet<(Ent, Ent)>,                // node, tag

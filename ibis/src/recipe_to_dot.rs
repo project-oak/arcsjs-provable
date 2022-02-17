@@ -70,7 +70,7 @@ impl ToDot for Recipe {
         let node_id = |node| format!("{}_h_{}", &s_id, node);
         let mut sol_graph = DotGraph::default();
         let mut particles = HashMap::new();
-        for Node(particle, node, ty) in &self.nodes {
+        for Node(particle, node, cap, ty) in &self.nodes {
             let mut extras: Vec<String> = vec![];
             if let Some(feedback) = &self.feedback {
                 for HasTag(_hts, source, sink, tag) in &feedback.has_tags {
@@ -102,7 +102,7 @@ impl ToDot for Recipe {
                 .map(|ex| format!("<tr><td>{}</td></tr>", ex))
                 .collect();
             let particle_g = particles.entry(particle).or_insert_with(DotGraph::default);
-            particle_g.add_node(format!("{node_id} [shape=record label=< <table border=\"0\"><tr><td>{node} : {ty}</td></tr>{extras}</table>>]", node_id=node_id(node), node=node, ty=ty, extras=extras.join("")));
+            particle_g.add_node(format!("{node_id} [shape=record label=< <table border=\"0\"><tr><td>{cap} {node} : {ty}</td></tr>{extras}</table>>]", node_id=node_id(node), node=node, cap=cap, ty=ty, extras=extras.join("")));
         }
         for (particle, particle_g) in particles {
             sol_graph.add_child(

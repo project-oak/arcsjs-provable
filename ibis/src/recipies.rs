@@ -6,8 +6,9 @@ ibis! {
     Solution(Sol);
     Type(Ent); // type
     LessPrivateThan(Ent, Ent); // tag, tag
+    Capability(Ent, Ent); // cap from, cap to
     Subtype(Ent, Ent); // sub, super
-    Node(Ent, Ent, Ent); // particle-identifier, identifier, type
+    Node(Ent, Ent, Ent, Ent); // particle-identifier, identifier, type
     Claim(Ent, Ent); // identifier, tag
     Check(Ent, Ent); // identifier, tag
 
@@ -15,10 +16,12 @@ ibis! {
     HasTag(Sol, Ent, Ent, Ent); // solution, source node, node with tag, tag
     Leak(Sol, Ent, Ent, Ent, Ent); // sol, node, expected_tag, source, tag2
     TypeError(Sol, Ent, Ent, Ent, Ent); // sol, node, ty, source, ty
+    CapabilityError(Sol, Ent, Ent, Ent, Ent); // sol, node, cap, source, cap
 
     Solution(parent.add_edge(from, to)) <-
-        Node(from_particle, from, from_type),
-        Node(to_particle, to, to_type),
+        Capability(from_capability, to_capability),
+        Node(from_particle, from, from_capability, from_type),
+        Node(to_particle, to, to_capability, to_type),
         (from != to),
         Subtype(from_type, to_type),
         Solution(parent),
@@ -61,14 +64,14 @@ ibis! {
     HasTag(s, n, n, tag) <- Solution(s), Claim(n, tag);
     HasTag(s, source, down, tag) <- // Propagate tags 'downstream'
         HasTag(s, source, curr, tag),
-        Node(_down_particle, down, _),
+        Node(_down_particle, down, _, _),
         (s.has_edge(curr, down)),
         (!s.is_trusted_to_remove_tag(down, tag));
 
     HasTag(s, source, down, tag) <- // Propagate tags 'across stream' (i.e. inside a particle)
         HasTag(s, source, curr, tag),
-        Node(particle, curr, _),
-        Node(particle, down, _),
+        Node(particle, curr, _, _),
+        Node(particle, down, _, _),
         (!s.is_trusted_to_remove_tag(down, tag));
 
     Leak(s, n, t1, source, t2) <-
@@ -77,13 +80,20 @@ ibis! {
         HasTag(s, source, n, t2); // Check failed, node has a 'more private' tag i.e. is leaking.
 
     TypeError(s, from, from_ty, to, to_ty) <-
-        Node(_from_p, from, from_ty),
-        Node(_to_p, to, to_ty),
+        Node(_from_p, from, _, from_ty),
+        Node(_to_p, to, _, to_ty),
         Solution(s),
         (s.has_edge(from, to)),
         !Subtype(from_ty, to_ty); // Check failed, from writes an incompatible type into to
 
-    Type(x) <- Node(_par, _node, x); // Infer types that are used in the recipies.
+    CapabilityError(s, from, from_capability, to, to_capability) <-
+        Node(_from_p, from, from_capability, _),
+        Node(_to_p, to, to_capability, _),
+        Solution(s),
+        (s.has_edge(from, to)),
+        !Capability(from_capability, to_capability); // Check failed, from writes an incompatible type into to
+
+    Type(x) <- Node(_par, _node, _cap, x); // Infer types that are used in the recipies.
     Type(x) <- Subtype(x, _);
     Type(y) <- Subtype(_, y);
     Subtype(x, ent!("ibis::UniversalType")) <- Type(x); // Create a universal type.
@@ -102,6 +112,8 @@ pub struct Config {
     pub subtypes: Vec<Subtype>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub less_private_than: Vec<LessPrivateThan>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub capabilities: Vec<Capability>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Eq, PartialEq)]
@@ -111,6 +123,8 @@ pub struct Feedback {
     pub leaks: Vec<Leak>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub type_errors: Vec<TypeError>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub capability_errors: Vec<CapabilityError>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub has_tags: Vec<HasTag>,
 }
@@ -168,7 +182,8 @@ impl Recipe {
                 .map(|node| {
                     let particle = solution.node_to_particle.get(node).unwrap();
                     let ty = solution.node_types.get(node).unwrap();
-                    Node(*particle, *node, *ty)
+                    let cap = solution.node_capabilities.get(node).unwrap();
+                    Node(*particle, *node, *cap, *ty)
                 })
                 .collect(),
             claims: solution
@@ -207,11 +222,12 @@ impl From<&Recipe> for SolutionData {
             edges: make(&recipe.edges, Clone::clone),
             checks: make(&recipe.checks, |Check(node, tag)| (*node, *tag)),
             claims: make(&recipe.claims, |Claim(node, tag)| (*node, *tag)),
-            node_to_particle: make(&recipe.nodes, |Node(particle, node, _ty)| {
+            node_to_particle: make(&recipe.nodes, |Node(particle, node, _cap, _ty)| {
                 (*node, *particle)
             }),
-            node_types: make(&recipe.nodes, |Node(_particle, node, ty)| (*node, *ty)),
-            nodes: make(&recipe.nodes, |Node(_particle, node, _ty)| *node),
+            node_types: make(&recipe.nodes, |Node(_particle, node, _cap, ty)| (*node, *ty)),
+            node_capabilities: make(&recipe.nodes, |Node(_particle, node, cap, _ty)| (*node, *cap)),
+            nodes: make(&recipe.nodes, |Node(_particle, node, _cap, _ty)| *node),
             trusted_to_remove_tag: make(&recipe.trusted_to_remove_tag, Clone::clone),
         }
     }
@@ -227,7 +243,8 @@ impl From<Sol> for Recipe {
             nodes: make(&solution.nodes, |node| {
                 let particle = solution.node_to_particle.get(node).unwrap();
                 let ty = solution.node_types.get(node).unwrap();
-                Node(*particle, *node, *ty)
+                let cap = solution.node_capabilities.get(node).unwrap();
+                Node(*particle, *node, *cap, *ty)
             }),
             claims: make(&solution.claims, |(node, tag)| Claim(*node, *tag)),
             checks: make(&solution.checks, |(node, tag)| Check(*node, *tag)),
@@ -261,12 +278,14 @@ impl Ibis {
                     types,
                     subtypes,
                     less_private_than,
+                    capabilities,
                 },
             mut recipies, // Mutation required to move rather than copy the data.
         } = recipies;
         self.config.types.extend(types);
         self.config.subtypes.extend(subtypes);
         self.config.less_private_than.extend(less_private_than);
+        self.config.capabilities.extend(capabilities);
         self.recipies.extend(recipies.drain(0..));
     }
 
@@ -288,6 +307,12 @@ impl Ibis {
                 .iter()
                 .map(|lpt| lpt.to_claim()),
         );
+        runtime.extend(
+            self.config
+                .capabilities
+                .iter()
+                .map(|capability| capability.to_claim()),
+        );
         runtime.extend(self.recipies.iter().map(|recipe| {
             // Convert to a solution (via id)
             SolutionInput(Sol::from(recipe))
@@ -303,6 +328,7 @@ impl Ibis {
             solutions,
             mut types,
             mut less_private_than,
+            mut capabilities,
             mut subtypes,
             _nodes,
             _claims,
@@ -310,6 +336,7 @@ impl Ibis {
             has_tags,
             leaks,
             type_errors,
+            capability_errors,
         ) = runtime.run();
         let all_recipies = solutions.iter().map(|Solution(s)| {
             Recipe::from_sol(*s).with_feedback(Feedback {
@@ -321,6 +348,11 @@ impl Ibis {
                 type_errors: type_errors
                     .iter()
                     .filter(|TypeError(type_s, _, _, _, _)| type_s == s)
+                    .cloned()
+                    .collect(),
+                capability_errors: capability_errors
+                    .iter()
+                    .filter(|CapabilityError(cap_s, _, _, _, _)| cap_s == s)
                     .cloned()
                     .collect(),
                 has_tags: has_tags
@@ -336,7 +368,7 @@ impl Ibis {
                 (recipe
                     .feedback
                     .as_ref()
-                    .map(|f| f.leaks.len() + f.type_errors.len() == 0))
+                    .map(|f| f.leaks.len() + f.type_errors.len() + f.capability_errors.len() == 0))
                 .unwrap_or(false)
             })
             .collect();
@@ -368,6 +400,7 @@ impl Ibis {
                 types: types.drain().collect(),
                 subtypes: subtypes.drain().collect(),
                 less_private_than: less_private_than.drain().collect(),
+                capabilities: capabilities.drain().collect(),
             },
             recipies,
         }
