@@ -29,7 +29,7 @@ pub use solution_id::Sol;
 pub use util::*;
 
 #[macro_export]
-macro_rules! ent_by_name {
+macro_rules! ent {
     ($fmt: expr) => {
         Ent::by_name($fmt)
     };
@@ -39,24 +39,14 @@ macro_rules! ent_by_name {
 }
 
 #[macro_export]
-macro_rules! ent {
-    ($fmt: expr) => {
-        crate::ent_by_name!($fmt)
-    };
-    ($fmt: expr, $($names: expr),*) => {
-        ent_by_name!($fmt, $( $names.name(), )*)
-    }
-}
-
-#[macro_export]
 macro_rules! apply {
     ($type: expr) => {
-        crate::ent_by_name!($type)
+        crate::ent!($type)
     };
     ($type: expr, $($arg: expr),*) => {
         {
             let args: Vec<String> = vec![$($arg.name(),)*];
-            crate::ent_by_name!("{}({})", $type, args.join(", "))
+            crate::ent!("{}({})", $type, args.join(", "))
         }
     };
 }
