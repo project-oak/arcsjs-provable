@@ -5,29 +5,16 @@
 // https://developers.google.com/open-source/licenses/bsd
 
 #[cfg(feature = "dot")]
-use ibis::dot::ToDot;
-use ibis::recipies::Ibis;
+use ibis::best_solutions_to_dot;
 use ibis::IbisError;
 use std::io::Read;
 
 fn main() -> Result<(), IbisError> {
-    let mut runtime = Ibis::new();
-
     let mut data = String::new();
     std::io::stdin()
         .read_to_string(&mut data)
         .expect("IO Error, reading stdin");
-    // TODO: Use ibis::Error and https://serde.rs/error-handling.html instead of expect.
-    let recipies: Ibis = serde_json::from_str(&data).expect("JSON Error?");
-
-    runtime.add_recipies(recipies);
-
-    eprintln!("Preparing graph...");
-    let solutions = runtime.extract_best_solutions();
-    #[cfg(feature = "dot")]
-    println!("{}", solutions.to_dot());
-    #[cfg(not(feature = "dot"))]
-    println!("{:?}", solutions);
+    println!("{}", best_solutions_to_dot(&data));
     Ok(())
 }
 

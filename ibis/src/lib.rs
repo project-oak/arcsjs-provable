@@ -3,6 +3,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file or at
 // https://developers.google.com/open-source/licenses/bsd
+#![allow(clippy::unused_unit)] // rustwasm/wasm-bindgen#2774 awaiting next `wasm-bindgen` release
 
 mod context;
 mod ent;
@@ -82,4 +83,66 @@ impl<T: ToInput + Clone> ToInput for &T {
     fn to_claim(self) -> Self::U {
         self.clone().to_claim()
     }
+}
+
+pub fn get_solutions(data: &str, loss: Option<usize>) -> Ibis {
+    let mut runtime = Ibis::new();
+
+    // TODO: Use ibis::Error and https://serde.rs/error-handling.html instead of expect.
+    let recipies: Ibis = serde_json::from_str(data).expect("JSON Error?");
+    runtime.add_recipies(recipies);
+
+    eprintln!("Preparing graph...");
+    runtime.extract_solutions_with_loss(loss)
+}
+
+#[cfg(feature = "wasm")]
+pub mod wasm {
+    use wasm_bindgen::prelude::*;
+
+    #[wasm_bindgen]
+    pub fn best_solutions_to_json(data: &str) -> String {
+        super::best_solutions_to_json(data)
+    }
+
+    #[wasm_bindgen]
+    pub fn all_solutions_to_json(data: &str) -> String {
+        super::all_solutions_to_json(data)
+    }
+
+    #[cfg(feature = "dot")]
+    #[wasm_bindgen]
+    pub fn best_solutions_to_dot(data: &str) -> String {
+        super::best_solutions_to_dot(data)
+    }
+
+    #[cfg(feature = "dot")]
+    #[wasm_bindgen]
+    pub fn all_solutions_to_dot(data: &str) -> String {
+        super::all_solutions_to_dot(data)
+    }
+}
+
+pub fn best_solutions_to_json(data: &str) -> String {
+    let solutions = get_solutions(data, Some(0));
+    serde_json::to_string(&solutions).expect("Couldn't serialize Ibis output")
+}
+
+pub fn all_solutions_to_json(data: &str) -> String {
+    let solutions = get_solutions(data, None);
+    serde_json::to_string(&solutions).expect("Couldn't serialize Ibis output")
+}
+
+#[cfg(feature = "dot")]
+pub fn best_solutions_to_dot(data: &str) -> String {
+    use dot::ToDot;
+    let solutions = get_solutions(data, Some(0));
+    solutions.to_dot()
+}
+
+#[cfg(feature = "dot")]
+pub fn all_solutions_to_dot(data: &str) -> String {
+    use dot::ToDot;
+    let solutions = get_solutions(data, None);
+    solutions.to_dot()
 }

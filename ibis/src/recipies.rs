@@ -339,14 +339,6 @@ impl Ibis {
         self.recipies.extend(recipies.drain(0..));
     }
 
-    pub fn extract_solutions(self) -> Ibis {
-        self.extract_solutions_with_loss(None)
-    }
-
-    pub fn extract_best_solutions(self) -> Ibis {
-        self.extract_solutions_with_loss(Some(0))
-    }
-
     pub fn extract_solutions_with_loss(self, loss: Option<usize>) -> Ibis {
         let mut runtime = Crepe::new();
         runtime.extend(self.config.types.iter().map(|ty| ty.to_claim()));

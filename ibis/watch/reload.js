@@ -1,5 +1,7 @@
 let last = "";
 
+init('../pkg/ibis_bg.wasm');
+
 async function loadDot() {
     const dot = await fetch(`last.dot?d=${Date.now()}`);
     const dotContent = await dot.text();
@@ -9,11 +11,14 @@ async function loadDot() {
     if (last != dotContent) {
         last = dotContent;
         // update it
+        const demo = await fetch(`../demo.json?d=${Date.now()}`);
+        console.log(best_solutions_to_json(await demo.text()));
         document.getElementById('dotContent').innerText = last;
         dotImage.innerHTML = dotSvgContent;
     }
 }
 
+console.log('starting');
 //refresh info every 1 second//
 loadDot();
 setInterval('loadDot()', 1000);

@@ -4,19 +4,15 @@
 // license that can be found in the LICENSE file or at
 // https://developers.google.com/open-source/licenses/bsd
 
-use ibis::{Ibis, Recipe};
+use ibis::{get_solutions, Ibis, Recipe};
 
 fn map_solutions_with_edge_loss<U>(
     data: &str,
     loss: Option<usize>,
     on_result: &dyn Fn(&Recipe) -> U,
 ) -> Vec<U> {
-    let mut runtime = Ibis::new();
-    let recipies: Ibis = serde_json::from_str(data).expect("JSON Error?");
-    runtime.add_recipies(recipies);
-
-    runtime
-        .extract_solutions_with_loss(loss)
+    let recipies: Ibis = get_solutions(data, loss);
+    recipies
         .recipies
         .iter()
         .map(|recipe| on_result(recipe))
