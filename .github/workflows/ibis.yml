@@ -27,32 +27,6 @@ jobs:
     - name: Run ignored tests
       run: cargo test --locked --release --verbose -- --ignored
 
-  test_wasm:
-    name: Test using ${{ matrix.os }} and WASM
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-latest] #, windows-latest]
-    steps:
-    - uses: actions/checkout@v1
-    - uses: actions/cache@v2
-      with:
-        path: |
-          ~/.cargo/registry
-          ~/.cargo/git
-          target
-        key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-    - name: Set up PATH for wasmtime # WARNING: Posix specific
-      run: echo "${HOME}/.wasmtime/bin" >> $GITHUB_PATH
-    - name: Install wasi toolchain
-      run: cargo install cargo-wasi
-    - name: Install wasmtime
-      run: curl https://wasmtime.dev/install.sh -sSf | bash
-    - name: Run tests with WASI
-      run: cargo wasi test --locked --release --verbose
-    - name: Run ignored tests with WASI
-      run: cargo wasi test --locked --release --verbose -- --ignored
-
   build:
     name: Build using ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
