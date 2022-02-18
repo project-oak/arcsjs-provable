@@ -3,6 +3,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file or at
 // https://developers.google.com/open-source/licenses/bsd
+#![allow(clippy::unused_unit)] // rustwasm/wasm-bindgen#2774 awaiting next `wasm-bindgen` release
 
 mod context;
 mod ent;
@@ -96,7 +97,7 @@ fn get_solutions(data: &str, loss: Option<usize>) -> Ibis {
 }
 
 #[cfg(feature = "wasm")]
-mod wasm {
+pub mod wasm {
     use wasm_bindgen::prelude::*;
 
     #[wasm_bindgen]
