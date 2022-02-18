@@ -85,7 +85,7 @@ impl<T: ToInput + Clone> ToInput for &T {
     }
 }
 
-fn get_solutions(data: &str, loss: Option<usize>) -> Ibis {
+pub fn get_solutions(data: &str, loss: Option<usize>) -> Ibis {
     let mut runtime = Ibis::new();
 
     // TODO: Use ibis::Error and https://serde.rs/error-handling.html instead of expect.
