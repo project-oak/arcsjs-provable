@@ -11,7 +11,7 @@ crate-type = ["cdylib", "rlib"]
 # rlib is for native
 
 [features]
-default = [ "dot" ]
+default = [ "dot", "console_error_panic_hook", "wasm" ]
 ancestors = [] # Support the tracking of ancestor solutions
 dot = [] # Support the generation of dot graphs (for debugging)
 wasm = [ "wasm-bindgen" ] # Support wasm-bindgen API
@@ -25,6 +25,7 @@ ibis_macros = { package = "arcsjs_ibis_macros", path = "./ibis_macros" }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 wasm-bindgen = { version = "0.2.79", optional = true }
+console_error_panic_hook = { version = "0.1.1", optional = true }
 
 [dev_dependencies]
 pretty_assertions = "1.0.0"

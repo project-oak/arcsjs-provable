@@ -88,11 +88,54 @@ fn get_solutions(data: &str, loss: Option<usize>) -> Ibis {
     let mut runtime = Ibis::new();
 
     // TODO: Use ibis::Error and https://serde.rs/error-handling.html instead of expect.
-    let recipies: Ibis = serde_json::from_str(&data).expect("JSON Error?");
+    let recipies: Ibis = serde_json::from_str(data).expect("JSON Error?");
     runtime.add_recipies(recipies);
 
     eprintln!("Preparing graph...");
     runtime.extract_solutions_with_loss(loss)
+}
+
+#[cfg(feature = "wasm")]
+mod wasm {
+    use wasm_bindgen::prelude::*;
+
+    pub fn set_panic_hook() {
+        // When the `console_error_panic_hook` feature is enabled, we can call the
+        // `set_panic_hook` function at least once during initialization, and then
+        // we will get better error messages if our code ever panics.
+        //
+        // For more details see
+        // https://github.com/rustwasm/console_error_panic_hook#readme
+        #[cfg(feature = "console_error_panic_hook")]
+        console_error_panic_hook::set_once();
+    }
+
+    #[wasm_bindgen]
+    pub fn test(data: &str) -> String {
+        format!("INPUT WAS: {}", data)
+    }
+
+    #[wasm_bindgen]
+    pub fn best_solutions_to_json(data: &str) -> String {
+        super::best_solutions_to_json(data)
+    }
+
+    #[wasm_bindgen]
+    pub fn all_solutions_to_json(data: &str) -> String {
+        super::all_solutions_to_json(data)
+    }
+
+    #[cfg(feature = "dot")]
+    #[wasm_bindgen]
+    pub fn best_solutions_to_dot(data: &str) -> String {
+        super::best_solutions_to_dot(data)
+    }
+
+    #[cfg(feature = "dot")]
+    #[wasm_bindgen]
+    pub fn all_solutions_to_dot(data: &str) -> String {
+        super::all_solutions_to_dot(data)
+    }
 }
 
 pub fn best_solutions_to_json(data: &str) -> String {
