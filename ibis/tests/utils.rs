@@ -4,14 +4,14 @@
 // license that can be found in the LICENSE file or at
 // https://developers.google.com/open-source/licenses/bsd
 
-use ibis::{solutions, Ibis, Recipe};
+use ibis::{get_solutions, Ibis, Recipe};
 
 fn map_solutions_with_edge_loss<U>(
     data: &str,
     loss: Option<usize>,
     on_result: &dyn Fn(&Recipe) -> U,
 ) -> Vec<U> {
-    let recipies: Ibis = solutions(data, loss);
+    let recipies: Ibis = get_solutions(data, loss);
     recipies
         .recipies
         .iter()
