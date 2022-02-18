@@ -99,7 +99,7 @@ fn get_solutions(data: &str, loss: Option<usize>) -> Ibis {
 mod wasm {
     use wasm_bindgen::prelude::*;
 
-    pub fn set_panic_hook() {
+    fn set_panic_hook() {
         // When the `console_error_panic_hook` feature is enabled, we can call the
         // `set_panic_hook` function at least once during initialization, and then
         // we will get better error messages if our code ever panics.
@@ -111,29 +111,28 @@ mod wasm {
     }
 
     #[wasm_bindgen]
-    pub fn test(data: &str) -> String {
-        format!("INPUT WAS: {}", data)
-    }
-
-    #[wasm_bindgen]
     pub fn best_solutions_to_json(data: &str) -> String {
+        set_panic_hook();
         super::best_solutions_to_json(data)
     }
 
     #[wasm_bindgen]
     pub fn all_solutions_to_json(data: &str) -> String {
+        set_panic_hook();
         super::all_solutions_to_json(data)
     }
 
     #[cfg(feature = "dot")]
     #[wasm_bindgen]
     pub fn best_solutions_to_dot(data: &str) -> String {
+        set_panic_hook();
         super::best_solutions_to_dot(data)
     }
 
     #[cfg(feature = "dot")]
     #[wasm_bindgen]
     pub fn all_solutions_to_dot(data: &str) -> String {
+        set_panic_hook();
         super::all_solutions_to_dot(data)
     }
 }
