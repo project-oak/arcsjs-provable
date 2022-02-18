@@ -21,5 +21,4 @@ async function loadDot() {
 console.log('starting');
 //refresh info every 1 second//
 loadDot();
-set_panic_hook();
 setInterval('loadDot()', 1000);

@@ -28,7 +28,9 @@ always_render() {
 }
 
 spawn_watcher () {
-  cargo watch -q -s "cargo wasi build; cat demo.json | wasmtime ./target/wasm32-wasi/release/main.wasi.wasm" | always_render &
+  # We rebuild the wasm package
+  # Then we reset the ibis.js output (as it needs some tweets to work in the browser without webpack
+  cargo watch -q -s "wasm-pack build --target web --release; git checkout pkg/ibis.js" | always_render &
   WATCH_PID="$!"
 }
 
