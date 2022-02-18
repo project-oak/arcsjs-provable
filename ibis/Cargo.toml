@@ -6,11 +6,15 @@ edition = "2021"
 [lib]
 name = "ibis"
 path = "src/lib.rs"
+crate-type = ["cdylib", "rlib"]
+# cdylib is for wasm
+# rlib is for native
 
 [features]
 default = [ "dot" ]
 ancestors = [] # Support the tracking of ancestor solutions
 dot = [] # Support the generation of dot graphs (for debugging)
+wasm = [ "wasm-bindgen" ] # Support wasm-bindgen API
 
 [dependencies]
 nom = "7.1.0"
@@ -20,6 +24,7 @@ lazy_static = "1.4.0"
 ibis_macros = { package = "arcsjs_ibis_macros", path = "./ibis_macros" }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
+wasm-bindgen = { version = "0.2.79", optional = true }
 
 [dev_dependencies]
 pretty_assertions = "1.0.0"

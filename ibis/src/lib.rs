@@ -83,3 +83,38 @@ impl<T: ToInput + Clone> ToInput for &T {
         self.clone().to_claim()
     }
 }
+
+fn get_solutions(data: &str, loss: Option<usize>) -> Ibis {
+    let mut runtime = Ibis::new();
+
+    // TODO: Use ibis::Error and https://serde.rs/error-handling.html instead of expect.
+    let recipies: Ibis = serde_json::from_str(&data).expect("JSON Error?");
+    runtime.add_recipies(recipies);
+
+    eprintln!("Preparing graph...");
+    runtime.extract_solutions_with_loss(loss)
+}
+
+pub fn best_solutions_to_json(data: &str) -> String {
+    let solutions = get_solutions(data, Some(0));
+    serde_json::to_string(&solutions).expect("Couldn't serialize Ibis output")
+}
+
+pub fn all_solutions_to_json(data: &str) -> String {
+    let solutions = get_solutions(data, None);
+    serde_json::to_string(&solutions).expect("Couldn't serialize Ibis output")
+}
+
+#[cfg(feature = "dot")]
+pub fn best_solutions_to_dot(data: &str) -> String {
+    use dot::ToDot;
+    let solutions = get_solutions(data, Some(0));
+    solutions.to_dot()
+}
+
+#[cfg(feature = "dot")]
+pub fn all_solutions_to_dot(data: &str) -> String {
+    use dot::ToDot;
+    let solutions = get_solutions(data, None);
+    solutions.to_dot()
+}
