@@ -150,7 +150,7 @@ fn is_default<T: Default + Eq>(v: &T) -> bool {
 #[derive(Default, Debug, Serialize, Deserialize, Eq, PartialEq)]
 #[serde(deny_unknown_fields)]
 pub struct Config {
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "is_default")]
     pub metadata: serde_json::Value,
     #[serde(default, skip_serializing_if = "is_default")]
     pub types: Vec<KnownType>,
@@ -191,7 +191,7 @@ pub struct Ibis {
 #[derive(Default, Debug, Serialize, Deserialize, Eq, PartialEq)]
 #[serde(deny_unknown_fields)]
 pub struct Recipe {
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "is_default")]
     pub metadata: serde_json::Value,
     #[serde(skip, default)]
     pub id: Option<Sol>,

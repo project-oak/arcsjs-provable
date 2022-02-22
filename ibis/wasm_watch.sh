@@ -30,12 +30,12 @@ always_render() {
 spawn_watcher () {
   # We rebuild the wasm package
   # Then we reset the ibis.js output (as it needs some tweets to work in the browser without webpack
-  cargo watch -q -s "wasm-pack build --target web --release; git checkout pkg/ibis.js" | always_render &
+  cargo watch -q -s "wasm-pack build --target web --profiling" --ignore "playground/*" --ignore "watch/*" | always_render &
   WATCH_PID="$!"
 }
 
 server () {
-  python3 -m http.server &> ./watch/http.server.log
+  npx http-server . -p 8000 &> ./watch/http.server.log
 }
 
 clear

@@ -1,8 +1,8 @@
 let last = "";
 
-init('../pkg/ibis_bg.wasm');
-
 async function loadDot() {
+    init('../pkg/ibis_bg.wasm');
+
     const dot = await fetch(`last.dot?d=${Date.now()}`);
     const dotContent = await dot.text();
     const dotSvg = await fetch(`last.svg?d=${Date.now()}`);
