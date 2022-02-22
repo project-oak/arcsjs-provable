@@ -11,9 +11,9 @@ fn map_solutions_with_edge_loss<U>(
     loss: Option<usize>,
     on_result: &dyn Fn(&Recipe) -> U,
 ) -> Vec<U> {
-    let recipies: Ibis = get_solutions(data, loss);
-    recipies
-        .recipies
+    let recipes: Ibis = get_solutions(data, loss);
+    recipes
+        .recipes
         .iter()
         .map(|recipe| on_result(recipe))
         .collect()

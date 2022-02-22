@@ -5,7 +5,7 @@
 // https://developers.google.com/open-source/licenses/bsd
 
 use crate::dot::{DotGraph, ToDot};
-use crate::recipies::{Check, Claim, HasTag, Ibis, Leak, Node, Recipe, TypeError};
+use crate::recipes::{Check, Claim, HasTag, Ibis, Leak, Node, Recipe, TypeError};
 use crate::Sol;
 use std::collections::HashMap;
 
@@ -14,11 +14,11 @@ impl ToDot for Ibis {
         let mut g = DotGraph::default();
 
         let solutions = if true {
-            self.recipies.iter().collect()
+            self.recipes.iter().collect()
         } else {
             let mut max = 0;
             let mut best = None;
-            for s in &self.recipies {
+            for s in &self.recipes {
                 let l = s.edges.len();
                 if l > max {
                     best = Some(s);

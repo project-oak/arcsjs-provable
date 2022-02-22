@@ -21,7 +21,7 @@ fn static_subtyping_socretes_is_mortal() {
     ["socretes", "man"],
     ["man", "mortal"]
   ],
-  "recipies": [
+  "recipes": [
     {
       "nodes": [
         ["p_a", "socretes", "any", "socretes"],

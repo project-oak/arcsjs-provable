@@ -3,7 +3,7 @@
     "author": "jopra@google.com",
     "date": "03/02/2020"
   },
-  "recipies": [
+  "recipes": [
     {
       "edges": [
         ["a", "c"]

@@ -16,7 +16,7 @@ fn create_combinations() {
   "capabilities": [
     ["write", "read"]
   ],
-  "recipies": [
+  "recipes": [
     {
       "nodes": [
         ["p_a", "a", "write", "Unit"],
@@ -51,7 +51,7 @@ fn create_edges() {
   "capabilities": [
     ["any", "any"]
   ],
-  "recipies": [
+  "recipes": [
     {
       "nodes": [
         ["p_a", "a", "any", "Char"],
@@ -76,7 +76,7 @@ fn create_typed_edges() {
   "capabilities": [
     ["any", "any"]
   ],
-  "recipies": [
+  "recipes": [
     {
       "nodes": [
         ["p_a", "a", "any", "Char"],
@@ -109,7 +109,7 @@ fn create_all_directed_graphs_with_4_nodes() {
   "capabilities": [
     ["any", "any"]
   ],
-  "recipies": [
+  "recipes": [
     {
       "nodes": [
         ["p_a", "a", "any", "Char"],

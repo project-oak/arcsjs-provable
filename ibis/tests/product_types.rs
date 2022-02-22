@@ -16,7 +16,7 @@ fn a_product_is_a_subtype_of_its_arguments() {
   "capabilities": [
     ["any", "any"]
   ],
-  "recipies": [
+  "recipes": [
     {
       "nodes": [
         ["p_a", "a", "any", "ibis.ProductType(Man, Mortal)"],
@@ -43,7 +43,7 @@ fn a_type_is_a_subtype_of_products_of_its_super_types() {
     ["Man", "Mortal"],
     ["Man", "Human"]
   ],
-  "recipies": [
+  "recipes": [
     {
       "nodes": [
         ["p_a", "a", "any", "ibis.ProductType(Human, Mortal)"],
@@ -68,7 +68,7 @@ fn a_type_is_equal_to_the_product_of_it_and_its_super_types() {
   "subtypes": [
     ["Man", "Mortal"]
   ],
-  "recipies": [
+  "recipes": [
     {
       "nodes": [
         ["p_a", "a", "any", "ibis.ProductType(Man, Mortal)"],
@@ -90,7 +90,7 @@ fn product_of_products() {
   "capabilities": [
     ["any", "any"]
   ],
-  "recipies": [
+  "recipes": [
     {
       "nodes": [
         ["p_abc", "abc", "any", "ibis.ProductType(A, ibis.ProductType(B, C))"],

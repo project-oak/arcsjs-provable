@@ -83,7 +83,7 @@ function getStringFromWasm0(ptr, len) {
 * @param {string} data
 * @returns {string}
 */
-function best_solutions_to_json(data) {
+export function best_solutions_to_json(data) {
     try {
         const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
         var ptr0 = passStringToWasm0(data, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
@@ -102,7 +102,7 @@ function best_solutions_to_json(data) {
 * @param {string} data
 * @returns {string}
 */
-function all_solutions_to_json(data) {
+export function all_solutions_to_json(data) {
     try {
         const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
         var ptr0 = passStringToWasm0(data, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
@@ -121,7 +121,7 @@ function all_solutions_to_json(data) {
 * @param {string} data
 * @returns {string}
 */
-function best_solutions_to_dot(data) {
+export function best_solutions_to_dot(data) {
     try {
         const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
         var ptr0 = passStringToWasm0(data, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
@@ -140,7 +140,7 @@ function best_solutions_to_dot(data) {
 * @param {string} data
 * @returns {string}
 */
-function all_solutions_to_dot(data) {
+export function all_solutions_to_dot(data) {
     try {
         const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
         var ptr0 = passStringToWasm0(data, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
@@ -188,7 +188,7 @@ async function load(module, imports) {
 
 async function init(input) {
     if (typeof input === 'undefined') {
-        input = new URL('ibis_bg.wasm');
+        input = new URL('ibis_bg.wasm', import.meta.url);
     }
     const imports = {};
 
@@ -206,3 +206,6 @@ async function init(input) {
 
     return wasm;
 }
+
+export default init;
+

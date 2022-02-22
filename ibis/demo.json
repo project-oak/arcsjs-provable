@@ -16,7 +16,7 @@
   "less_private_than": [
     ["public", "private"]
   ],
-  "recipies": [
+  "recipes": [
     {
       "metadata": {
         "name": "demo"
