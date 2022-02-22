@@ -26,7 +26,7 @@ fn create_tagged_type_checked_graphs() {
   "less_private_than": [
     ["public", "private"]
   ],
-  "recipies": [
+  "recipes": [
     {
       "trusted_to_remove_tag": [
         ["b", "private"]

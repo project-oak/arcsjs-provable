@@ -18,13 +18,13 @@ mod util;
 pub mod dot;
 #[cfg(feature = "dot")]
 pub mod recipe_to_dot;
-pub mod recipies;
+pub mod recipes;
 extern crate ibis_macros;
 
 pub use ent::Ent;
 pub use error::IbisError;
 pub use ibis_macros::*;
-pub use recipies::*;
+pub use recipes::*;
 pub use solution_data::SolutionData;
 pub use solution_id::Sol;
 pub use util::*;
@@ -89,8 +89,8 @@ pub fn get_solutions(data: &str, loss: Option<usize>) -> Ibis {
     let mut runtime = Ibis::new();
 
     // TODO: Use ibis::Error and https://serde.rs/error-handling.html instead of expect.
-    let recipies: Ibis = serde_json::from_str(data).expect("JSON Error?");
-    runtime.add_recipies(recipies);
+    let recipes: Ibis = serde_json::from_str(data).expect("JSON Error?");
+    runtime.add_recipes(recipes);
 
     eprintln!("Preparing graph...");
     runtime.extract_solutions_with_loss(loss)

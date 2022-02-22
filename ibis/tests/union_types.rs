@@ -16,7 +16,7 @@ fn a_union_is_a_subtype_of_its_arguments() {
   "capabilities": [
     ["any", "any"]
   ],
-  "recipies": [
+  "recipes": [
     {
       "nodes": [
         ["p_a", "a", "any", "ibis.UnionType(Man, Dog)"],
@@ -43,7 +43,7 @@ fn a_union_is_a_subtype_of_its_arguments_shared_super_types() {
     ["TallMan", "Man"],
     ["ShortMan", "Man"]
   ],
-  "recipies": [
+  "recipes": [
     {
       "nodes": [
         ["p_a", "a", "any", "ibis.UnionType(TallMan, ShortMan)"],
@@ -68,7 +68,7 @@ fn a_type_is_equal_to_the_union_of_it_and_its_super_types() {
   "subtypes": [
     ["Man", "Mortal"]
   ],
-  "recipies": [
+  "recipes": [
     {
       "nodes": [
         ["p_a", "a", "any", "ibis.UnionType(Man, Mortal)"],
@@ -90,7 +90,7 @@ fn union_of_unions() {
   "capabilities": [
     ["any", "any"]
   ],
-  "recipies": [
+  "recipes": [
     {
       "nodes": [
         ["p_abc", "abc", "any", "ibis.UnionType(A, ibis.UnionType(B, C))"],

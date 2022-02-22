@@ -135,7 +135,7 @@ ibis! {
         (s.has_edge(from, to)),
         !Capability(from_capability, to_capability); // Check failed, from writes an incompatible type into to
 
-    KnownType(x) <- Node(_par, _node, _cap, x); // Infer types that are used in the recipies.
+    KnownType(x) <- Node(_par, _node, _cap, x); // Infer types that are used in the recipes.
     KnownType(x) <- Subtype(x, _);
     KnownType(y) <- Subtype(_, y);
     Subtype(x, ent!("ibis.UniversalType")) <- KnownType(x); // Create a universal type.
@@ -175,7 +175,7 @@ pub struct Feedback {
     pub has_tags: Vec<HasTag>,
 }
 
-fn starting_recipies() -> Vec<Recipe> {
+fn starting_recipes() -> Vec<Recipe> {
     vec![Recipe::default()]
 }
 
@@ -184,8 +184,8 @@ fn starting_recipies() -> Vec<Recipe> {
 pub struct Ibis {
     #[serde(flatten)]
     pub config: Config,
-    #[serde(default = "starting_recipies", skip_serializing_if = "is_default")]
-    pub recipies: Vec<Recipe>,
+    #[serde(default = "starting_recipes", skip_serializing_if = "is_default")]
+    pub recipes: Vec<Recipe>,
 }
 
 #[derive(Default, Debug, Serialize, Deserialize, Eq, PartialEq)]
@@ -320,7 +320,7 @@ impl Ibis {
         Ibis::default() // All the accumulated recipe info
     }
 
-    pub fn add_recipies(&mut self, recipies: Ibis) {
+    pub fn add_recipes(&mut self, recipes: Ibis) {
         let Ibis {
             config:
                 Config {
@@ -330,13 +330,13 @@ impl Ibis {
                     less_private_than,
                     capabilities,
                 },
-            mut recipies, // Mutation required to move rather than copy the data.
-        } = recipies;
+            mut recipes, // Mutation required to move rather than copy the data.
+        } = recipes;
         self.config.types.extend(types);
         self.config.subtypes.extend(subtypes);
         self.config.less_private_than.extend(less_private_than);
         self.config.capabilities.extend(capabilities);
-        self.recipies.extend(recipies.drain(0..));
+        self.recipes.extend(recipes.drain(0..));
     }
 
     pub fn extract_solutions_with_loss(self, loss: Option<usize>) -> Ibis {
@@ -355,12 +355,12 @@ impl Ibis {
                 .iter()
                 .map(|capability| capability.to_claim()),
         );
-        runtime.extend(self.recipies.iter().map(|recipe| {
+        runtime.extend(self.recipes.iter().map(|recipe| {
             // Convert to a solution (via id)
             SolutionInput(Sol::from(recipe))
         }));
 
-        for recipe in self.recipies {
+        for recipe in self.recipes {
             runtime.extend(recipe.checks.iter().map(|check| check.to_claim()));
             runtime.extend(recipe.claims.iter().map(|claim| claim.to_claim()));
             runtime.extend(recipe.nodes.iter().map(|node| node.to_claim()));
@@ -380,7 +380,7 @@ impl Ibis {
             type_errors,
             capability_errors,
         ) = runtime.run();
-        let all_recipies = solutions.iter().map(|Solution(s)| {
+        let all_recipes = solutions.iter().map(|Solution(s)| {
             Recipe::from_sol(*s).with_feedback(Feedback {
                 leaks: leaks
                     .iter()
@@ -404,8 +404,8 @@ impl Ibis {
                     .collect(),
             })
         });
-        let all_recipies_len = all_recipies.len();
-        let mut recipies: Vec<Recipe> = all_recipies
+        let all_recipes_len = all_recipes.len();
+        let mut recipes: Vec<Recipe> = all_recipes
             .filter(|recipe| {
                 (recipe
                     .feedback
@@ -414,27 +414,27 @@ impl Ibis {
                 .unwrap_or(false)
             })
             .collect();
-        let recipies_len = recipies.len();
-        let recipies = if let Some(loss) = loss {
+        let recipes_len = recipes.len();
+        let recipes = if let Some(loss) = loss {
             let mut max = 0;
-            for r in &recipies {
+            for r in &recipes {
                 let l = r.edges.len();
                 if max < l {
                     max = l;
                 }
             }
-            recipies
+            recipes
                 .drain(0..)
                 .filter(|recipe| recipe.edges.len() >= max - loss)
                 .collect()
         } else {
-            recipies
+            recipes
         };
         eprintln!(
             "Selected {} of {} valid solutions. (Generated {} solutions)",
-            recipies.len(),
-            recipies_len,
-            all_recipies_len
+            recipes.len(),
+            recipes_len,
+            all_recipes_len
         );
         Ibis {
             config: Config {
@@ -444,7 +444,7 @@ impl Ibis {
                 less_private_than: less_private_than.drain().collect(),
                 capabilities: capabilities.drain().collect(),
             },
-            recipies,
+            recipes,
         }
     }
 }

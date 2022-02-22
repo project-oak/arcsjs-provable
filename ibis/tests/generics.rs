@@ -24,7 +24,7 @@ fn precomputed_subtypes() {
     ["List(Mortal)", "Iterable(Mortal)"],
     ["Iterable(Man)", "Iterable(Mortal)"]
   ],
-  "recipies": [
+  "recipes": [
     {
       "nodes": [
         ["p_a", "a", "any", "List(Man)"],
@@ -56,7 +56,7 @@ fn generics_are_not_necessarily_abstractable() {
     ["Iterable", "ibis.GenericType"],
     ["Iterable", "ibis.InductiveType"]
   ],
-  "recipies": [
+  "recipes": [
     {
       "nodes": [
         ["p_a", "a", "any", "List(Man)"],
@@ -84,7 +84,7 @@ fn dynamic_subtypes() {
     ["Iterable", "ibis.GenericType"],
     ["Iterable", "ibis.InductiveType"]
   ],
-  "recipies": [
+  "recipes": [
     {
       "nodes": [
         ["p_a", "a", "any", "List(Man)"],
@@ -117,7 +117,7 @@ fn all_subtype_the_universal_type() {
     ["Iterable", "ibis.GenericType"],
     ["Iterable", "ibis.InductiveType"]
   ],
-  "recipies": [
+  "recipes": [
     {
       "nodes": [
         ["p_a", "a", "any", "List(Man)"],
