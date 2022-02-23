@@ -1,0 +1,27 @@
+pre code {
+  background-color: #eee;
+  border: 1px solid #999;
+  display: block;
+  padding: 20px;
+}
+
+.input-area {
+  width: 100%;
+  height: 50%;
+}
+
+.flex-parent {
+  display: flex;
+}
+
+.flex-child {
+  flex: 1;
+  margin: 10px;
+  border: 2px solid;
+  width: 50%;
+  height: 100%;
+}
+
+.flex-child:first-child {
+  margin-right: 20px;
+}
