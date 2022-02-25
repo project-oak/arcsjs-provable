@@ -1,2 +1,4 @@
 watch/last.*
 *.log
+flamegraph.svg
+perf.data*

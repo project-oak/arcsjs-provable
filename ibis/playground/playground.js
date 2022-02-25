@@ -17,7 +17,8 @@ async function getDemoContent() {
 
 async function startup() {
     const input = document.getElementById('input');
-    input.addEventListener("change", loadDot);
+    const submit = document.getElementById('submit');
+    submit.addEventListener("click", loadDot);
 
     await Promise.all([loadIbis(), getDemoContent()]);
     await loadDot();

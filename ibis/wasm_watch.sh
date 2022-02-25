@@ -9,6 +9,7 @@
 _term() {
   echo "Caught SIGTERM signal: killing watchers"
   kill -TERM "$WATCH_PID" 2>/dev/null
+  kill -TERM "$SERVER_PID" 2>/dev/null
 }
 
 trap _term SIGTERM
@@ -36,6 +37,7 @@ spawn_watcher () {
 
 server () {
   npx http-server . -p 8000 &> ./watch/http.server.log
+  SERVER_PID="$!"
 }
 
 clear
@@ -43,3 +45,4 @@ spawn_watcher
 echo "open http://localhost:8000/watch to view the output"
 server
 wait "$WATCH_PID"
+wait "$SERVER_PID"
