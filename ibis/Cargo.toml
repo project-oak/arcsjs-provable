@@ -2,6 +2,9 @@
 name = "arcsjs-ibis"
 version = "0.1.0"
 edition = "2021"
+description = "Ibis - a knowledge engine for type checking asynchronously communicating modules"
+repository = "https://github.com/project-oak/arcsjs-provable"
+license = "See ../LICENSE"
 
 [lib]
 name = "ibis"
@@ -31,7 +34,7 @@ console_error_panic_hook = { version = "0.1.7", optional = true }
 pretty_assertions = "1.0.0"
 
 [profile.release]
-opt-level = 3
+opt-level = "z"
 lto = "fat"
 
 [package.metadata.wasm-pack.profile.release]
