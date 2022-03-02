@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 description = "Ibis - a knowledge engine for type checking asynchronously communicating modules"
 repository = "https://github.com/project-oak/arcsjs-provable"
-license = "See ../LICENSE"
+license = "See LICENSE"
 
 [lib]
 name = "ibis"
