@@ -14,7 +14,10 @@ fn main() -> Result<(), IbisError> {
     std::io::stdin()
         .read_to_string(&mut data)
         .expect("IO Error, reading stdin");
+    #[cfg(feature = "dot")]
     println!("{}", best_solutions_to_dot(&data));
+    #[cfg(not(feature = "dot"))]
+    println!("{}", best_solutions_to_json(&data));
     Ok(())
 }
 

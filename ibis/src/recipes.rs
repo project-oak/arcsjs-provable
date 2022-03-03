@@ -21,9 +21,9 @@ ibis! {
     Solution(parent.add_edge(from, to)) <-
         Capability(from_capability, to_capability),
         Node(from_particle, from, from_capability, from_type),
+        Subtype(from_type, to_type),
         Node(to_particle, to, to_capability, to_type),
         (from != to),
-        Subtype(from_type, to_type),
         Solution(parent),
         (!parent.has_edge(from, to));
 
@@ -31,9 +31,9 @@ ibis! {
         x,
         prod
     ) <-
-        KnownType(x),
         KnownType(prod),
         (is_a!(prod, ent!("ibis.ProductType"))),
+        KnownType(x),
         Subtype(x, arg!(prod, 0)),
         Subtype(x, arg!(prod, 1));
 
