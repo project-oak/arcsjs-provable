@@ -14,7 +14,9 @@ fn solve_demo(data: &str) {
 
 fn criterion_benchmark_solve_demo(c: &mut Criterion) {
     let data = include_str!("../demo.json");
-    c.bench_function("solve demo.json", |b| b.iter(|| solve_demo(black_box(data))));
+    c.bench_function("solve demo.json", |b| {
+        b.iter(|| solve_demo(black_box(data)))
+    });
 }
 
 criterion_group!(benches, criterion_benchmark_solve_demo);

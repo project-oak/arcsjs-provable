@@ -37,7 +37,7 @@ impl DotGraph {
 
         for node in self.nodes {
             // Work around for node containing Dot symbols.
-            let node = node.replace("{", "\\{").replace("}", "\\}");
+            let node = node.replace('{', "\\{").replace('}', "\\}");
             items.push(node + ";");
         }
 
