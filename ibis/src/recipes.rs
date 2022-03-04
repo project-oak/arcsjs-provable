@@ -104,11 +104,11 @@ ibis! {
         KnownType(apply!(y_generic, y_arg));
 
     HasTag(s, n, n, tag) <- Solution(s), Claim(n, tag);
-    HasTag(s, source, down, tag) <- // Propagate tags 'downstream'
-        Node(_down_particle, down, _, _),
+    HasTag(s, source, *down, tag) <- // Propagate tags 'downstream'
         HasTag(s, source, curr, tag),
-        !TrustedToRemoveTag(down, tag),
-        (s.has_edge(curr, down));
+        for (up, down) in &s.solution().edges,
+        (*up == curr),
+        !TrustedToRemoveTag(*down, tag);
 
     HasTag(s, source, down, tag) <- // Propagate tags 'across stream' (i.e. inside a particle)
         HasTag(s, source, curr, tag),
