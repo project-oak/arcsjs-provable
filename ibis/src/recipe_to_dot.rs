@@ -5,7 +5,9 @@
 // https://developers.google.com/open-source/licenses/bsd
 
 use crate::dot::{DotGraph, ToDot};
-use crate::recipes::{Check, Claim, HasTag, Ibis, Leak, Node, TrustedToRemoveTag, Recipe, TypeError};
+use crate::recipes::{
+    Check, Claim, HasTag, Ibis, Leak, Node, Recipe, TrustedToRemoveTag, TypeError,
+};
 use crate::Sol;
 use std::collections::HashMap;
 

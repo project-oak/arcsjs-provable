@@ -9,7 +9,8 @@ use std::collections::BTreeSet;
 
 #[derive(Clone, PartialEq, Eq, Ord, PartialOrd, Hash, Default)]
 pub struct SolutionData {
-    pub edges: BTreeSet<(Ent, Ent)>, // from, to
+    // from, to
+    pub edges: BTreeSet<(Ent, Ent)>,
     // TODO: Instances of: pub particle_instance: BTreeSet<(Ent, Ent)>, // from, to
 }
 

@@ -299,14 +299,17 @@ impl Ibis {
             runtime.extend(recipe.checks.iter().map(|check| check.to_claim()));
             runtime.extend(recipe.claims.iter().map(|claim| claim.to_claim()));
             runtime.extend(recipe.nodes.iter().map(|node| node.to_claim()));
-            runtime.extend(recipe.trusted_to_remove_tag.iter().map(|trusted| trusted.to_claim()));
+            runtime.extend(
+                recipe
+                    .trusted_to_remove_tag
+                    .iter()
+                    .map(|trusted| trusted.to_claim()),
+            );
             // Add necessary data to this module and add a 'new solution'.
             let data = SolutionData {
                 edges: make(&recipe.edges, Clone::clone),
             };
-            runtime.extend(vec![SolutionInput(
-                Sol::new_blocking(data)
-            )]);
+            runtime.extend(vec![SolutionInput(Sol::new_blocking(data))]);
         }
 
         let (
