@@ -236,6 +236,15 @@ impl Recipe {
     }
 }
 
+impl From<&Recipe> for Sol {
+    fn from(recipe: &Recipe) -> Self {
+        let data = SolutionData {
+            edges: make(&recipe.edges, Clone::clone),
+        };
+        Sol::new_blocking(data)
+    }
+}
+
 impl From<Sol> for Recipe {
     fn from(sol: Sol) -> Self {
         let solution = sol.solution();
@@ -306,10 +315,8 @@ impl Ibis {
                     .map(|trusted| trusted.to_claim()),
             );
             // Add necessary data to this module and add a 'new solution'.
-            let data = SolutionData {
-                edges: make(&recipe.edges, Clone::clone),
-            };
-            runtime.extend(vec![SolutionInput(Sol::new_blocking(data))]);
+            let sol = Sol::from(&recipe);
+            runtime.extend(vec![SolutionInput(sol)]);
         }
 
         let (
