@@ -11,6 +11,7 @@ ibis! {
     Node(Ent, Ent, Ent, Ent); // particle-identifier, identifier, capability, type
     Claim(Ent, Ent); // identifier, tag
     Check(Ent, Ent); // identifier, tag
+    TrustedToRemoveTag(Ent, Ent); // node, tag
 
     // Feedback
     HasTag(Sol, Ent, Ent, Ent); // solution, source node, node with tag, tag
@@ -24,8 +25,7 @@ ibis! {
         Subtype(from_type, to_type),
         Node(to_particle, to, to_capability, to_type),
         (from != to),
-        Solution(parent),
-        (!parent.has_edge(from, to));
+        Solution(parent);
 
     Subtype(
         x,
@@ -108,13 +108,13 @@ ibis! {
         HasTag(s, source, curr, tag),
         Node(_down_particle, down, _, _),
         (s.has_edge(curr, down)),
-        (!s.is_trusted_to_remove_tag(down, tag));
+        !TrustedToRemoveTag(down, tag);
 
     HasTag(s, source, down, tag) <- // Propagate tags 'across stream' (i.e. inside a particle)
         HasTag(s, source, curr, tag),
         Node(particle, curr, _, _),
         Node(particle, down, _, _),
-        (!s.is_trusted_to_remove_tag(down, tag));
+        !TrustedToRemoveTag(down, tag);
 
     Leak(s, n, t1, source, t2) <-
         Check(n, t1),
@@ -205,7 +205,7 @@ pub struct Recipe {
     #[serde(default, skip_serializing_if = "is_default")]
     pub checks: Vec<Check>,
     #[serde(default, skip_serializing_if = "is_default")]
-    pub trusted_to_remove_tag: Vec<(Ent, Ent)>,
+    pub trusted_to_remove_tag: Vec<TrustedToRemoveTag>,
     #[serde(default, skip_serializing_if = "is_default")]
     pub edges: Vec<(Ent, Ent)>,
     #[cfg(feature = "ancestors")]
@@ -222,27 +222,10 @@ impl Recipe {
             id: Some(sol),
             feedback: None,
             metadata: serde_json::Value::Null,
-            nodes: solution
-                .nodes
-                .iter()
-                .map(|node| {
-                    let particle = solution.node_to_particle.get(node).unwrap();
-                    let ty = solution.node_types.get(node).unwrap();
-                    let cap = solution.node_capabilities.get(node).unwrap();
-                    Node(*particle, *node, *cap, *ty)
-                })
-                .collect(),
-            claims: solution
-                .claims
-                .iter()
-                .map(|(node, tag)| Claim(*node, *tag))
-                .collect(),
-            checks: solution
-                .checks
-                .iter()
-                .map(|(node, tag)| Check(*node, *tag))
-                .collect(),
-            trusted_to_remove_tag: solution.trusted_to_remove_tag.iter().cloned().collect(),
+            nodes: vec![],
+            claims: vec![],
+            checks: vec![],
+            trusted_to_remove_tag: vec![],
             edges: solution.edges.iter().cloned().collect(),
         }
     }
@@ -253,36 +236,6 @@ impl Recipe {
     }
 }
 
-impl From<&Recipe> for Sol {
-    fn from(recipe: &Recipe) -> Self {
-        // Convert the recipe to its 'solution data'
-        let solution = SolutionData::from(recipe);
-        // Get an id to represent that.
-        Sol::new_blocking(solution)
-    }
-}
-
-impl From<&Recipe> for SolutionData {
-    fn from(recipe: &Recipe) -> Self {
-        Self {
-            edges: make(&recipe.edges, Clone::clone),
-            checks: make(&recipe.checks, |Check(node, tag)| (*node, *tag)),
-            claims: make(&recipe.claims, |Claim(node, tag)| (*node, *tag)),
-            node_to_particle: make(&recipe.nodes, |Node(particle, node, _cap, _ty)| {
-                (*node, *particle)
-            }),
-            node_types: make(&recipe.nodes, |Node(_particle, node, _cap, ty)| {
-                (*node, *ty)
-            }),
-            node_capabilities: make(&recipe.nodes, |Node(_particle, node, cap, _ty)| {
-                (*node, *cap)
-            }),
-            nodes: make(&recipe.nodes, |Node(_particle, node, _cap, _ty)| *node),
-            trusted_to_remove_tag: make(&recipe.trusted_to_remove_tag, Clone::clone),
-        }
-    }
-}
-
 impl From<Sol> for Recipe {
     fn from(sol: Sol) -> Self {
         let solution = sol.solution();
@@ -290,28 +243,14 @@ impl From<Sol> for Recipe {
             id: Some(sol),
             feedback: None,
             metadata: serde_json::Value::Null,
-            nodes: make(&solution.nodes, |node| {
-                let particle = solution.node_to_particle.get(node).unwrap();
-                let ty = solution.node_types.get(node).unwrap();
-                let cap = solution.node_capabilities.get(node).unwrap();
-                Node(*particle, *node, *cap, *ty)
-            }),
-            claims: make(&solution.claims, |(node, tag)| Claim(*node, *tag)),
-            checks: make(&solution.checks, |(node, tag)| Check(*node, *tag)),
-            trusted_to_remove_tag: make(&solution.trusted_to_remove_tag, Clone::clone),
+            nodes: vec![],
+            claims: vec![],
+            checks: vec![],
+            trusted_to_remove_tag: vec![],
             edges: make(&solution.edges, Clone::clone),
             #[cfg(feature = "ancestors")]
             ancestors: sol.ancestors().iter().cloned().collect(),
         }
-    }
-}
-
-impl From<SolutionData> for Recipe {
-    fn from(solution: SolutionData) -> Self {
-        // Get an id for the solution data.
-        let sol = Sol::new_blocking(solution);
-        // Convert that id and solution data to a recipe.
-        Recipe::from(sol)
     }
 }
 
@@ -355,15 +294,19 @@ impl Ibis {
                 .iter()
                 .map(|capability| capability.to_claim()),
         );
-        runtime.extend(self.recipes.iter().map(|recipe| {
-            // Convert to a solution (via id)
-            SolutionInput(Sol::from(recipe))
-        }));
 
         for recipe in self.recipes {
             runtime.extend(recipe.checks.iter().map(|check| check.to_claim()));
             runtime.extend(recipe.claims.iter().map(|claim| claim.to_claim()));
             runtime.extend(recipe.nodes.iter().map(|node| node.to_claim()));
+            runtime.extend(recipe.trusted_to_remove_tag.iter().map(|trusted| trusted.to_claim()));
+            // Add necessary data to this module and add a 'new solution'.
+            let data = SolutionData {
+                edges: make(&recipe.edges, Clone::clone),
+            };
+            runtime.extend(vec![SolutionInput(
+                Sol::new_blocking(data)
+            )]);
         }
 
         let (
@@ -375,6 +318,7 @@ impl Ibis {
             _nodes,
             _claims,
             _checks,
+            _trusted_to_remove_tag,
             has_tags,
             leaks,
             type_errors,

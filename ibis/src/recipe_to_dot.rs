@@ -5,7 +5,7 @@
 // https://developers.google.com/open-source/licenses/bsd
 
 use crate::dot::{DotGraph, ToDot};
-use crate::recipes::{Check, Claim, HasTag, Ibis, Leak, Node, Recipe, TypeError};
+use crate::recipes::{Check, Claim, HasTag, Ibis, Leak, Node, TrustedToRemoveTag, Recipe, TypeError};
 use crate::Sol;
 use std::collections::HashMap;
 
@@ -79,7 +79,7 @@ impl ToDot for Recipe {
                     }
                 }
             }
-            for (trusted_n, tag) in &self.trusted_to_remove_tag {
+            for TrustedToRemoveTag(trusted_n, tag) in &self.trusted_to_remove_tag {
                 if trusted_n == node {
                     extras.push(format!("trusted to remove tag '{}'", tag));
                 }
