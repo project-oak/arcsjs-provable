@@ -5,20 +5,13 @@
 // https://developers.google.com/open-source/licenses/bsd
 
 use crate::ent::*;
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::BTreeSet;
 
 #[derive(Clone, PartialEq, Eq, Ord, PartialOrd, Hash, Default)]
 pub struct SolutionData {
-    pub edges: BTreeSet<(Ent, Ent)>, // from, to
-
-    // Starting data
-    pub nodes: BTreeSet<Ent>,
-    pub node_types: BTreeMap<Ent, Ent>,              // node, type
-    pub node_capabilities: BTreeMap<Ent, Ent>,       // node, capability
-    pub node_to_particle: BTreeMap<Ent, Ent>,        // node, particle
-    pub claims: BTreeSet<(Ent, Ent)>,                // node, tag
-    pub checks: BTreeSet<(Ent, Ent)>,                // node, tag
-    pub trusted_to_remove_tag: BTreeSet<(Ent, Ent)>, // node, tag
+    // from, to
+    pub edges: BTreeSet<(Ent, Ent)>,
+    // TODO: Instances of: pub particle_instance: BTreeSet<(Ent, Ent)>, // from, to
 }
 
 impl SolutionData {
@@ -30,17 +23,5 @@ impl SolutionData {
         let mut n = SolutionData { ..self.clone() };
         n.edges.insert((from, to));
         n
-    }
-
-    pub fn add_node(&self, particle: Ent, node: Ent, ty: Ent) -> SolutionData {
-        let mut n = SolutionData { ..self.clone() };
-        n.nodes.insert(node);
-        n.node_to_particle.insert(node, particle);
-        n.node_types.insert(node, ty);
-        n
-    }
-
-    pub fn is_trusted_to_remove_tag(&self, node: Ent, tag: Ent) -> bool {
-        self.trusted_to_remove_tag.contains(&(node, tag))
     }
 }
