@@ -121,18 +121,18 @@ ibis! {
         LessPrivateThan(t1, t2),
         HasTag(s, source, n, t2); // Check failed, node has a 'more private' tag i.e. is leaking.
 
-    TypeError(s, from, from_ty, to, to_ty) <-
-        Node(_from_p, from, _, from_ty),
-        Node(_to_p, to, _, to_ty),
+    TypeError(s, *from, from_ty, *to, to_ty) <-
         Solution(s),
-        (s.has_edge(from, to)),
+        for (from, to) in &s.solution().edges,
+        Node(_from_p, *from, _, from_ty),
+        Node(_to_p, *to, _, to_ty),
         !Subtype(from_ty, to_ty); // Check failed, from writes an incompatible type into to
 
-    CapabilityError(s, from, from_capability, to, to_capability) <-
-        Node(_from_p, from, from_capability, _),
-        Node(_to_p, to, to_capability, _),
+    CapabilityError(s, *from, from_capability, *to, to_capability) <-
         Solution(s),
-        (s.has_edge(from, to)),
+        for (from, to) in &s.solution().edges,
+        Node(_from_p, *from, from_capability, _),
+        Node(_to_p, *to, to_capability, _),
         !Capability(from_capability, to_capability); // Check failed, from writes an incompatible type into to
 
     KnownType(x) <- Node(_par, _node, _cap, x); // Infer types that are used in the recipes.
