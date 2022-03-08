@@ -13,6 +13,9 @@ fn static_subtyping_socretes_is_mortal() {
     let solutions = all_edges(
         r#"
 {
+  "flags": {
+    "planning": true
+  },
   "capabilities": [
     ["any", "any"]
   ],

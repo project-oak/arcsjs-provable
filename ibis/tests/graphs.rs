@@ -13,6 +13,9 @@ fn create_combinations() {
     let solutions = map_all_solutions(
         r#"
 {
+  "flags": {
+    "planning": true
+  },
   "capabilities": [
     ["write", "read"]
   ],
@@ -48,6 +51,9 @@ fn create_edges() {
     let solutions = all_solutions(
         r#"
 {
+  "flags": {
+    "planning": true
+  },
   "capabilities": [
     ["any", "any"]
   ],
@@ -73,6 +79,9 @@ fn create_typed_edges() {
     let solutions = all_solutions(
         r#"
 {
+  "flags": {
+    "planning": true
+  },
   "capabilities": [
     ["any", "any"]
   ],
@@ -106,6 +115,9 @@ fn create_all_directed_graphs_with_4_nodes() {
     let solutions = all_solutions(
         r#"
 {
+  "flags": {
+    "planning": true
+  },
   "capabilities": [
     ["any", "any"]
   ],

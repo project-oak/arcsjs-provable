@@ -13,6 +13,9 @@ fn create_tagged_type_checked_graphs() {
     let solutions = all_solutions(
         r#"
 {
+  "flags": {
+    "planning": true
+  },
   "capabilities": [
     ["any", "any"]
   ],
