@@ -158,9 +158,7 @@ pub struct Flags {
 
 impl Default for Flags {
     fn default() -> Self {
-        Self {
-            planning: false,
-        }
+        Self { planning: false }
     }
 }
 

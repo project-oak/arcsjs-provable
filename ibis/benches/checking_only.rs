@@ -71,9 +71,7 @@ fn criterion_benchmark_solve_demo(c: &mut Criterion) {
   ]
 }
 "#;
-    c.bench_function("checking_only", |b| {
-        b.iter(|| solve_demo(black_box(data)))
-    });
+    c.bench_function("checking_only", |b| b.iter(|| solve_demo(black_box(data))));
 }
 
 criterion_group!(benches, criterion_benchmark_solve_demo);
