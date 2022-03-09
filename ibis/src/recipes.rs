@@ -376,10 +376,13 @@ impl Ibis {
         let all_recipes_len = all_recipes.len();
         let mut recipes: Vec<Recipe> = all_recipes
             .filter(|recipe| {
-                (recipe
-                    .feedback
-                    .as_ref()
-                    .map(|f| f.leaks.len() + f.type_errors.len() + f.capability_errors.len() == 0))
+                (recipe.feedback.as_ref().map(|f| {
+                    if self.config.flags.planning {
+                        f.leaks.len() + f.type_errors.len() + f.capability_errors.len() == 0
+                    } else {
+                        true // include 'failing' recipes
+                    }
+                }))
                 .unwrap_or(false)
             })
             .collect();
