@@ -149,17 +149,11 @@ fn is_default<T: Default + Eq>(v: &T) -> bool {
     v == &T::default()
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, Eq, PartialEq)]
+#[derive(Default, Debug, Clone, Serialize, Deserialize, Eq, PartialEq)]
 #[serde(deny_unknown_fields)]
 pub struct Flags {
     #[serde(default, skip_serializing_if = "is_default")]
     pub planning: bool,
-}
-
-impl Default for Flags {
-    fn default() -> Self {
-        Self { planning: false }
-    }
 }
 
 #[derive(Default, Debug, Clone, Serialize, Deserialize, Eq, PartialEq)]
