@@ -13,6 +13,9 @@ fn a_product_is_a_subtype_of_its_arguments() {
     let solutions = all_edges(
         r#"
 {
+  "flags": {
+    "planning": true
+  },
   "capabilities": [
     ["any", "any"]
   ],
@@ -36,6 +39,9 @@ fn a_type_is_a_subtype_of_products_of_its_super_types() {
     let solutions = all_edges(
         r#"
 {
+  "flags": {
+    "planning": true
+  },
   "capabilities": [
     ["any", "any"]
   ],
@@ -62,6 +68,9 @@ fn a_type_is_equal_to_the_product_of_it_and_its_super_types() {
     let solutions = all_edges(
         r#"
 {
+  "flags": {
+    "planning": true
+  },
   "capabilities": [
     ["any", "any"]
   ],
@@ -87,6 +96,9 @@ fn product_of_products() {
     let solutions = all_edges(
         r#"
 {
+  "flags": {
+    "planning": true
+  },
   "capabilities": [
     ["any", "any"]
   ],

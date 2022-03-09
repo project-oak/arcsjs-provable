@@ -3,6 +3,7 @@ use crate::{apply, arg, ent, ibis, is_a, Ent, Sol, SolutionData, ToInput};
 use serde::{Deserialize, Serialize};
 
 ibis! {
+    PlanningIsEnabled(bool);
     Solution(Sol);
     KnownType(Ent); // type
     LessPrivateThan(Ent, Ent); // tag, tag
@@ -20,6 +21,7 @@ ibis! {
     CapabilityError(Sol, Ent, Ent, Ent, Ent); // sol, node, cap, source, cap
 
     Solution(parent.add_edge(from, to)) <-
+        PlanningIsEnabled(true),
         Capability(from_capability, to_capability),
         Node(from_particle, from, from_capability, from_type),
         Subtype(from_type, to_type),
@@ -147,7 +149,14 @@ fn is_default<T: Default + Eq>(v: &T) -> bool {
     v == &T::default()
 }
 
-#[derive(Default, Debug, Serialize, Deserialize, Eq, PartialEq)]
+#[derive(Default, Debug, Clone, Serialize, Deserialize, Eq, PartialEq)]
+#[serde(deny_unknown_fields)]
+pub struct Flags {
+    #[serde(default, skip_serializing_if = "is_default")]
+    pub planning: bool,
+}
+
+#[derive(Default, Debug, Clone, Serialize, Deserialize, Eq, PartialEq)]
 #[serde(deny_unknown_fields)]
 pub struct Config {
     #[serde(default, skip_serializing_if = "is_default")]
@@ -160,6 +169,8 @@ pub struct Config {
     pub less_private_than: Vec<LessPrivateThan>,
     #[serde(default, skip_serializing_if = "is_default")]
     pub capabilities: Vec<Capability>,
+    #[serde(default, skip_serializing_if = "is_default")]
+    pub flags: Flags,
 }
 
 #[derive(Debug, Serialize, Deserialize, Eq, PartialEq)]
@@ -277,9 +288,11 @@ impl Ibis {
                     subtypes,
                     less_private_than,
                     capabilities,
+                    flags,
                 },
             mut recipes, // Mutation required to move rather than copy the data.
         } = recipes;
+        self.config.flags = flags; // TODO: Merge not overwrite.
         self.config.types.extend(types);
         self.config.subtypes.extend(subtypes);
         self.config.less_private_than.extend(less_private_than);
@@ -289,6 +302,7 @@ impl Ibis {
 
     pub fn extract_solutions_with_loss(self, loss: Option<usize>) -> Ibis {
         let mut runtime = Crepe::new();
+        runtime.extend(&[PlanningIsEnabled(self.config.flags.planning).to_claim()]);
         runtime.extend(self.config.types.iter().map(|ty| ty.to_claim()));
         runtime.extend(self.config.subtypes.iter().map(|sub_ty| sub_ty.to_claim()));
         runtime.extend(
@@ -320,6 +334,7 @@ impl Ibis {
         }
 
         let (
+            _flags,
             solutions,
             mut types,
             mut less_private_than,
@@ -397,6 +412,7 @@ impl Ibis {
                 subtypes: subtypes.drain().collect(),
                 less_private_than: less_private_than.drain().collect(),
                 capabilities: capabilities.drain().collect(),
+                flags: self.config.flags.clone(),
             },
             recipes,
         }

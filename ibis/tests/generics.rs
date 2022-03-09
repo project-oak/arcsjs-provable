@@ -13,6 +13,9 @@ fn precomputed_subtypes() {
     let solutions = all_edges(
         r#"
 {
+  "flags": {
+    "planning": true
+  },
   "capabilities": [
     ["any", "any"]
   ],
@@ -47,6 +50,9 @@ fn generics_are_not_necessarily_abstractable() {
     let solutions = all_edges(
         r#"
 {
+  "flags": {
+    "planning": true
+  },
   "capabilities": [
     ["any", "any"]
   ],
@@ -75,6 +81,9 @@ fn dynamic_subtypes() {
     let solutions = all_edges(
         r#"
 {
+  "flags": {
+    "planning": true
+  },
   "capabilities": [
     ["any", "any"]
   ],
@@ -108,6 +117,9 @@ fn all_subtype_the_universal_type() {
     let solutions = all_edges(
         r#"
 {
+  "flags": {
+    "planning": true
+  },
   "capabilities": [
     ["any", "any"]
   ],

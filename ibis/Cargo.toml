@@ -45,3 +45,7 @@ wasm-opt = ["-O4", "--enable-mutable-globals"]
 [[bench]]
 name = "demo"
 harness = false
+
+[[bench]]
+name = "checking_only"
+harness = false
