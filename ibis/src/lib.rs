@@ -95,7 +95,6 @@ pub fn get_solutions(data: &str, loss: Option<usize>) -> Ibis {
     let recipes: Ibis = serde_json::from_str(data).expect("JSON Error?");
     runtime.add_recipes(recipes);
 
-    eprintln!("Preparing graph...");
     runtime.extract_solutions_with_loss(loss)
 }
 

@@ -5,6 +5,7 @@ use serde::{Deserialize, Serialize};
 ibis! {
     PlanningIsEnabled(bool);
     Solution(Sol);
+    UncheckedSolution(Sol);
     KnownType(Ent); // type
     LessPrivateThan(Ent, Ent); // tag, tag
     Capability(Ent, Ent); // cap from, cap to
@@ -20,14 +21,14 @@ ibis! {
     TypeError(Sol, Ent, Ent, Ent, Ent); // sol, node, ty, source, ty
     CapabilityError(Sol, Ent, Ent, Ent, Ent); // sol, node, cap, source, cap
 
-    Solution(parent.add_edge(from, to)) <-
+    UncheckedSolution(parent.add_edge(from, to)) <-
         PlanningIsEnabled(true),
         Capability(from_capability, to_capability),
         Node(from_particle, from, from_capability, from_type),
         Subtype(from_type, to_type),
         Node(to_particle, to, to_capability, to_type),
         (from != to),
-        Solution(parent);
+        UncheckedSolution(parent);
 
     Subtype(
         x,
@@ -105,7 +106,7 @@ ibis! {
         KnownType(apply!(x_generic, x_arg)),
         KnownType(apply!(y_generic, y_arg));
 
-    HasTag(s, n, n, tag) <- Solution(s), Claim(n, tag);
+    HasTag(s, n, n, tag) <- UncheckedSolution(s), Claim(n, tag);
     HasTag(s, source, *down, tag) <- // Propagate tags 'downstream'
         HasTag(s, source, curr, tag),
         for (up, down) in &s.solution().edges,
@@ -124,18 +125,24 @@ ibis! {
         HasTag(s, source, n, t2); // Check failed, node has a 'more private' tag i.e. is leaking.
 
     TypeError(s, *from, from_ty, *to, to_ty) <-
-        Solution(s),
+        UncheckedSolution(s),
         for (from, to) in &s.solution().edges,
         Node(_from_p, *from, _, from_ty),
         Node(_to_p, *to, _, to_ty),
         !Subtype(from_ty, to_ty); // Check failed, from writes an incompatible type into to
 
     CapabilityError(s, *from, from_capability, *to, to_capability) <-
-        Solution(s),
+        UncheckedSolution(s),
         for (from, to) in &s.solution().edges,
         Node(_from_p, *from, from_capability, _),
         Node(_to_p, *to, to_capability, _),
         !Capability(from_capability, to_capability); // Check failed, from writes an incompatible type into to
+
+    Solution(s) <-
+        UncheckedSolution(s),
+        !TypeError(s, _, _, _, _),
+        !CapabilityError(s, _, _, _, _),
+        !Leak(s, _, _, _, _);
 
     KnownType(x) <- Node(_par, _node, _cap, x); // Infer types that are used in the recipes.
     KnownType(x) <- Subtype(x, _);
@@ -197,6 +204,12 @@ pub struct Ibis {
     pub config: Config,
     #[serde(default = "starting_recipes", skip_serializing_if = "is_default")]
     pub recipes: Vec<Recipe>,
+    #[serde(default, skip_serializing_if = "is_default")]
+    pub num_unchecked_solutions: usize,
+    #[serde(default, skip_serializing_if = "is_default")]
+    pub num_solutions: usize,
+    #[serde(default, skip_serializing_if = "is_default")]
+    pub num_selected: usize,
 }
 
 #[derive(Default, Debug, Serialize, Deserialize, Eq, PartialEq)]
@@ -291,6 +304,9 @@ impl Ibis {
                     flags,
                 },
             mut recipes, // Mutation required to move rather than copy the data.
+            num_unchecked_solutions: _,
+            num_solutions: _,
+            num_selected: _,
         } = recipes;
         self.config.flags = flags; // TODO: Merge not overwrite.
         self.config.types.extend(types);
@@ -330,12 +346,13 @@ impl Ibis {
             );
             // Add necessary data to this module and add a 'new solution'.
             let sol = Sol::from(&recipe);
-            runtime.extend(vec![SolutionInput(sol)]);
+            runtime.extend(vec![UncheckedSolutionInput(sol)]);
         }
 
         let (
             _flags,
             solutions,
+            unchecked_solutions,
             mut types,
             mut less_private_than,
             mut capabilities,
@@ -349,44 +366,41 @@ impl Ibis {
             type_errors,
             capability_errors,
         ) = runtime.run();
-        let all_recipes = solutions.iter().map(|Solution(s)| {
-            Recipe::from_sol(*s).with_feedback(Feedback {
-                leaks: leaks
-                    .iter()
-                    .filter(|Leak(leak_s, _, _, _, _)| leak_s == s)
-                    .cloned()
-                    .collect(),
-                type_errors: type_errors
-                    .iter()
-                    .filter(|TypeError(type_s, _, _, _, _)| type_s == s)
-                    .cloned()
-                    .collect(),
-                capability_errors: capability_errors
-                    .iter()
-                    .filter(|CapabilityError(cap_s, _, _, _, _)| cap_s == s)
-                    .cloned()
-                    .collect(),
-                has_tags: has_tags
-                    .iter()
-                    .filter(|HasTag(has_tag_s, _, _, _)| has_tag_s == s)
-                    .cloned()
-                    .collect(),
-            })
-        });
-        let all_recipes_len = all_recipes.len();
-        let mut recipes: Vec<Recipe> = all_recipes
-            .filter(|recipe| {
-                (recipe.feedback.as_ref().map(|f| {
-                    if self.config.flags.planning {
-                        f.leaks.len() + f.type_errors.len() + f.capability_errors.len() == 0
-                    } else {
-                        true // include 'failing' recipes
-                    }
-                }))
-                .unwrap_or(false)
+        let recipes: Vec<Sol> = if self.config.flags.planning {
+            solutions.iter().map(|Solution(s)| *s).collect()
+        } else {
+            unchecked_solutions
+                .iter()
+                .map(|UncheckedSolution(s)| *s)
+                .collect()
+        };
+        let mut recipes: Vec<Recipe> = recipes
+            .iter()
+            .map(|s| {
+                Recipe::from_sol(*s).with_feedback(Feedback {
+                    leaks: leaks
+                        .iter()
+                        .filter(|Leak(leak_s, _, _, _, _)| leak_s == s)
+                        .cloned()
+                        .collect(),
+                    type_errors: type_errors
+                        .iter()
+                        .filter(|TypeError(type_s, _, _, _, _)| type_s == s)
+                        .cloned()
+                        .collect(),
+                    capability_errors: capability_errors
+                        .iter()
+                        .filter(|CapabilityError(cap_s, _, _, _, _)| cap_s == s)
+                        .cloned()
+                        .collect(),
+                    has_tags: has_tags
+                        .iter()
+                        .filter(|HasTag(has_tag_s, _, _, _)| has_tag_s == s)
+                        .cloned()
+                        .collect(),
+                })
             })
             .collect();
-        let recipes_len = recipes.len();
         let recipes = if let Some(loss) = loss {
             let mut max = 0;
             for r in &recipes {
@@ -402,12 +416,6 @@ impl Ibis {
         } else {
             recipes
         };
-        eprintln!(
-            "Selected {} of {} valid solutions. (Generated {} solutions)",
-            recipes.len(),
-            recipes_len,
-            all_recipes_len
-        );
         Ibis {
             config: Config {
                 metadata: serde_json::Value::Null,
@@ -417,6 +425,9 @@ impl Ibis {
                 capabilities: capabilities.drain().collect(),
                 flags: self.config.flags.clone(),
             },
+            num_unchecked_solutions: unchecked_solutions.len(),
+            num_solutions: solutions.len(),
+            num_selected: recipes.len(),
             recipes,
         }
     }
