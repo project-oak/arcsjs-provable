@@ -29,6 +29,9 @@ pub use solution_data::SolutionData;
 pub use solution_id::Sol;
 pub use util::*;
 
+use shadow_rs::shadow;
+shadow!(build);
+
 #[macro_export]
 macro_rules! ent {
     ($fmt: expr) => {
@@ -96,6 +99,10 @@ pub fn get_solutions(data: &str, loss: Option<usize>) -> Ibis {
     runtime.extract_solutions_with_loss(loss)
 }
 
+pub fn print_info() {
+    eprintln!("{}", build::version());
+}
+
 #[cfg(feature = "wasm")]
 pub mod wasm {
     use wasm_bindgen::prelude::*;
@@ -104,29 +111,34 @@ pub mod wasm {
         console_error_panic_hook::set_once();
     }
 
+    fn setup() {
+        set_panic_hook();
+        super::print_info();
+    }
+
     #[wasm_bindgen]
     pub fn best_solutions_to_json(data: &str) -> String {
-        set_panic_hook();
+        setup();
         super::best_solutions_to_json(data)
     }
 
     #[wasm_bindgen]
     pub fn all_solutions_to_json(data: &str) -> String {
-        set_panic_hook();
+        setup();
         super::all_solutions_to_json(data)
     }
 
     #[cfg(feature = "dot")]
     #[wasm_bindgen]
     pub fn best_solutions_to_dot(data: &str) -> String {
-        set_panic_hook();
+        setup();
         super::best_solutions_to_dot(data)
     }
 
     #[cfg(feature = "dot")]
     #[wasm_bindgen]
     pub fn all_solutions_to_dot(data: &str) -> String {
-        set_panic_hook();
+        setup();
         super::all_solutions_to_dot(data)
     }
 }
