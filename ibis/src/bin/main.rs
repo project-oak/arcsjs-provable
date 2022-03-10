@@ -15,6 +15,7 @@ fn main() -> Result<(), IbisError> {
     std::io::stdin()
         .read_to_string(&mut data)
         .expect("IO Error, reading stdin");
+    eprintln!("Preparing graph...");
     #[cfg(feature = "dot")]
     println!("{}", best_solutions_to_dot(&data));
     #[cfg(not(feature = "dot"))]
