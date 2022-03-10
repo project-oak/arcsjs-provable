@@ -99,8 +99,8 @@ pub fn get_solutions(data: &str, loss: Option<usize>) -> Ibis {
     runtime.extract_solutions_with_loss(loss)
 }
 
-pub fn print_info() {
-    eprintln!("{}", build::version());
+pub fn version_info() -> String {
+    format!("{}", build::version())
 }
 
 #[cfg(feature = "wasm")]
@@ -113,7 +113,11 @@ pub mod wasm {
 
     fn setup() {
         set_panic_hook();
-        super::print_info();
+    }
+
+    #[wasm_bindgen]
+    pub fn version_info() -> String {
+        super::version_info()
     }
 
     #[wasm_bindgen]

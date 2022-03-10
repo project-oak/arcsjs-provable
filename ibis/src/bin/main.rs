@@ -10,7 +10,7 @@ use ibis::IbisError;
 use std::io::Read;
 
 fn main() -> Result<(), IbisError> {
-    ibis::print_info();
+    eprintln!("{}", ibis::version_info());
     let mut data = String::new();
     std::io::stdin()
         .read_to_string(&mut data)
