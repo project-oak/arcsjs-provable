@@ -5,6 +5,7 @@ edition = "2021"
 description = "Ibis - a knowledge engine for type checking asynchronously communicating modules"
 repository = "https://github.com/project-oak/arcsjs-provable"
 license = "See LICENSE"
+build = "build.rs"
 
 [lib]
 name = "ibis"
@@ -20,6 +21,7 @@ dot = [] # Support the generation of dot graphs (for debugging)
 wasm = [ "wasm-bindgen", "console_error_panic_hook" ] # Support wasm-bindgen API
 
 [dependencies]
+shadow-rs = { version = "0.9", default-features = false }
 nom = "7.1.0"
 paste = "1.0.6"
 crepe = "0.1.6"
@@ -33,6 +35,9 @@ console_error_panic_hook = { version = "0.1.7", optional = true }
 [dev-dependencies]
 pretty_assertions = "1.0.0"
 criterion = { version = "0.3", features = ["html_reports"] }
+
+[build-dependencies]
+shadow-rs = "0.9"
 
 [profile.release]
 opt-level = "z"

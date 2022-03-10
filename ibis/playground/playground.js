@@ -1,11 +1,13 @@
-import {default as ibis, best_solutions_to_json} from '../pkg/ibis.js';
+import {default as ibis, version_info, best_solutions_to_json} from '../pkg/ibis.js';
 
 async function loadIbis() {
     const feedback = document.getElementById('feedback');
+    const version_info_display = document.getElementById('version_info');
     feedback.innerText = 'Loading ibis...';
     // Set up ibis
     await ibis('../pkg/ibis_bg.wasm');
     feedback.innerText = 'Loaded';
+    version_info_display.innerText = version_info();
 }
 
 async function getDemoContent() {
