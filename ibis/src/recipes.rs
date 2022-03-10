@@ -220,7 +220,7 @@ pub struct Recipe {
     #[serde(skip, default)]
     pub id: Option<Sol>,
     // Do not deserialize the feedback on a recipe: Re-generate it each time for consistency.
-    #[serde(skip_deserializing, flatten)]
+    #[serde(flatten)]
     pub feedback: Option<Feedback>,
     #[serde(default, skip_serializing_if = "is_default")]
     pub nodes: Vec<Node>,
@@ -335,17 +335,26 @@ impl Ibis {
         );
 
         for recipe in self.recipes {
-            runtime.extend(recipe.checks.iter().map(|check| check.to_claim()));
-            runtime.extend(recipe.claims.iter().map(|claim| claim.to_claim()));
-            runtime.extend(recipe.nodes.iter().map(|node| node.to_claim()));
+            // Add necessary data to this module and add a 'new solution'.
+            let sol = Sol::from(&recipe);
+            let Recipe {
+                checks,
+                claims,
+                nodes,
+                trusted_to_remove_tag,
+                feedback: _,
+                metadata: _,
+                id: _,
+                edges: _, // Already captured by sol
+            } = recipe;
+            runtime.extend(checks.iter().map(|check| check.to_claim()));
+            runtime.extend(claims.iter().map(|claim| claim.to_claim()));
+            runtime.extend(nodes.iter().map(|node| node.to_claim()));
             runtime.extend(
-                recipe
-                    .trusted_to_remove_tag
+                trusted_to_remove_tag
                     .iter()
                     .map(|trusted| trusted.to_claim()),
             );
-            // Add necessary data to this module and add a 'new solution'.
-            let sol = Sol::from(&recipe);
             runtime.extend(vec![UncheckedSolutionInput(sol)]);
         }
 
