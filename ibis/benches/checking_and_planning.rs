@@ -12,11 +12,11 @@ fn solve_demo(data: &str) {
     // TODO: use the result to ensure it is correct
 }
 
-pub fn criterion_benchmark_checking_only(c: &mut Criterion) {
+pub fn criterion_benchmark_noop_planning(c: &mut Criterion) {
     let data = r#"
 {
   "flags": {
-    "planning": false
+    "planning": true
   },
   "capabilities": [
     ["write", "read"],
@@ -71,5 +71,5 @@ pub fn criterion_benchmark_checking_only(c: &mut Criterion) {
   ]
 }
 "#;
-    c.bench_function("checking_only", |b| b.iter(|| solve_demo(black_box(data))));
+    c.bench_function("noop_planning", |b| b.iter(|| solve_demo(black_box(data))));
 }
