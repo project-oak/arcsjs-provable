@@ -100,7 +100,7 @@ pub fn get_solutions(data: &str, loss: Option<usize>) -> Ibis {
 }
 
 pub fn version_info() -> String {
-    format!("{}", build::version())
+    build::version()
 }
 
 #[cfg(feature = "wasm")]
