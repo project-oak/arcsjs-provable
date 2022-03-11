@@ -66,12 +66,7 @@ impl Sol {
     }
 
     pub fn empty() -> Self {
-        let guard = CTX.lock().expect("Shouldn't fail");
-        let mut ctx = (*guard).borrow_mut();
-        let id = Sol { id: 0 };
-        // The following inserts the 'default' Sol with the 'zero' id, clobbering the old data
-        // This is safe because we only ever insert the 'default'
-        Sol::new_with_id(&mut ctx, id, SolutionData::default())
+        Sol::new_blocking(SolutionData::default())
     }
 
     fn get_solution(&self, ctx: &Ctx) -> SolutionData {
