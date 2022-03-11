@@ -198,7 +198,7 @@ fn starting_recipes() -> Vec<Recipe> {
 }
 
 #[derive(Default, Debug, Serialize, Deserialize, Eq, PartialEq)]
-#[serde(deny_unknown_fields)]
+#[serde()]
 pub struct Ibis {
     #[serde(flatten)]
     pub config: Config,
