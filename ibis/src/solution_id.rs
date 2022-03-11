@@ -107,6 +107,7 @@ impl Sol {
             .insert(parent);
     }
 
+    #[allow(clippy::let_and_return)]
     pub fn make_child(&self, update: &dyn Fn(&SolutionData) -> SolutionData) -> Sol {
         let guard = CTX.lock().expect("Shouldn't fail");
         let mut ctx = (*guard).borrow_mut();
