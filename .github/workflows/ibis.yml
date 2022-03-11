@@ -58,6 +58,7 @@ jobs:
         path: |
           ~/.cargo/registry
           ~/.cargo/git
+          /usr/bin/wasm-pack
           pkg
           target
         key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
