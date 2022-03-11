@@ -2,6 +2,8 @@
 
 [![Ibis](https://github.com/googlestaging/arcsjs-provable/actions/workflows/ibis.yml/badge.svg)](https://github.com/googlestaging/arcsjs-provable/actions/workflows/ibis.yml)
 
+See the playground [here](./playground)
+
 #### This is not an officially supported Google product
 
 # Getting started
