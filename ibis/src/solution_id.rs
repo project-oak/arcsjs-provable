@@ -54,11 +54,15 @@ impl Sol {
     }
 
     fn new(ctx: &mut Ctx, solution: SolutionData) -> Self {
-        ctx.solution_id += 1;
-        let sol = Sol {
-            id: ctx.solution_id,
-        };
-        Sol::new_with_id(ctx, sol, solution)
+        if let Some(sol) = ctx.id_to_solution.get_back(&solution) {
+            *sol
+        } else {
+            ctx.solution_id += 1;
+            let sol = Sol {
+                id: ctx.solution_id,
+            };
+            Sol::new_with_id(ctx, sol, solution)
+        }
     }
 
     pub fn empty() -> Self {
@@ -103,16 +107,12 @@ impl Sol {
             .insert(parent);
     }
 
+    #[allow(clippy::let_and_return)]
     pub fn make_child(&self, update: &dyn Fn(&SolutionData) -> SolutionData) -> Sol {
         let guard = CTX.lock().expect("Shouldn't fail");
         let mut ctx = (*guard).borrow_mut();
         let new_solution = update(&self.get_solution(&ctx));
-        let result = ctx
-            .id_to_solution
-            .get_back(&new_solution)
-            .cloned()
-            .unwrap_or_else(|| Sol::new(&mut ctx, new_solution));
-
+        let result = Sol::new(&mut ctx, new_solution);
         // Track the history of solutions
         #[cfg(feature = "ancestors")]
         result.add_ancestor(&mut ctx, *self);

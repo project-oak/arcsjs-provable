@@ -8,7 +8,7 @@ use criterion::{black_box, Criterion};
 use ibis::best_solutions_to_json;
 
 fn solve_demo(data: &str) {
-    let _result = best_solutions_to_json(&data);
+    let _result = best_solutions_to_json(data);
     // TODO: use the result to ensure it is correct
 }
 

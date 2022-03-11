@@ -202,6 +202,8 @@ fn starting_recipes() -> Vec<Recipe> {
 pub struct Ibis {
     #[serde(flatten)]
     pub config: Config,
+    #[serde(flatten)]
+    pub shared: Option<Recipe>,
     #[serde(default = "starting_recipes", skip_serializing_if = "is_default")]
     pub recipes: Vec<Recipe>,
     #[serde(default, skip_serializing_if = "is_default")]
@@ -307,6 +309,7 @@ impl Ibis {
             num_unchecked_solutions: _,
             num_solutions: _,
             num_selected: _,
+            shared,
         } = recipes;
         self.config.flags = flags; // TODO: Merge not overwrite.
         self.config.types.extend(types);
@@ -314,6 +317,7 @@ impl Ibis {
         self.config.less_private_than.extend(less_private_than);
         self.config.capabilities.extend(capabilities);
         self.recipes.extend(recipes.drain(0..));
+        self.shared = shared; // TODO: Merge not overwrite.
     }
 
     pub fn extract_solutions_with_loss(self, loss: Option<usize>) -> Ibis {
@@ -334,9 +338,9 @@ impl Ibis {
                 .map(|capability| capability.to_claim()),
         );
 
-        for recipe in self.recipes {
+        for recipe in self.recipes.iter().chain(self.shared.iter()) {
             // Add necessary data to this module and add a 'new solution'.
-            let sol = Sol::from(&recipe);
+            let sol = Sol::from(recipe);
             let Recipe {
                 checks,
                 claims,
@@ -368,10 +372,10 @@ impl Ibis {
             mut less_private_than,
             mut capabilities,
             mut subtypes,
-            _nodes,
-            _claims,
-            _checks,
-            _trusted_to_remove_tag,
+            nodes,
+            claims,
+            checks,
+            trusted_to_remove_tag,
             has_tags,
             leaks,
             type_errors,
@@ -440,6 +444,18 @@ impl Ibis {
             num_solutions: solutions.len(),
             num_selected: recipes.len(),
             recipes,
+            shared: Some(Recipe {
+                edges: vec![],
+                metadata: serde_json::Value::Null,
+                feedback: None,
+                id: None,
+                nodes: nodes.iter().cloned().collect(),
+                checks: checks.iter().cloned().collect(),
+                claims: claims.iter().cloned().collect(),
+                trusted_to_remove_tag: trusted_to_remove_tag.iter().cloned().collect(),
+                #[cfg(feature = "ancestors")]
+                ancestors: vec![],
+            }),
         }
     }
 }
