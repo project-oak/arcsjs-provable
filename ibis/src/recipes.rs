@@ -453,6 +453,8 @@ impl Ibis {
                 checks: checks.iter().cloned().collect(),
                 claims: claims.iter().cloned().collect(),
                 trusted_to_remove_tag: trusted_to_remove_tag.iter().cloned().collect(),
+                #[cfg(feature = "ancestors")]
+                ancestors: vec![],
             }),
         }
     }
