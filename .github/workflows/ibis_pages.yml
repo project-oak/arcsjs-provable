@@ -34,8 +34,8 @@ jobs:
         if-no-files-found: error
         name: ibis
         path: ibis/pkg/*
-    # Run our deployment command
-    - name: Set up a github identity
-      run: git config --global user.email "test@example.com" && git config --global user.name "Github Actions"
-    - name: Deploying the static website to origin/pages
-      run: git checkout -b pages && git add -f pkg && git commit -m "Update pages" && git push origin pages -f
+    - name: Deploy 🚀
+      uses: JamesIves/github-pages-deploy-action@v4.2.5
+      with:
+        branch: pages # The branch the action should deploy to.
+        folder: . # The folder the action should deploy.
