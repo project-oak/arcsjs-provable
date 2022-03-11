@@ -58,6 +58,7 @@ jobs:
         path: |
           ~/.cargo/registry
           ~/.cargo/git
+          pkg
           target
         key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
     - name: Install wasm-pack toolchain
