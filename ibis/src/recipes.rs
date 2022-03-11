@@ -180,7 +180,7 @@ pub struct Config {
     pub flags: Flags,
 }
 
-#[derive(Debug, Default, Serialize, Deserialize, Eq, PartialEq)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize, Eq, PartialEq)]
 #[serde(deny_unknown_fields)]
 pub struct Feedback {
     #[serde(default, skip_serializing_if = "is_default")]
@@ -214,7 +214,7 @@ pub struct Ibis {
     pub num_selected: usize,
 }
 
-#[derive(Default, Debug, Serialize, Deserialize, Eq, PartialEq)]
+#[derive(Default, Debug, Clone, Serialize, Deserialize, Eq, PartialEq)]
 #[serde(deny_unknown_fields)]
 pub struct Recipe {
     #[serde(default, skip_serializing_if = "is_default")]
@@ -338,14 +338,19 @@ impl Ibis {
                 .map(|capability| capability.to_claim()),
         );
 
-        let maybe_shared = if self.shared == Recipe::default() {
+        let maybe_shared = if Sol::from(&self.shared) == Sol::default() {
             None
         } else {
-            Some(self.shared)
+            Some(self.shared.clone())
         };
         for recipe in self.recipes.iter().chain(maybe_shared.iter()) {
             // Add necessary data to this module and add a 'new solution'.
             let sol = Sol::from(recipe);
+            runtime.extend(vec![UncheckedSolutionInput(sol)]);
+        }
+
+        for recipe in self.recipes.iter().chain(Some(self.shared).iter()) {
+            // Add necessary data to this module and add a 'new solution'.
             let Recipe {
                 checks,
                 claims,
@@ -354,7 +359,7 @@ impl Ibis {
                 feedback: _,
                 metadata: _,
                 id: _,
-                edges: _, // Already captured by sol
+                edges: _, // To be captured by sol
                 #[cfg(feature = "ancestors")]
                     ancestors: _,
             } = recipe;
@@ -366,7 +371,6 @@ impl Ibis {
                     .iter()
                     .map(|trusted| trusted.to_claim()),
             );
-            runtime.extend(vec![UncheckedSolutionInput(sol)]);
         }
 
         let (
