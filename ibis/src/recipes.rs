@@ -346,6 +346,8 @@ impl Ibis {
                 metadata: _,
                 id: _,
                 edges: _, // Already captured by sol
+                #[cfg(feature = "ancestors")]
+                    ancestors: _,
             } = recipe;
             runtime.extend(checks.iter().map(|check| check.to_claim()));
             runtime.extend(claims.iter().map(|claim| claim.to_claim()));
