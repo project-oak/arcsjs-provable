@@ -180,7 +180,7 @@ pub struct Config {
     pub flags: Flags,
 }
 
-#[derive(Debug, Serialize, Deserialize, Eq, PartialEq)]
+#[derive(Debug, Default, Serialize, Deserialize, Eq, PartialEq)]
 #[serde(deny_unknown_fields)]
 pub struct Feedback {
     #[serde(default, skip_serializing_if = "is_default")]
@@ -203,7 +203,7 @@ pub struct Ibis {
     #[serde(flatten)]
     pub config: Config,
     #[serde(flatten)]
-    pub shared: Option<Recipe>,
+    pub shared: Recipe,
     #[serde(default = "starting_recipes", skip_serializing_if = "is_default")]
     pub recipes: Vec<Recipe>,
     #[serde(default, skip_serializing_if = "is_default")]
@@ -223,7 +223,7 @@ pub struct Recipe {
     pub id: Option<Sol>,
     // Do not deserialize the feedback on a recipe: Re-generate it each time for consistency.
     #[serde(flatten)]
-    pub feedback: Option<Feedback>,
+    pub feedback: Feedback,
     #[serde(default, skip_serializing_if = "is_default")]
     pub nodes: Vec<Node>,
     #[serde(default, skip_serializing_if = "is_default")]
@@ -246,7 +246,7 @@ impl Recipe {
             #[cfg(feature = "ancestors")]
             ancestors: sol.ancestors().iter().cloned().collect(),
             id: Some(sol),
-            feedback: None,
+            feedback: Feedback::default(),
             metadata: serde_json::Value::Null,
             nodes: vec![],
             claims: vec![],
@@ -257,7 +257,7 @@ impl Recipe {
     }
 
     pub fn with_feedback(mut self, feedback: Feedback) -> Self {
-        self.feedback = Some(feedback);
+        self.feedback = feedback;
         self
     }
 }
@@ -276,7 +276,7 @@ impl From<Sol> for Recipe {
         let solution = sol.solution();
         Recipe {
             id: Some(sol),
-            feedback: None,
+            feedback: Feedback::default(),
             metadata: serde_json::Value::Null,
             nodes: vec![],
             claims: vec![],
@@ -338,7 +338,12 @@ impl Ibis {
                 .map(|capability| capability.to_claim()),
         );
 
-        for recipe in self.recipes.iter().chain(self.shared.iter()) {
+        let maybe_shared = if self.shared == Recipe::default() {
+            None
+        } else {
+            Some(self.shared)
+        };
+        for recipe in self.recipes.iter().chain(maybe_shared.iter()) {
             // Add necessary data to this module and add a 'new solution'.
             let sol = Sol::from(recipe);
             let Recipe {
@@ -444,10 +449,10 @@ impl Ibis {
             num_solutions: solutions.len(),
             num_selected: recipes.len(),
             recipes,
-            shared: Some(Recipe {
+            shared: Recipe {
                 edges: vec![],
                 metadata: serde_json::Value::Null,
-                feedback: None,
+                feedback: Feedback::default(),
                 id: None,
                 nodes: nodes.iter().cloned().collect(),
                 checks: checks.iter().cloned().collect(),
@@ -455,7 +460,7 @@ impl Ibis {
                 trusted_to_remove_tag: trusted_to_remove_tag.iter().cloned().collect(),
                 #[cfg(feature = "ancestors")]
                 ancestors: vec![],
-            }),
+            },
         }
     }
 }

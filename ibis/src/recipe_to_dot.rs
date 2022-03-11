@@ -74,11 +74,9 @@ impl ToDot for Recipe {
         let mut particles = HashMap::new();
         for Node(particle, node, cap, ty) in &self.nodes {
             let mut extras: Vec<String> = vec![];
-            if let Some(feedback) = &self.feedback {
-                for HasTag(_hts, source, sink, tag) in &feedback.has_tags {
-                    if sink == node && source != node {
-                        extras.push(format!("'{}' from {}", tag, source));
-                    }
+            for HasTag(_hts, source, sink, tag) in &self.feedback.has_tags {
+                if sink == node && source != node {
+                    extras.push(format!("'{}' from {}", tag, source));
                 }
             }
             for TrustedToRemoveTag(trusted_n, tag) in &self.trusted_to_remove_tag {
@@ -114,14 +112,12 @@ impl ToDot for Recipe {
             );
         }
 
-        if let Some(feedback) = &self.feedback {
-            for Leak(_leak_s, node, expected, source, tag) in &feedback.leaks {
-                sol_graph.add_edge(node_id(source), node_id(node), vec![format!("style=dotted color=red label=<<font color=\"red\">expected '{}', found contradiction '{}'</font>>", expected, tag)]);
-            }
+        for Leak(_leak_s, node, expected, source, tag) in &self.feedback.leaks {
+            sol_graph.add_edge(node_id(source), node_id(node), vec![format!("style=dotted color=red label=<<font color=\"red\">expected '{}', found contradiction '{}'</font>>", expected, tag)]);
+        }
 
-            for TypeError(_error_s, from, from_ty, to, to_ty) in &feedback.type_errors {
-                sol_graph.add_edge(node_id(from), node_id(to), vec![format!("style=dotted color=red label=<<font color=\"red\">expected '{}', found incompatible type '{}'</font>>", to_ty, from_ty)]);
-            }
+        for TypeError(_error_s, from, from_ty, to, to_ty) in &self.feedback.type_errors {
+            sol_graph.add_edge(node_id(from), node_id(to), vec![format!("style=dotted color=red label=<<font color=\"red\">expected '{}', found incompatible type '{}'</font>>", to_ty, from_ty)]);
         }
 
         for (from_id, to_id) in &self.id.expect("WAT").edges() {
