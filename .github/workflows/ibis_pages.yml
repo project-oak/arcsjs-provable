@@ -35,4 +35,4 @@ jobs:
         path: ibis/pkg/*
     # Run our deployment command
     - name: Deploying the static website to origin/pages
-      run: git add -f pkg && git commit -m "Update pages" -f && git push origin/pages
+      run: git add -f pkg && git commit -m "Update pages" && git push origin/pages -f
