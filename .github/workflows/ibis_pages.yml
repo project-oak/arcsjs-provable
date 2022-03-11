@@ -34,5 +34,7 @@ jobs:
         name: ibis
         path: ibis/pkg/*
     # Run our deployment command
+    - name: Set up a github identity
+      run: git config --global user.email "test@example.com" && git config --global user.name "Github Actions"
     - name: Deploying the static website to origin/pages
       run: git add -f pkg && git commit -m "Update pages" && git push origin/pages -f
