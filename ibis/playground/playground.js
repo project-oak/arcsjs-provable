@@ -1,4 +1,4 @@
-import {default as ibis, version_info, best_solutions_to_json} from '../pkg/ibis.js';
+import {default as ibis, version_info, best_solutions_to_json, best_solutions_to_dot} from '../pkg/ibis.js';
 
 async function loadIbis() {
     const feedback = document.getElementById('feedback');
@@ -19,14 +19,17 @@ async function getDemoContent() {
 
 async function startup() {
     const input = document.getElementById('input');
-    const submit = document.getElementById('submit');
-    submit.addEventListener("click", loadDot);
+    const to_json = document.getElementById('to_json');
+    to_json.addEventListener("click", () => run(best_solutions_to_json,
+        input => JSON.stringify(JSON.parse(input), undefined, 2)
+    ));
+    const to_dot = document.getElementById('to_dot');
+    to_dot.addEventListener("click", () => run(best_solutions_to_dot, x => x));
 
     await Promise.all([loadIbis(), getDemoContent()]);
-    await loadDot();
 }
 
-async function loadDot() {
+async function run(ibis_function, formatter) {
     const input = document.getElementById('input');
     const output = document.getElementById('output');
     const feedback = document.getElementById('feedback');
@@ -38,12 +41,10 @@ async function loadDot() {
     }
     // update it
     const startTime = performance.now()
-    const result = best_solutions_to_json(inputText);
-    const resultJson = JSON.parse(result);
+    const result = ibis_function(inputText);
     const endTime = performance.now()
-    console.log(resultJson);
     feedback.innerText = `Done in ${(endTime-startTime)/1000.0} seconds`;
-    output.value = JSON.stringify(resultJson, undefined, 4);
+    output.value = formatter(result);
 }
 
 window.onload = function() {
