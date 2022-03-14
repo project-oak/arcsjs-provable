@@ -33,7 +33,7 @@ impl ToDot for Ibis {
             let sol = &recipe.id.expect("Every recipe should have an id?");
             let s_id = sol_id(sol);
             #[allow(unused_mut)]
-            let mut sol_graph = recipe.to_dot_repr();
+            let mut sol_graph = (self, recipe).to_dot_repr();
             #[cfg(feature = "ancestors")]
             {
                 let s = Sol::from(recipe);
@@ -64,32 +64,33 @@ fn sol_id(sol: &Sol) -> String {
     format!("sol_{}", &sol.id)
 }
 
-impl ToDot for Recipe {
+impl ToDot for (&Ibis, &Recipe) {
     fn to_dot_repr(&self) -> DotGraph {
-        let sol = &self.id.expect("Every recipe should have an id?");
+        let (ibis, recipe) = &self;
+        let sol = &recipe.id.expect("Every recipe should have an id?");
         let s_id = sol_id(sol);
         let particle_id = |particle| format!("{}_p_{}", &s_id, particle);
         let node_id = |node| format!("{}_h_{}", &s_id, node);
         let mut sol_graph = DotGraph::default();
         let mut particles = HashMap::new();
-        for Node(particle, node, cap, ty) in &self.nodes {
+        for Node(particle, node, cap, ty) in &ibis.shared.nodes {
             let mut extras: Vec<String> = vec![];
-            for HasTag(_hts, source, sink, tag) in &self.feedback.has_tags {
+            for HasTag(_hts, source, sink, tag) in &recipe.feedback.has_tags {
                 if sink == node && source != node {
                     extras.push(format!("'{}' from {}", tag, source));
                 }
             }
-            for TrustedToRemoveTag(trusted_n, tag) in &self.trusted_to_remove_tag {
+            for TrustedToRemoveTag(trusted_n, tag) in &ibis.shared.trusted_to_remove_tag {
                 if trusted_n == node {
                     extras.push(format!("trusted to remove tag '{}'", tag));
                 }
             }
-            for Claim(claim_node, tag) in &self.claims {
+            for Claim(claim_node, tag) in &ibis.shared.claims {
                 if claim_node == node {
                     extras.push(format!("claims to be '{}'", tag));
                 }
             }
-            for Check(check_node, tag) in &self.checks {
+            for Check(check_node, tag) in &ibis.shared.checks {
                 if check_node == node {
                     extras.push(format!(
                         "<font color=\"blue\">checked to be '{}'</font>",
@@ -112,15 +113,15 @@ impl ToDot for Recipe {
             );
         }
 
-        for Leak(_leak_s, node, expected, source, tag) in &self.feedback.leaks {
+        for Leak(_leak_s, node, expected, source, tag) in &recipe.feedback.leaks {
             sol_graph.add_edge(node_id(source), node_id(node), vec![format!("style=dotted color=red label=<<font color=\"red\">expected '{}', found contradiction '{}'</font>>", expected, tag)]);
         }
 
-        for TypeError(_error_s, from, from_ty, to, to_ty) in &self.feedback.type_errors {
+        for TypeError(_error_s, from, from_ty, to, to_ty) in &recipe.feedback.type_errors {
             sol_graph.add_edge(node_id(from), node_id(to), vec![format!("style=dotted color=red label=<<font color=\"red\">expected '{}', found incompatible type '{}'</font>>", to_ty, from_ty)]);
         }
 
-        for (from_id, to_id) in &self.id.expect("WAT").edges() {
+        for (from_id, to_id) in &recipe.id.expect("WAT").edges() {
             let from = format!("{}:s", node_id(from_id));
             let to = format!("{}:n", node_id(to_id));
             sol_graph.add_edge(from.clone(), to.clone(), vec![]);

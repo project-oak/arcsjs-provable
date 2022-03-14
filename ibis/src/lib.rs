@@ -16,9 +16,9 @@ mod type_struct;
 mod util;
 #[cfg(feature = "dot")]
 pub mod dot;
-#[cfg(feature = "dot")]
-pub mod recipe_to_dot;
 pub mod recipes;
+#[cfg(feature = "dot")]
+pub mod to_dot_impls;
 extern crate ibis_macros;
 
 pub use ent::Ent;
