@@ -1,4 +1,23 @@
+import './viz.js';
+import './full.render.js';
 import {default as ibis, version_info, best_solutions_to_json, best_solutions_to_dot} from '../pkg/ibis.js';
+
+function render(dot) {
+  var viz = new Viz();
+
+  viz.renderSVGElement(dot)
+  .then(function(element) {
+    const graph = document.getElementById('graph');
+    graph.replaceChildren(element);
+  })
+  .catch(error => {
+    // Create a new Viz instance (@see Caveats page for more info)
+    viz = new Viz();
+
+    // Possibly display the error
+    console.error(error);
+  });
+}
 
 async function loadIbis() {
     const feedback = document.getElementById('feedback');
@@ -24,7 +43,10 @@ async function startup() {
         input => JSON.stringify(JSON.parse(input), undefined, 2)
     ));
     const to_dot = document.getElementById('to_dot');
-    to_dot.addEventListener("click", () => run(best_solutions_to_dot, x => x));
+    to_dot.addEventListener("click", () => run(best_solutions_to_dot, dot => {
+        render(dot);
+        return dot;
+    }));
 
     await Promise.all([loadIbis(), getDemoContent()]);
 }
