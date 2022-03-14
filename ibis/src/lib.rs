@@ -17,7 +17,7 @@ mod util;
 #[cfg(feature = "dot")]
 pub mod dot;
 #[cfg(feature = "dot")]
-pub mod recipe_to_dot;
+pub mod to_dot_impls;
 pub mod recipes;
 extern crate ibis_macros;
 
