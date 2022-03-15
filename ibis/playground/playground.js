@@ -1,5 +1,5 @@
-import './viz.js';
-import './full.render.js';
+import './third_party/viz.js';
+import './third_party/full.render.js';
 import {default as ibis, version_info, best_solutions_to_json, best_solutions_to_dot} from '../pkg/ibis.js';
 
 function render(dot) {
