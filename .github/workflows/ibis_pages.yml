@@ -34,7 +34,7 @@ jobs:
     - name: Build docs using cargo doc
       run: cargo doc
     - Move docs to docs folder
-      run: mv ./target/docs/* ./docs/
+      run: mv ./target/doc/* ./docs/
     - uses: actions/upload-artifact@v2
       with:
         if-no-files-found: error
