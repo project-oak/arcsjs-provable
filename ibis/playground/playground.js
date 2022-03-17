@@ -1,6 +1,14 @@
+// Copyright 2022 Google LLC
+//
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file or at
+// https://developers.google.com/open-source/licenses/bsd
 import './third_party/viz.js';
 import './third_party/full.render.js';
 import {default as ibis, version_info, best_solutions_to_json, best_solutions_to_dot} from '../pkg/ibis.js';
+import {FilePane} from './file-pane.js';
+
+window.customElements.define('file-pane', FilePane);
 
 function render(dot) {
   var viz = new Viz();
@@ -32,12 +40,12 @@ async function loadIbis() {
 async function getDemoContent() {
     const demo = await fetch('../demo.json');
     const demoText = await demo.text();
-    const input = document.getElementById('input');
-    input.value = demoText;
+    const filePane = document.getElementById('filePane');
+    filePane.addFile(undefined, demoText);
 }
 
 async function startup() {
-    const input = document.getElementById('input');
+    const filePane = document.getElementById('filePane');
     const to_json = document.getElementById('to_json');
     to_json.addEventListener("click", () => run(best_solutions_to_json,
         input => JSON.stringify(JSON.parse(input), undefined, 2)
@@ -51,16 +59,40 @@ async function startup() {
     await Promise.all([loadIbis(), getDemoContent()]);
 }
 
+function merge_recipe(dest, new_recipe) {
+    for (const prop in new_recipe) {
+        if (!Object.prototype.hasOwnProperty.call(new_recipe, prop)) {
+            continue;
+        }
+        // Add the data
+        if (prop in dest) {
+            if (dest[prop] instanceof Array) {
+                dest[prop].push(...new_recipe[prop]);
+            } else {
+                merge_recipe(dest[prop], new_recipe[prop]);
+            }
+        } else {
+            // TODO: Handle different data types differently
+            dest[prop] = new_recipe[prop];
+        }
+    }
+}
+
 async function run(ibis_function, formatter) {
-    const input = document.getElementById('input');
-    const output = document.getElementById('output');
+    const filePane = document.getElementById('filePane');
     const feedback = document.getElementById('feedback');
     feedback.innerText = 'Running...';
-    const inputText = input.value;
-    if (!inputText) {
-        output.value = 'no text';
+    const inputFiles = Array.from(filePane.files.children).map(file => file.value);
+    const inputData = {};
+    inputFiles.forEach(file => {
+        const data = JSON.parse(file);
+        merge_recipe(inputData, data);
+    });
+    if (!inputFiles) {
+        feedback.innerText = 'No input?';
         return;
     }
+    const inputText = JSON.stringify(inputData);
     // update it
     const startTime = performance.now()
     const result = ibis_function(inputText);

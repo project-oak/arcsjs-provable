@@ -5,21 +5,32 @@ pre code {
   padding: 20px;
 }
 
-.input-area {
+.full-width {
   width: 100%;
-  height: 50%;
 }
 
 .flex-parent {
   display: flex;
 }
 
+.input-area {
+  border: 2px solid;
+  /* width: 50%;*/
+  min-width: 300px;
+  max-width: 100vw;
+  /*height: 100%;*/
+  min-height: 300px;
+  max-height: 100vh;
+}
+
+.graph {
+  text-align: center;
+  width: 100%;
+}
+
 .flex-child {
   flex: 1;
   margin: 10px;
-  border: 2px solid;
-  width: 50%;
-  height: 100%;
 }
 
 .flex-child:first-child {
