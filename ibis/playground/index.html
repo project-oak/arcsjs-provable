@@ -7,15 +7,13 @@
   </head>
   <body>
     <h1>Ibis - Playground</h1>
-    <div id="dotImage" min-width="100%" min-height="100%"></div>
     <div id="feedback">Waiting...</div>
     <button id="to_json">Run (to json)</button>
     <button id="to_dot">Run (to dot)</button>
-    <div class="flex-parent input-area">
-      <textarea class="flex-child" id="input"></textarea>
-      <textarea class="flex-child" id="output"></textarea>
-    </div>
-    <div id="graph" style="text-align: center;"></div>
+    <button id="clear_output">Clear output</button>
+    <file-pane id="filePane"></file-pane>
+    <file-pane id="outputPane" no-add-button="true"></file-pane>
+    <div id="graph" class="graph"></div>
     <div id="version_info"></div>
     <div class="footer">
       Thanks to <a href="https://github.com/mdaines/viz.js">vis.js</a> (<a href="https://github.com/mdaines/viz.js/blob/master/LICENSE">license</a>).
