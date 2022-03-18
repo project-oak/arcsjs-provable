@@ -27,12 +27,17 @@ function logStatus(status, style) {
 
 export async function loadIbis(ibis_path, status_callback, version_info_callback) {
     ibisStatusCallback = status_callback;
-    logStatus('Loading ibis...');
-    await ibis(ibis_path); // Set up ibis
-    logStatus('Loaded');
+    try {
+        logStatus('Loading ibis...');
+        await ibis(ibis_path); // Set up ibis
+        logStatus('Loaded');
 
-    if (version_info_callback) {
-        version_info_callback(version_info());
+        if (version_info_callback) {
+            version_info_callback(version_info());
+        }
+    } catch (err) {
+        logStatus(`${err}`, 'error');
+        throw err;
     }
 }
 
@@ -74,6 +79,7 @@ function run(func, input) {
         return result;
     } catch (err) {
         logStatus(`${err}`, 'error');
+        throw err;
     }
 }
 
