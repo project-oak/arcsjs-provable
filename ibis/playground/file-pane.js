@@ -129,7 +129,7 @@ export class FilePane extends HTMLElement {
         this.fileBase = 'a'.charCodeAt(0);
     }
 
-    getFilesContents() {
+    getFileContents() {
         return Array.from(this.files.children).map(file => file.value);
     }
 
