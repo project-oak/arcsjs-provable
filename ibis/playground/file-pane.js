@@ -123,6 +123,12 @@ export class FilePane extends HTMLElement {
         return file;
     }
 
+    dropAllFiles() {
+        this.files.replaceChildren();
+        this.tabs.replaceChildren();
+        this.fileBase = 'a'.charCodeAt(0);
+    }
+
     getFilesContents() {
         return Array.from(this.files.children).map(file => file.value);
     }
