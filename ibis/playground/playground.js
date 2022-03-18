@@ -36,18 +36,26 @@ async function getDemoContent() {
 
 async function startup() {
     const filePane = document.getElementById('filePane');
+    const outputPane = document.getElementById('outputPane');
     const to_json = document.getElementById('to_json');
     const clear_output = document.getElementById('clear_output');
     to_json.addEventListener("click", () => run(best_solutions_to_json,
         input => JSON.stringify(JSON.parse(input), undefined, 2)
     ));
-    const to_dot = document.getElementById('to_dot');
-    to_dot.addEventListener("click", () => run(best_solutions_to_dot, dot => {
+
+    const to_dot_callback = () => run(best_solutions_to_dot, dot => {
         render(dot);
         return dot;
-    }));
+    });
+    const to_dot = document.getElementById('to_dot');
+    to_dot.addEventListener("click", to_dot_callback);
+    filePane.addExecuteCallback(to_dot_callback);
+
+    outputPane.addTabSwitchCallback(() => {
+        render(outputPane.active.value);
+    });
+
     clear_output.addEventListener("click", () => {
-        const outputPane = document.getElementById('outputPane');
         outputPane.dropAllFiles();
     });
 

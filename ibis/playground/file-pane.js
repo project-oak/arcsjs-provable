@@ -72,16 +72,19 @@ export class FilePane extends HTMLElement {
     connectedCallback() {
     }
 
-    init(executeCallback, exportButton) {
+    addExecuteCallback(executeCallback) {
         this.executeCallback = executeCallback;
-        this.exportButton = exportButton;
-        this.exportButton.addEventListener('click', this.exportFiles.bind(this));
-        this.addButton.addEventListener('click', this.addFile.bind(this));
+    }
+
+    addTabSwitchCallback(tabSwitchCallback) {
+        this.tabSwitchCallback = tabSwitchCallback;
     }
 
     interceptCtrlEnter(event) {
         if (event.key === 'Enter' && event.ctrlKey) {
-            this.executeCallback();
+            if (this.executeCallback) {
+                this.executeCallback();
+            }
             event.preventDefault();
         }
     }
@@ -142,5 +145,9 @@ export class FilePane extends HTMLElement {
         }
         event.target.classList.add('active');
         event.target.linkedFile.style.display = '';
+        this.active = event.target.linkedFile;
+        if (this.tabSwitchCallback) {
+            this.tabSwitchCallback();
+        }
     }
 }
