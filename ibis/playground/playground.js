@@ -80,25 +80,24 @@ function merge_recipe(dest, new_recipe) {
 
 async function run(ibis_function, formatter) {
     const filePane = document.getElementById('filePane');
+    const outputPane = document.getElementById('outputPane');
     const feedback = document.getElementById('feedback');
     feedback.innerText = 'Running...';
-    const inputFiles = Array.from(filePane.files.children).map(file => file.value);
     const inputData = {};
-    inputFiles.forEach(file => {
-        const data = JSON.parse(file);
-        merge_recipe(inputData, data);
+    filePane.getFilesContents().forEach(file => {
+        if (file != "") {
+            const data = JSON.parse(file);
+            merge_recipe(inputData, data);
+        }
     });
-    if (!inputFiles) {
-        feedback.innerText = 'No input?';
-        return;
-    }
     const inputText = JSON.stringify(inputData);
     // update it
     const startTime = performance.now()
     const result = ibis_function(inputText);
     const endTime = performance.now()
     feedback.innerText = `Done in ${(endTime-startTime)/1000.0} seconds`;
-    output.value = formatter(result);
+    const outputFile = outputPane.addFile(undefined, formatter(result));
+    outputFile.disabled = true;
 }
 
 window.onload = function() {

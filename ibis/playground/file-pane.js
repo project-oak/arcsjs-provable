@@ -53,7 +53,9 @@ const template = `
   </div>`;
 
 export class FilePane extends HTMLElement {
-    connectedCallback() {
+
+    constructor() {
+        super();
         const shadowRoot = this.attachShadow({mode: 'open'});
         shadowRoot.innerHTML = template;
 
@@ -66,10 +68,12 @@ export class FilePane extends HTMLElement {
         this.fileBase = 'a'.charCodeAt(0);
     }
 
+    connectedCallback() {
+    }
+
     init(executeCallback, exportButton) {
         this.executeCallback = executeCallback;
         this.exportButton = exportButton;
-
         this.exportButton.addEventListener('click', this.exportFiles.bind(this));
         this.addButton.addEventListener('click', this.addFile.bind(this));
     }
@@ -78,6 +82,21 @@ export class FilePane extends HTMLElement {
         if (event.key === 'Enter' && event.ctrlKey) {
             this.executeCallback();
             event.preventDefault();
+        }
+    }
+
+    static get observedAttributes() {
+        return ['no-add-button'];
+    }
+
+    attributeChangedCallback(name, oldValue, newValue) {
+        console.log(this, name, oldValue, newValue);
+        if (name === 'no-add-button') {
+            if (newValue) {
+                this.addButton.style.display = 'none';
+            } else {
+                this.addButton.style.display = '';
+            }
         }
     }
 
@@ -100,6 +119,11 @@ export class FilePane extends HTMLElement {
         if (this.fileBase > 'z'.charCodeAt(0)) {
             this.addButton.style.display = 'none';
         }
+        return file;
+    }
+
+    getFilesContents() {
+        return Array.from(this.files.children).map(file => file.value);
     }
 
     showFile(event) {
