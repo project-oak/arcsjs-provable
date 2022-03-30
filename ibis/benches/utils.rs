@@ -19,11 +19,10 @@ fn concat(data1: &[u32], data2: u32) -> Vec<u32> {
 pub fn criterion_benchmark_new_vec_push(c: &mut Criterion) {
     let data1: Vec<u32> = (1..100000).into_iter().collect();
     let data2: u32 = 10001;
-    c.bench_function("noop_planning_vec_thing_mut", |b| b.iter(|| {
-        mut_push(black_box(&data1), black_box(data2))
-    }));
-    c.bench_function("noop_planning_vec_thing_concat", |b| b.iter(|| {
-        concat(black_box(&data1), black_box(data2))
-    }));
+    c.bench_function("noop_planning_vec_thing_mut", |b| {
+        b.iter(|| mut_push(black_box(&data1), black_box(data2)))
+    });
+    c.bench_function("noop_planning_vec_thing_concat", |b| {
+        b.iter(|| concat(black_box(&data1), black_box(data2)))
+    });
 }
-
