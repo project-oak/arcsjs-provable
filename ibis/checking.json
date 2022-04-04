@@ -1,0 +1,36 @@
+{
+  "flags": {
+    "planning": false
+  },
+  "metadata": {
+    "author": "jopra@google.com",
+    "date": "2022/04/04"
+  },
+  "capabilities": [
+    ["write", "read"],
+    ["any", "read"],
+    ["write", "any"]
+  ],
+  "subtypes": [
+    ["Int", "Number"],
+    ["Int", "Serializable"],
+    ["String", "Serializable"]
+  ],
+  "less_private_than": [
+    ["public", "private"]
+  ],
+  "recipes": [
+    {
+      "metadata": {
+        "name": "checking_demo"
+      },
+      "nodes": [
+        ["p_a", "a", "write", "NotInt"],
+        ["p_b", "b", "read", "ibis.UnionType(Number, String)"]
+      ],
+      "edges": [
+        ["a", "b"]
+      ]
+    }
+  ]
+}
