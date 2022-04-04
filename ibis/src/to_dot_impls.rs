@@ -70,7 +70,7 @@ impl ToDot for (&Ibis, &Recipe) {
         let sol = &recipe.id.expect("Every recipe should have an id?");
         let s_id = sol_id(sol);
         let particle_id = |particle| format!("{}_p_{}", &s_id, particle);
-        let node_id = |node| format!("{}_h_{}", &s_id, node);
+        let node_id = |node| format!("{}_h_{}", &s_id, node).replace('.', "_");
         let mut sol_graph = DotGraph::default();
         let mut particles = HashMap::new();
         for Node(particle, node, cap, ty) in &ibis.shared.nodes {

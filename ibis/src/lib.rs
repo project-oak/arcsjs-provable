@@ -116,6 +116,7 @@ pub mod wasm {
 
     #[wasm_bindgen]
     pub fn version_info() -> String {
+        setup();
         super::version_info()
     }
 
