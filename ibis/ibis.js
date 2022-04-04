@@ -83,6 +83,31 @@ function run(func, input) {
     }
 }
 
+export function check_is_subtype(subtype, supertype, subtypes) {
+    const input = {
+        flags: { planning: false },
+        subtypes,
+        capabilities: [
+            ["write", "read"]
+        ],
+        recipes: [
+            {
+                nodes: [
+                    ["p_a", "a", "write", subtype ],
+                    ["p_b", "b", "read", supertype ]
+                ],
+                edges: [
+                    ["a", "b"]
+                ]
+            }
+        ]
+    };
+    const result = JSON.parse(run(best_solutions_to_json_impl, [JSON.stringify(input)]));
+    const errors = result.recipes.map(recipe => recipe.type_errors) || []; // TODO: check for other kinds of errors.
+    logStatus(JSON.stringify('Found errors:', errors), 'error');
+    return errors.length === 0;
+}
+
 export function best_solutions_to_json(input) {
     return run(best_solutions_to_json_impl, input);
 }
