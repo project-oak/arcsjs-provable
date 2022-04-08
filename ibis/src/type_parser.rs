@@ -47,8 +47,16 @@ fn simple_type_structure(input: &str) -> IResult<&str, Type> {
     Ok((input, Type::new(name, args.unwrap_or_default())))
 }
 
-fn type_structure(input: &str) -> IResult<&str, Type> {
-    let (input, mut types) = separated_list1(space1, simple_type_structure)(input)?;
+fn labelled_simple_type_structure(input: &str) -> IResult<&str, Type> {
+    let (input, (label, mut structure)) = tuple((opt(label), simple_type_structure))(input)?;
+    if let Some(label) = label {
+        structure = Type::new("ibis.Labelled", vec![Type::named(label), structure]);
+    }
+    Ok((input, structure))
+}
+
+fn type_parser(input: &str) -> IResult<&str, Type> {
+    let (input, mut types) = separated_list1(space1, labelled_simple_type_structure)(input)?;
     let mut ty = None;
     for new_ty in types.drain(0..).rev() {
         ty = Some(if let Some(ty) = ty {
@@ -58,14 +66,6 @@ fn type_structure(input: &str) -> IResult<&str, Type> {
         });
     }
     Ok((input, ty.expect("Should have a type")))
-}
-
-fn type_parser(input: &str) -> IResult<&str, Type> {
-    let (input, (label, mut structure)) = tuple((opt(label), type_structure))(input)?;
-    if let Some(label) = label {
-        structure = Type::new("ibis.Labelled", vec![Type::named(label), structure]);
-    }
-    Ok((input, structure))
 }
 
 pub fn read_type(input: &str) -> Type {
@@ -140,6 +140,22 @@ mod tests {
                             }
                         ]
                     }
+                ]
+            }
+        );
+    }
+
+    #[test]
+    fn read_a_product_type_using_syntactic_sugar() {
+        let name_string = read_type("name: String");
+        let age_number = read_type("age: Number");
+        assert_eq!(
+            read_type("name: String age: Number"),
+            Type {
+                name: "ibis.ProductType",
+                args: vec![
+                    name_string,
+                    age_number
                 ]
             }
         );

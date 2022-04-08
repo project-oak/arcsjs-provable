@@ -42,9 +42,8 @@ impl<'a> std::fmt::Display for Type<'a> {
         if self.name == "ibis.Labelled" && self.args.len() > 1 {
             write!(f, "{}: ", self.args[0])?;
             format_arg_set(f, ", ", &self.args[1..])
-        // } else if self.name == "ibis.ProductType" && self.args.len() > 1 {
-        // write!(f, "{}: ", self.args[0])?;
-        // format_arg_set(f, " & ", &self.args[1..])
+        } else if self.name == "ibis.ProductType" && self.args.len() > 0 {
+            format_arg_set(f, " ", &self.args)
         } else {
             let res = write!(
                 f,
