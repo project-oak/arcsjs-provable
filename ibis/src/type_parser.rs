@@ -7,9 +7,9 @@
 extern crate nom;
 use nom::{
     bytes::complete::{tag, take_while},
-    character::complete::space0,
+    character::complete::{space0, space1},
     combinator::opt,
-    multi::separated_list0,
+    multi::{separated_list0, separated_list1},
     sequence::tuple,
     Finish, IResult,
 };
@@ -17,7 +17,11 @@ use nom::{
 use crate::type_struct::Type;
 
 fn is_name_char(c: char) -> bool {
-    c != '(' && c != ')' && c != ',' && c != ':'
+    match c {
+        '(' | ')' | ',' | ':' => false, // Symbols
+        ' ' | '\n' | '\r' | '\t' => false, // Whitespace
+        _ => true // Name char
+    }
 }
 
 fn name(input: &str) -> IResult<&str, &str> {
@@ -35,12 +39,25 @@ fn type_args(input: &str) -> IResult<&str, Vec<Type>> {
     Ok((input, args))
 }
 
-fn type_structure(input: &str) -> IResult<&str, Type> {
+fn simple_type_structure(input: &str) -> IResult<&str, Type> {
     let (input, (mut name, args)) = tuple((name, opt(type_args)))(input)?;
     if name == "*" {
         name = "ibis.UniversalType";
     }
     Ok((input, Type::new(name, args.unwrap_or_default())))
+}
+
+fn type_structure(input: &str) -> IResult<&str, Type> {
+    let (input, mut types) = separated_list1(space1, simple_type_structure)(input)?;
+    let mut ty = None;
+    for new_ty in types.drain(0..).rev() {
+        ty = Some(if let Some(ty) = ty {
+            Type::new("ibis.ProductType", vec![new_ty, ty])
+        } else {
+            new_ty
+        });
+    }
+    Ok((input, ty.expect("Should have a type")))
 }
 
 fn type_parser(input: &str) -> IResult<&str, Type> {
@@ -75,6 +92,55 @@ mod tests {
             Type {
                 name: "Type",
                 args: vec![]
+            }
+        );
+    }
+
+    #[test]
+    fn read_a_type_with_a_single_capabilities() {
+        assert_eq!(
+            read_type("read Type"),
+            Type {
+                name: "ibis.ProductType",
+                args: vec![
+                    Type {
+                        name: "read",
+                        args: vec![]
+                    },
+                    Type {
+                        name: "Type",
+                        args: vec![]
+                    }
+                ]
+            }
+        );
+    }
+
+    #[test]
+    fn read_a_type_with_multiple_capabilities() {
+        assert_eq!(
+            read_type("read write Type"),
+            Type {
+                name: "ibis.ProductType",
+                args: vec![
+                    Type {
+                        name: "read",
+                        args: vec![]
+                    },
+                    Type {
+                        name: "ibis.ProductType",
+                        args: vec![
+                            Type {
+                                name: "write",
+                                args: vec![]
+                            },
+                            Type {
+                                name: "Type",
+                                args: vec![]
+                            }
+                        ]
+                    }
+                ]
             }
         );
     }
