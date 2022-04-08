@@ -14,7 +14,6 @@ impl<'a> Type<'a> {
     pub fn new(name: &'a str, args: Vec<Type<'a>>) -> Self {
         Self { name, args }
     }
-
     pub fn named(name: &'a str) -> Self {
         Self::new(name, vec![])
     }
@@ -41,7 +40,13 @@ impl<'a> std::fmt::Display for Type<'a> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         if self.name == "ibis.Labelled" && self.args.len() > 1 {
             write!(f, "{}: ", self.args[0])?;
-            format_arg_set(f, ", ", &self.args[1..])
+            if self.args[1].name == "ibis.ProductType" {
+                write!(f, "(")?;
+                format_arg_set(f, ", ", &self.args[1..])?;
+                write!(f, ")")
+            } else {
+                format_arg_set(f, ", ", &self.args[1..])
+            }
         } else if self.name == "ibis.ProductType" && self.args.len() > 0 {
             format_arg_set(f, " ", &self.args)
         } else {

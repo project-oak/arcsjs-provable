@@ -40,6 +40,9 @@ fn type_args(input: &str) -> IResult<&str, Vec<Type>> {
 }
 
 fn simple_type_structure(input: &str) -> IResult<&str, Type> {
+    if let Ok((input, (_, ty, _))) = tuple((tag("("), type_parser, tag(")")))(input) {
+        return Ok((input, ty));
+    }
     let (input, (mut name, args)) = tuple((name, opt(type_args)))(input)?;
     if name == "*" {
         name = "ibis.UniversalType";
@@ -85,32 +88,29 @@ pub fn read_type(input: &str) -> Type {
 mod tests {
     use super::*;
 
+    fn parse_and_round_trip(s: &str, t: Type) {
+        let ty = read_type(s);
+        assert_eq!(ty, t);
+        assert_eq!(format!("{}", ty), s);
+    }
+
     #[test]
     fn read_a_simple_type_name() {
-        assert_eq!(
-            read_type("Type"),
-            Type {
-                name: "Type",
-                args: vec![]
-            }
+        parse_and_round_trip(
+            "Type",
+            Type::named("Type")
         );
     }
 
     #[test]
     fn read_a_type_with_a_single_capabilities() {
-        assert_eq!(
-            read_type("read Type"),
+        parse_and_round_trip(
+            "read Type",
             Type {
                 name: "ibis.ProductType",
                 args: vec![
-                    Type {
-                        name: "read",
-                        args: vec![]
-                    },
-                    Type {
-                        name: "Type",
-                        args: vec![]
-                    }
+                    Type::named("read"),
+                    Type::named("Type")
                 ]
             }
         );
@@ -118,26 +118,17 @@ mod tests {
 
     #[test]
     fn read_a_type_with_multiple_capabilities() {
-        assert_eq!(
-            read_type("read write Type"),
+        parse_and_round_trip(
+            "read write Type",
             Type {
                 name: "ibis.ProductType",
                 args: vec![
-                    Type {
-                        name: "read",
-                        args: vec![]
-                    },
+                    Type::named("read"),
                     Type {
                         name: "ibis.ProductType",
                         args: vec![
-                            Type {
-                                name: "write",
-                                args: vec![]
-                            },
-                            Type {
-                                name: "Type",
-                                args: vec![]
-                            }
+                            Type::named("write"),
+                            Type::named("Type")
                         ]
                     }
                 ]
@@ -149,8 +140,8 @@ mod tests {
     fn read_a_product_type_using_syntactic_sugar() {
         let name_string = read_type("name: String");
         let age_number = read_type("age: Number");
-        assert_eq!(
-            read_type("name: String age: Number"),
+        parse_and_round_trip(
+            "name: String age: Number",
             Type {
                 name: "ibis.ProductType",
                 args: vec![
@@ -162,20 +153,36 @@ mod tests {
     }
 
     #[test]
+    fn read_nested_type() {
+        let json = read_type("JSON");
+        let age_number = read_type("age: Number");
+        parse_and_round_trip(
+            "name: (JSON age: Number)",
+            Type {
+                name: "ibis.Labelled",
+                args: vec![
+                    Type::named("name"),
+                    Type {
+                        name: "ibis.ProductType",
+                        args: vec![
+                            json,
+                            age_number
+                        ]
+                    }
+                ]
+            }
+        );
+    }
+
+    #[test]
     fn read_a_type_with_arguments() {
-        assert_eq!(
-            read_type("Type(a, b)"),
+        parse_and_round_trip(
+            "Type(a, b)",
             Type {
                 name: "Type",
                 args: vec![
-                    Type {
-                        name: "a",
-                        args: vec![]
-                    },
-                    Type {
-                        name: "b",
-                        args: vec![]
-                    },
+                    Type::named("a"),
+                    Type::named("b")
                 ]
             }
         );
@@ -183,22 +190,16 @@ mod tests {
 
     #[test]
     fn read_a_type_with_nested_arguments() {
-        assert_eq!(
-            read_type("Type(a(c), b)"),
+        parse_and_round_trip(
+            "Type(a(c), b)",
             Type {
                 name: "Type",
                 args: vec![
                     Type {
                         name: "a",
-                        args: vec![Type {
-                            name: "c",
-                            args: vec![]
-                        }]
+                        args: vec![Type::named("c")]
                     },
-                    Type {
-                        name: "b",
-                        args: vec![]
-                    },
+                    Type::named("b")
                 ]
             }
         );
@@ -206,19 +207,13 @@ mod tests {
 
     #[test]
     fn read_type_with_label() {
-        assert_eq!(
-            read_type("name: Type"),
+        parse_and_round_trip(
+            "name: Type",
             Type {
                 name: "ibis.Labelled",
                 args: vec![
-                    Type {
-                        name: "name",
-                        args: vec![],
-                    },
-                    Type {
-                        name: "Type",
-                        args: vec![]
-                    },
+                    Type::named("name"),
+                    Type::named("Type")
                 ]
             }
         );
