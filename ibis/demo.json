@@ -25,25 +25,19 @@
         "name": "demo"
       },
       "nodes": [
-        ["p_a", "a", "write", "Int"],
-        ["p_b", "b", "any", "Number"],
-        ["p_c", "c", "write", "String"],
-        ["p_de", "d", "read", "Serializable"],
-        ["p_de", "e", "read", "ibis.UnionType(Number, String)"],
-        ["p_f", "f", "write", "name: String age: Int"],
-        ["p_g", "g", "read", "name: *"],
-        ["p_h", "h", "read", "name: String age: Int"],
-        ["p_i", "i", "read", "name: String"],
-        ["p_j", "j", "read", "age: Int"]
+        ["p_a", "a", "write private Int"],
+        ["p_b", "b", "any Number"],
+        ["p_c", "c", "write String"],
+        ["p_de", "d", "read Serializable"],
+        ["p_de", "e", "read public ibis.UnionType(Number, String)"],
+        ["p_f", "f", "write name: String age: Int"],
+        ["p_g", "g", "read name: *"],
+        ["p_h", "h", "read name: String age: Int"],
+        ["p_i", "i", "read name: String"],
+        ["p_j", "j", "read age: Int"]
       ],
       "edges": [
         ["b", "e"]
-      ],
-      "claims": [
-        ["a", "private"]
-      ],
-      "checks": [
-        ["e", "public"]
       ],
       "trusted_to_remove_tag": [
         ["b", "private"]
