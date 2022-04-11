@@ -6,16 +6,25 @@
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct Type<'a> {
+    pub capabilities: Vec<&'a str>,
     pub name: &'a str,
     pub args: Vec<Type<'a>>,
 }
 
 impl<'a> Type<'a> {
-    pub fn new(name: &'a str, args: Vec<Type<'a>>) -> Self {
-        Self { name, args }
+    pub fn with_args(name: &'a str, args: Vec<Type<'a>>) -> Self {
+        Self { capabilities: vec![], name, args }
     }
-    pub fn named(name: &'a str) -> Self {
-        Self::new(name, vec![])
+    pub fn new(name: &'a str) -> Self {
+        Self::with_args(name, vec![])
+    }
+    pub fn with_capability(mut self, cap: &'a str) -> Self {
+        self.capabilities.push(cap);
+        self
+    }
+    pub fn with_arg(mut self, arg: Type<'a>) -> Self {
+        self.args.push(arg);
+        self
     }
 }
 
@@ -38,15 +47,20 @@ fn format_arg_set<'a>(
 
 impl<'a> std::fmt::Display for Type<'a> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        for cap in &self.capabilities {
+            write!(f, "{} ", cap)?;
+        }
         if self.name == "ibis.Labelled" && self.args.len() > 1 {
             write!(f, "{}: ", self.args[0])?;
-            if self.args[1].name == "ibis.ProductType" {
+            let is_product = self.args[1].name == "ibis.ProductType";
+            if is_product {
                 write!(f, "(")?;
-                format_arg_set(f, ", ", &self.args[1..])?;
-                write!(f, ")")
-            } else {
-                format_arg_set(f, ", ", &self.args[1..])
             }
+            format_arg_set(f, ", ", &self.args[1..])?;
+            if is_product {
+                write!(f, ")")?;
+            }
+            Ok(())
         } else if self.name == "ibis.ProductType" && self.args.len() > 0 {
             format_arg_set(f, " ", &self.args)
         } else {

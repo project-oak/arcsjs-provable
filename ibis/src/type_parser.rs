@@ -47,13 +47,15 @@ fn simple_type_structure(input: &str) -> IResult<&str, Type> {
     if name == "*" {
         name = "ibis.UniversalType";
     }
-    Ok((input, Type::new(name, args.unwrap_or_default())))
+    Ok((input, Type::with_args(name, args.unwrap_or_default())))
 }
 
 fn labelled_simple_type_structure(input: &str) -> IResult<&str, Type> {
     let (input, (label, mut structure)) = tuple((opt(label), simple_type_structure))(input)?;
     if let Some(label) = label {
-        structure = Type::new("ibis.Labelled", vec![Type::named(label), structure]);
+        structure = Type::new("ibis.Labelled")
+            .with_arg(Type::new(label))
+            .with_arg(structure);
     }
     Ok((input, structure))
 }
@@ -63,7 +65,9 @@ fn type_parser(input: &str) -> IResult<&str, Type> {
     let mut ty = None;
     for new_ty in types.drain(0..).rev() {
         ty = Some(if let Some(ty) = ty {
-            Type::new("ibis.ProductType", vec![new_ty, ty])
+            Type::new("ibis.ProductType")
+                .with_arg(new_ty)
+                .with_arg(ty)
         } else {
             new_ty
         });
@@ -98,7 +102,7 @@ mod tests {
     fn read_a_simple_type_name() {
         parse_and_round_trip(
             "Type",
-            Type::named("Type")
+            Type::new("Type")
         );
     }
 
@@ -106,13 +110,8 @@ mod tests {
     fn read_a_type_with_a_single_capabilities() {
         parse_and_round_trip(
             "read Type",
-            Type {
-                name: "ibis.ProductType",
-                args: vec![
-                    Type::named("read"),
-                    Type::named("Type")
-                ]
-            }
+            Type::new("Type")
+                .with_capability("read")
         );
     }
 
@@ -120,19 +119,9 @@ mod tests {
     fn read_a_type_with_multiple_capabilities() {
         parse_and_round_trip(
             "read write Type",
-            Type {
-                name: "ibis.ProductType",
-                args: vec![
-                    Type::named("read"),
-                    Type {
-                        name: "ibis.ProductType",
-                        args: vec![
-                            Type::named("write"),
-                            Type::named("Type")
-                        ]
-                    }
-                ]
-            }
+            Type::new("Type")
+                .with_capability("read")
+                .with_capability("write")
         );
     }
 
@@ -142,13 +131,9 @@ mod tests {
         let age_number = read_type("age: Number");
         parse_and_round_trip(
             "name: String age: Number",
-            Type {
-                name: "ibis.ProductType",
-                args: vec![
-                    name_string,
-                    age_number
-                ]
-            }
+            Type::new("ibis.ProductType")
+                .with_arg(name_string)
+                .with_arg(age_number)
         );
     }
 
@@ -158,19 +143,13 @@ mod tests {
         let age_number = read_type("age: Number");
         parse_and_round_trip(
             "name: (JSON age: Number)",
-            Type {
-                name: "ibis.Labelled",
-                args: vec![
-                    Type::named("name"),
-                    Type {
-                        name: "ibis.ProductType",
-                        args: vec![
-                            json,
-                            age_number
-                        ]
-                    }
-                ]
-            }
+            Type::new("ibis.Labelled")
+                .with_arg(Type::new("name"))
+                .with_arg(
+                    Type::new("ibis.ProductType")
+                        .with_arg(json)
+                        .with_arg(age_number)
+                )
         );
     }
 
@@ -178,13 +157,9 @@ mod tests {
     fn read_a_type_with_arguments() {
         parse_and_round_trip(
             "Type(a, b)",
-            Type {
-                name: "Type",
-                args: vec![
-                    Type::named("a"),
-                    Type::named("b")
-                ]
-            }
+            Type::new("Type")
+                .with_arg(Type::new("a"))
+                .with_arg(Type::new("b"))
         );
     }
 
@@ -192,16 +167,12 @@ mod tests {
     fn read_a_type_with_nested_arguments() {
         parse_and_round_trip(
             "Type(a(c), b)",
-            Type {
-                name: "Type",
-                args: vec![
-                    Type {
-                        name: "a",
-                        args: vec![Type::named("c")]
-                    },
-                    Type::named("b")
-                ]
-            }
+            Type::new("Type")
+                .with_arg(
+                    Type::new("a")
+                        .with_arg(Type::new("c")),
+                )
+                .with_arg(Type::new("b"))
         );
     }
 
@@ -209,13 +180,9 @@ mod tests {
     fn read_type_with_label() {
         parse_and_round_trip(
             "name: Type",
-            Type {
-                name: "ibis.Labelled",
-                args: vec![
-                    Type::named("name"),
-                    Type::named("Type")
-                ]
-            }
+            Type::new("ibis.Labelled")
+                .with_arg(Type::new("name"))
+                .with_arg(Type::new("Type"))
         );
     }
 
