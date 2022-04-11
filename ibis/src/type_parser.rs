@@ -69,15 +69,8 @@ fn simple_structure(input: &str) -> IResult<&str, Type> {
     Ok((input, Type::with_args(name, args.unwrap_or_default())))
 }
 
-fn structure(input: &str) -> IResult<&str, Type> {
-    parenthesized(input)
-        .or_else(|_| entity(input))
-        .or_else(|_| labelled_type(input))
-        .or_else(|_| simple_structure(input))
-}
-
 fn labelled_type(input: &str) -> IResult<&str, Type> {
-    let (input, (label, structure)) = tuple((label, structure))(input)?;
+    let (input, (label, structure)) = tuple((label, cut(structure)))(input)?;
     Ok((
         input,
         Type::new("ibis.Labelled")
@@ -86,7 +79,7 @@ fn labelled_type(input: &str) -> IResult<&str, Type> {
     ))
 }
 
-fn entity(input: &str) -> IResult<&str, Type> {
+fn product_type(input: &str) -> IResult<&str, Type> {
     let (input, (_, mut types, _)) = tuple((
         tag("{"),
         cut(separated_list1(tag(","), structure)),
@@ -102,11 +95,20 @@ fn entity(input: &str) -> IResult<&str, Type> {
     Ok((input, ty))
 }
 
+fn structure(input: &str) -> IResult<&str, Type> {
+    parenthesized(input)
+        .or_else(|_| product_type(input))
+        .or_else(|_| labelled_type(input))
+        .or_else(|_| simple_structure(input))
+}
+
+fn structure_with_capability(input: &str) -> IResult<&str, Type> {
+    let (input, (cap, _, ty)) = tuple((capability, space0, type_parser))(input)?;
+    Ok((input, ty.with_capability(cap)))
+}
+
 fn type_parser(input: &str) -> IResult<&str, Type> {
-    if let Ok((input, (cap, _, ty))) = tuple((capability, space0, type_parser))(input) {
-        return Ok((input, ty.with_capability(cap)));
-    }
-    structure(input)
+    structure_with_capability(input).or_else(|_| structure(input))
 }
 
 pub fn read_type(og_input: &str) -> Type {
