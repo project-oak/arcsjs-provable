@@ -10,7 +10,8 @@ ibis! {
     LessPrivateThan(Ent, Ent); // tag, tag
     Capability(Ent, Ent); // cap from, cap to
     Subtype(Ent, Ent); // sub, super
-    Node(Ent, Ent, Ent, Ent); // particle-identifier, identifier, capability, type
+    CompatibleWith(Ent, Ent); // from, to
+    Node(Ent, Ent, Ent); // particle-identifier, identifier, capability, type
     Claim(Ent, Ent); // identifier, tag
     Check(Ent, Ent); // identifier, tag
     TrustedToRemoveTag(Ent, Ent); // node, tag
@@ -24,11 +25,19 @@ ibis! {
     UncheckedSolution(parent.add_edge(from, to)) <-
         PlanningIsEnabled(true),
         Capability(from_capability, to_capability),
-        Node(from_particle, from, from_capability, from_type),
-        Subtype(from_type, to_type),
-        Node(to_particle, to, to_capability, to_type),
+        Node(from_particle, from, from_type),
+        Node(to_particle, to, to_type),
+        ({eprintln!("{}, {}, {}. {}, {}, {}. {} to {}", &from_particle, &from, &from_type, &to_particle, &to, &to_type, &from_capability, &to_capability);true}),
+        Subtype(from_type, from_capability),
+        ({eprintln!("   {}, {}, {}. {}, {}, {}. {} to {}", &from_particle, &from, &from_type, &to_particle, &to, &to_type, &from_capability, &to_capability);true}),
+        Subtype(to_type, to_capability),
+        ({eprintln!("      {}, {}, {}. {}, {}, {}. {} to {}", &from_particle, &from, &from_type, &to_particle, &to, &to_type, &from_capability, &to_capability);true}),
+        CompatibleWith(from_type, to_type),
+        ({eprintln!("         {}, {}, {}. {}, {}, {}. {} to {}", &from_particle, &from, &from_type, &to_particle, &to, &to_type, &from_capability, &to_capability);true}),
         (from != to),
         UncheckedSolution(parent);
+
+    CompatibleWith(x, y) <- Subtype(x, y);
 
     Subtype(
         x,
@@ -115,8 +124,8 @@ ibis! {
 
     HasTag(s, source, down, tag) <- // Propagate tags 'across stream' (i.e. inside a particle)
         HasTag(s, source, curr, tag),
-        Node(particle, curr, _, _),
-        Node(particle, down, _, _),
+        Node(particle, curr, _),
+        Node(particle, down, _),
         !TrustedToRemoveTag(down, tag);
 
     Leak(s, n, t1, source, t2) <-
@@ -127,16 +136,18 @@ ibis! {
     TypeError(s, *from, from_ty, *to, to_ty) <-
         UncheckedSolution(s),
         for (from, to) in &s.solution().edges,
-        Node(_from_p, *from, _, from_ty),
-        Node(_to_p, *to, _, to_ty),
+        Node(_from_p, *from, from_ty),
+        Node(_to_p, *to, to_ty),
         !Subtype(from_ty, to_ty); // Check failed, from writes an incompatible type into to
 
     CapabilityError(s, *from, from_capability, *to, to_capability) <-
         UncheckedSolution(s),
         for (from, to) in &s.solution().edges,
-        Node(_from_p, *from, from_capability, _),
-        Node(_to_p, *to, to_capability, _),
-        !Capability(from_capability, to_capability); // Check failed, from writes an incompatible type into to
+        Node(_from_p, *from, from_type),
+        Node(_to_p, *to, to_type),
+        Capability(from_capability, to_capability),
+        !Subtype(from_type, from_capability),
+        !Subtype(to_type, to_capability); // Check failed, from writes an incompatible type into to
 
     Solution(s) <-
         UncheckedSolution(s),
@@ -144,7 +155,7 @@ ibis! {
         !CapabilityError(s, _, _, _, _),
         !Leak(s, _, _, _, _);
 
-    KnownType(x) <- Node(_par, _node, _cap, x); // Infer types that are used in the recipes.
+    KnownType(x) <- Node(_par, _node, x); // Infer types that are used in the recipes.
     KnownType(x) <- Subtype(x, _);
     KnownType(y) <- Subtype(_, y);
     Subtype(x, ent!("ibis.UniversalType")) <- KnownType(x); // Create a universal type.
@@ -381,6 +392,7 @@ impl Ibis {
             mut less_private_than,
             mut capabilities,
             mut subtypes,
+            _compatible_with,
             nodes,
             claims,
             checks,
