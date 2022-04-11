@@ -27,10 +27,10 @@ fn static_subtyping_socretes_is_mortal() {
   "recipes": [
     {
       "nodes": [
-        ["p_a", "socretes", "any", "socretes"],
-        ["p_b", "plato", "any", "plato"],
-        ["p_c", "man", "any", "man"],
-        ["p_out", "mortal", "any", "mortal"]
+        ["p_a", "socretes", "any socretes"],
+        ["p_b", "plato", "any plato"],
+        ["p_c", "man", "any man"],
+        ["p_out", "mortal", "any mortal"]
       ]
     }
   ]
