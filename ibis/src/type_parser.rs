@@ -50,14 +50,14 @@ fn label(input: &str) -> IResult<&str, &str> {
 fn type_args(input: &str) -> IResult<&str, Vec<Type>> {
     let (input, (_, args, _)) = tuple((
         tag("("),
-        cut(separated_list0(tag(","), structure)),
+        cut(separated_list0(tag(","), type_parser)),
         tag(")"),
     ))(input)?;
     Ok((input, args))
 }
 
 fn parenthesized(input: &str) -> IResult<&str, Type> {
-    let (input, (_, _, ty, _)) = tuple((opt(space0), tag("("), cut(structure), tag(")")))(input)?;
+    let (input, (_, _, ty, _)) = tuple((opt(space0), tag("("), cut(type_parser), tag(")")))(input)?;
     Ok((input, ty))
 }
 
@@ -70,45 +70,43 @@ fn simple_structure(input: &str) -> IResult<&str, Type> {
 }
 
 fn labelled_type(input: &str) -> IResult<&str, Type> {
-    let (input, (label, structure)) = tuple((label, cut(structure)))(input)?;
+    let (input, (label, ty)) = tuple((label, cut(type_parser)))(input)?;
     Ok((
         input,
         Type::new("ibis.Labelled")
             .with_arg(Type::new(label))
-            .with_arg(structure),
+            .with_arg(ty),
     ))
 }
 
 fn product_type(input: &str) -> IResult<&str, Type> {
     let (input, (_, mut types, _)) = tuple((
         tag("{"),
-        cut(separated_list1(tag(","), structure)),
+        cut(separated_list1(tag(","), type_parser)),
         tag("}"),
     ))(input)?;
     let mut types: Vec<Type> = types.drain(0..).rev().collect();
     let mut ty = types
         .pop()
-        .expect("A structure requires at least one labelled type");
+        .expect("A product type requires at least one type");
     for new_ty in types {
         ty = Type::with_args("ibis.ProductType", vec![ty, new_ty]);
     }
     Ok((input, ty))
 }
 
-fn structure(input: &str) -> IResult<&str, Type> {
-    parenthesized(input)
-        .or_else(|_| product_type(input))
-        .or_else(|_| labelled_type(input))
-        .or_else(|_| simple_structure(input))
-}
-
 fn structure_with_capability(input: &str) -> IResult<&str, Type> {
-    let (input, (cap, _, ty)) = tuple((capability, space0, type_parser))(input)?;
+    let (input, (cap, _, ty)) = tuple((capability, space0, cut(type_parser)))(input)?;
     Ok((input, ty.with_capability(cap)))
 }
 
 fn type_parser(input: &str) -> IResult<&str, Type> {
-    structure_with_capability(input).or_else(|_| structure(input))
+    let (input, _) = space0(input)?;
+    parenthesized(input)
+        .or_else(|_| product_type(input))
+        .or_else(|_| labelled_type(input))
+        .or_else(|_| structure_with_capability(input))
+        .or_else(|_| simple_structure(input))
 }
 
 pub fn read_type(og_input: &str) -> Type {

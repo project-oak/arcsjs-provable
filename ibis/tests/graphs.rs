@@ -22,10 +22,10 @@ fn create_combinations() {
   "recipes": [
     {
       "nodes": [
-        ["p_a", "a", "write"],
-        ["p_b", "b", "write"],
-        ["p_c", "c", "write"],
-        ["p_out", "out", "read"]
+        ["p_a", "a", "write Unit"],
+        ["p_b", "b", "write Unit"],
+        ["p_c", "c", "write Unit"],
+        ["p_out", "out", "read Unit"]
       ]
     }
   ]

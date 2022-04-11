@@ -21,15 +21,14 @@ ibis! {
     HasTag(Sol, Ent, Ent, Ent); // solution, source node, node with tag, tag
     Leak(Sol, Ent, Ent, Ent, Ent); // sol, node, expected_tag, source, tag2
     TypeError(Sol, Ent, Ent, Ent, Ent); // sol, node, ty, source, ty
-    CapabilityError(Sol, Ent, Ent, Ent, Ent); // sol, node, cap, source, cap
 
     UncheckedSolution(parent.add_edge(from, to)) <-
         PlanningIsEnabled(true),
-        Capability(from_capability, to_capability),
         Node(from_particle, from, from_type),
         Node(to_particle, to, to_type),
-        CompatibleWith(from_type, to_type),
         (from != to),
+        CompatibleWith(from_type, to_type),
+        // ({eprintln!("Connecting {}: {} to {}: {}", from, from_type, to, to_type); true}),
         UncheckedSolution(parent);
 
     HasCapability(arg!(ty, 0), ty) <-
@@ -47,6 +46,7 @@ ibis! {
         (!is_a!(x, ent!("ibis.WithCapability"))),
         KnownType(y),
         (!is_a!(y, ent!("ibis.WithCapability"))),
+        // ({eprintln!("checking subtyping ({}) ({})", x, y); true}),
         Subtype(x, y);
 
     CompatibleWith(x, y) <- // Check that y has the capabilities required by x.
@@ -54,6 +54,7 @@ ibis! {
         (is_a!(x, ent!("ibis.WithCapability"))),
         KnownType(y),
         HasCapability(cap, y), // For each of the capabilities y supports
+        // ({eprintln!("checking y has cap ({}) ({})", x, y); true}),
         Capability(arg!(x, 0), cap), // If this one is supported we can continue.
         CompatibleWith(arg!(x, 1), y);
 
@@ -62,7 +63,8 @@ ibis! {
         (!is_a!(x, ent!("ibis.WithCapability"))),
         KnownType(y),
         (is_a!(y, ent!("ibis.WithCapability"))),
-        Subtype(x, arg!(y, 1));
+        // ({eprintln!("discarding capability from y ({}) ({})", x, y); true}),
+        CompatibleWith(x, arg!(y, 1));
 
     Subtype(
         x,
@@ -163,21 +165,11 @@ ibis! {
         for (from, to) in &s.solution().edges,
         Node(_from_p, *from, from_ty),
         Node(_to_p, *to, to_ty),
-        !Subtype(from_ty, to_ty); // Check failed, from writes an incompatible type into to
-
-    CapabilityError(s, *from, from_capability, *to, to_capability) <-
-        UncheckedSolution(s),
-        for (from, to) in &s.solution().edges,
-        Node(_from_p, *from, from_type),
-        Node(_to_p, *to, to_type),
-        Capability(from_capability, to_capability),
-        !Subtype(from_type, from_capability),
-        !Subtype(to_type, to_capability); // Check failed, from writes an incompatible type into to
+        !CompatibleWith(from_ty, to_ty); // Check failed, from writes an incompatible type into to
 
     Solution(s) <-
         UncheckedSolution(s),
         !TypeError(s, _, _, _, _),
-        !CapabilityError(s, _, _, _, _),
         !Leak(s, _, _, _, _);
 
     KnownType(name!(ty)) <- KnownType(ty); // Types without their arguments are still types
@@ -225,8 +217,6 @@ pub struct Feedback {
     pub leaks: Vec<Leak>,
     #[serde(default, skip_serializing_if = "is_default")]
     pub type_errors: Vec<TypeError>,
-    #[serde(default, skip_serializing_if = "is_default")]
-    pub capability_errors: Vec<CapabilityError>,
     #[serde(default, skip_serializing_if = "is_default")]
     pub has_tags: Vec<HasTag>,
 }
@@ -428,7 +418,6 @@ impl Ibis {
             has_tags,
             leaks,
             type_errors,
-            capability_errors,
         ) = runtime.run();
         let recipes: Vec<Sol> = if self.config.flags.planning {
             solutions.iter().map(|Solution(s)| *s).collect()
@@ -450,11 +439,6 @@ impl Ibis {
                     type_errors: type_errors
                         .iter()
                         .filter(|TypeError(type_s, _, _, _, _)| type_s == s)
-                        .cloned()
-                        .collect(),
-                    capability_errors: capability_errors
-                        .iter()
-                        .filter(|CapabilityError(cap_s, _, _, _, _)| cap_s == s)
                         .cloned()
                         .collect(),
                     has_tags: has_tags
