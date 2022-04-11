@@ -58,21 +58,25 @@ fn parenthesized(input: &str) -> IResult<&str, Type> {
     Ok((input, ty))
 }
 
-fn structure(input: &str) -> IResult<&str, Type> {
-    if let Ok(res) = labelled_type(input) {
-        return Ok(res);
-    }
-    if let Ok(res) = entity(input) {
-        return Ok(res);
-    }
-    if let Ok(res) = parenthesized(input) {
-        return Ok(res);
-    }
+fn simple_structure(input: &str) -> IResult<&str, Type> {
     let (input, (mut name, args)) = tuple((name, opt(type_args)))(input)?;
     if name == "*" {
         name = "ibis.UniversalType";
     }
     Ok((input, Type::with_args(name, args.unwrap_or_default())))
+}
+
+fn structure(input: &str) -> IResult<&str, Type> {
+    parenthesized(input)
+        .or_else(|_| {
+            entity(input)
+        })
+        .or_else(|_| {
+            labelled_type(input)
+        })
+        .or_else(|_| {
+            simple_structure(input)
+        })
 }
 
 fn labelled_type(input: &str) -> IResult<&str, Type> {
