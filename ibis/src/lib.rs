@@ -61,7 +61,17 @@ macro_rules! is_a {
         use crate::type_parser::read_type;
         let name = $type.name();
         let ty = read_type(&name);
-        ty.name == $parent.name()
+        ty.name == $parent.name() && ty.args.len() > 0
+    }};
+}
+
+#[macro_export]
+macro_rules! name {
+    ($type: expr) => {{
+        use crate::type_parser::read_type;
+        let name = $type.name();
+        let ty = read_type(&name);
+        ent!(&format!("{}", ty.name))
     }};
 }
 
@@ -71,7 +81,19 @@ macro_rules! arg {
         use crate::type_parser::read_type;
         let name = $type.name();
         let ty = read_type(&name);
-        ent!(&format!("{}", ty.args[$ind]))
+        let ind = $ind;
+        if ind >= ty.args.len() {
+            panic!("Cannot access argument {} of {}", ind, name);
+        }
+        ent!(&format!("{}", ty.args[ind]))
+    }};
+}
+
+#[macro_export]
+macro_rules! args {
+    ($type: expr) => {{
+        use crate::type_parser::read_type;
+        read_type(&$type.name()).args.iter().map(|arg| ent!(&format!("{}", arg)))
     }};
 }
 

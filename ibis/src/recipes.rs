@@ -1,5 +1,5 @@
 use crate::util::make;
-use crate::{apply, arg, ent, ibis, is_a, Ent, Sol, SolutionData, ToInput};
+use crate::{apply, arg, args, name, ent, ibis, is_a, Ent, Sol, SolutionData, ToInput};
 use serde::{Deserialize, Serialize};
 
 ibis! {
@@ -11,6 +11,7 @@ ibis! {
     Capability(Ent, Ent); // cap from, cap to
     Subtype(Ent, Ent); // sub, super
     CompatibleWith(Ent, Ent); // from, to
+    HasCapability(Ent, Ent); // cap, ty
     Node(Ent, Ent, Ent); // particle-identifier, identifier, capability, type
     Claim(Ent, Ent); // identifier, tag
     Check(Ent, Ent); // identifier, tag
@@ -27,17 +28,41 @@ ibis! {
         Capability(from_capability, to_capability),
         Node(from_particle, from, from_type),
         Node(to_particle, to, to_type),
-        ({eprintln!("{}, {}, {}. {}, {}, {}. {} to {}", &from_particle, &from, &from_type, &to_particle, &to, &to_type, &from_capability, &to_capability);true}),
-        Subtype(from_type, from_capability),
-        ({eprintln!("   {}, {}, {}. {}, {}, {}. {} to {}", &from_particle, &from, &from_type, &to_particle, &to, &to_type, &from_capability, &to_capability);true}),
-        Subtype(to_type, to_capability),
-        ({eprintln!("      {}, {}, {}. {}, {}, {}. {} to {}", &from_particle, &from, &from_type, &to_particle, &to, &to_type, &from_capability, &to_capability);true}),
         CompatibleWith(from_type, to_type),
-        ({eprintln!("         {}, {}, {}. {}, {}, {}. {} to {}", &from_particle, &from, &from_type, &to_particle, &to, &to_type, &from_capability, &to_capability);true}),
         (from != to),
         UncheckedSolution(parent);
 
-    CompatibleWith(x, y) <- Subtype(x, y);
+    HasCapability(arg!(ty, 0), ty) <-
+        KnownType(ty),
+        (is_a!(ty, ent!("ibis.WithCapability")));
+
+    HasCapability(cap, ty) <-
+        KnownType(ty),
+        (is_a!(ty, ent!("ibis.WithCapability"))),
+        HasCapability(cap, arg!(ty, 1)); // Has all the child capabilities too.
+
+    // Base case: just types.
+    CompatibleWith(x, y) <-
+        KnownType(x),
+        (!is_a!(x, ent!("ibis.WithCapability"))),
+        KnownType(y),
+        (!is_a!(y, ent!("ibis.WithCapability"))),
+        Subtype(x, y);
+
+    CompatibleWith(x, y) <- // Check that y has the capabilities required by x.
+        KnownType(x),
+        (is_a!(x, ent!("ibis.WithCapability"))),
+        KnownType(y),
+        HasCapability(cap, y), // For each of the capabilities y supports
+        Capability(arg!(x, 0), cap), // If this one is supported we can continue.
+        CompatibleWith(arg!(x, 1), y);
+
+    CompatibleWith(x, y) <- // If a type has no capabilities, discard the capabilities of it's possible super type.
+        KnownType(x),
+        (!is_a!(x, ent!("ibis.WithCapability"))),
+        KnownType(y),
+        (is_a!(y, ent!("ibis.WithCapability"))),
+        Subtype(x, arg!(y, 1));
 
     Subtype(
         x,
@@ -155,6 +180,8 @@ ibis! {
         !CapabilityError(s, _, _, _, _),
         !Leak(s, _, _, _, _);
 
+    KnownType(name!(ty)) <- KnownType(ty); // Types without their arguments are still types
+    KnownType(arg) <- KnownType(ty), for arg in args!(ty); // Types arguments are types
     KnownType(x) <- Node(_par, _node, x); // Infer types that are used in the recipes.
     KnownType(x) <- Subtype(x, _);
     KnownType(y) <- Subtype(_, y);
@@ -393,6 +420,7 @@ impl Ibis {
             mut capabilities,
             mut subtypes,
             _compatible_with,
+            _has_capability,
             nodes,
             claims,
             checks,
