@@ -8,7 +8,7 @@ extern crate nom;
 use nom::{
     bytes::complete::{tag, take_while1},
     character::complete::{space0, space1},
-    combinator::{opt, cut},
+    combinator::{cut, opt},
     multi::{separated_list0, separated_list1},
     sequence::tuple,
     Finish, IResult,
@@ -19,16 +19,16 @@ use crate::type_struct::Type;
 fn is_name_char(c: char) -> bool {
     match c {
         '(' | ')' | '{' | '}' | ',' | ':' => false, // Symbols
-        ' ' | '\n' | '\r' | '\t' => false, // Whitespace
-        _ => true // Name char
+        ' ' | '\n' | '\r' | '\t' => false,          // Whitespace
+        _ => true,                                  // Name char
     }
 }
 
 fn is_lower_char(c: char) -> bool {
     match c {
         'a'..='z' => true, // a to z
-        '_' => true, // underscore
-        _ => false // Name char
+        '_' => true,       // underscore
+        _ => false,        // Name char
     }
 }
 
@@ -48,8 +48,11 @@ fn label(input: &str) -> IResult<&str, &str> {
 }
 
 fn type_args(input: &str) -> IResult<&str, Vec<Type>> {
-    let (input, (_, args, _)) =
-        tuple((tag("("), cut(separated_list0(tag(","), structure)), tag(")")))(input)?;
+    let (input, (_, args, _)) = tuple((
+        tag("("),
+        cut(separated_list0(tag(","), structure)),
+        tag(")"),
+    ))(input)?;
     Ok((input, args))
 }
 
@@ -68,30 +71,31 @@ fn simple_structure(input: &str) -> IResult<&str, Type> {
 
 fn structure(input: &str) -> IResult<&str, Type> {
     parenthesized(input)
-        .or_else(|_| {
-            entity(input)
-        })
-        .or_else(|_| {
-            labelled_type(input)
-        })
-        .or_else(|_| {
-            simple_structure(input)
-        })
+        .or_else(|_| entity(input))
+        .or_else(|_| labelled_type(input))
+        .or_else(|_| simple_structure(input))
 }
 
 fn labelled_type(input: &str) -> IResult<&str, Type> {
     let (input, (label, structure)) = tuple((label, structure))(input)?;
-    Ok(( input,
-         Type::new("ibis.Labelled")
+    Ok((
+        input,
+        Type::new("ibis.Labelled")
             .with_arg(Type::new(label))
-            .with_arg(structure)
+            .with_arg(structure),
     ))
 }
 
 fn entity(input: &str) -> IResult<&str, Type> {
-    let (input, (_, mut types, _)) = tuple((tag("{"), cut(separated_list1(tag(","), structure)), tag("}")))(input)?;
+    let (input, (_, mut types, _)) = tuple((
+        tag("{"),
+        cut(separated_list1(tag(","), structure)),
+        tag("}"),
+    ))(input)?;
     let mut types: Vec<Type> = types.drain(0..).rev().collect();
-    let mut ty = types.pop().expect("A structure requires at least one labelled type");
+    let mut ty = types
+        .pop()
+        .expect("A structure requires at least one labelled type");
     for new_ty in types {
         ty = Type::with_args("ibis.ProductType", vec![ty, new_ty]);
     }
@@ -107,7 +111,9 @@ fn type_parser(input: &str) -> IResult<&str, Type> {
 
 pub fn read_type(og_input: &str) -> Type {
     // TODO: return errors instead of panics
-    let (input, ty) = type_parser(og_input).finish().expect("Could not parse type");
+    let (input, ty) = type_parser(og_input)
+        .finish()
+        .expect("Could not parse type");
     if !input.is_empty() {
         todo!(
             "Did not reach end of input. Read {:?}. Left over '{}' from '{}'",
@@ -131,19 +137,12 @@ mod tests {
 
     #[test]
     fn read_a_simple_type_name() {
-        parse_and_round_trip(
-            "Type",
-            Type::new("Type")
-        );
+        parse_and_round_trip("Type", Type::new("Type"));
     }
 
     #[test]
     fn read_a_type_with_a_single_capabilities() {
-        parse_and_round_trip(
-            "read Type",
-            Type::new("Type")
-                .with_capability("read")
-        );
+        parse_and_round_trip("read Type", Type::new("Type").with_capability("read"));
     }
 
     #[test]
@@ -152,7 +151,7 @@ mod tests {
             "read write Type",
             Type::new("Type")
                 .with_capability("write")
-                .with_capability("read")
+                .with_capability("read"),
         );
     }
 
@@ -164,7 +163,7 @@ mod tests {
             "{name: String, age: Number}",
             Type::new("ibis.ProductType")
                 .with_arg(name_string)
-                .with_arg(age_number)
+                .with_arg(age_number),
         );
     }
 
@@ -179,8 +178,8 @@ mod tests {
                 .with_arg(
                     Type::new("ibis.ProductType")
                         .with_arg(json)
-                        .with_arg(age_number)
-                )
+                        .with_arg(age_number),
+                ),
         );
     }
 
@@ -190,7 +189,7 @@ mod tests {
             "Type(a, b)",
             Type::new("Type")
                 .with_arg(Type::new("a"))
-                .with_arg(Type::new("b"))
+                .with_arg(Type::new("b")),
         );
     }
 
@@ -199,11 +198,8 @@ mod tests {
         parse_and_round_trip(
             "Type(a(c), b)",
             Type::new("Type")
-                .with_arg(
-                    Type::new("a")
-                        .with_arg(Type::new("c")),
-                )
-                .with_arg(Type::new("b"))
+                .with_arg(Type::new("a").with_arg(Type::new("c")))
+                .with_arg(Type::new("b")),
         );
     }
 
@@ -213,7 +209,7 @@ mod tests {
             "name: Type",
             Type::new("ibis.Labelled")
                 .with_arg(Type::new("name"))
-                .with_arg(Type::new("Type"))
+                .with_arg(Type::new("Type")),
         );
     }
 
