@@ -40,7 +40,7 @@ pub fn criterion_benchmark_checking_only(c: &mut Criterion) {
         ["p_de", "d", "read Serializable"],
         ["p_de", "e", "read ibis.UnionType(Number, String)"],
         ["p_f", "f", "write {name: String, age: Int}"],
-        ["p_g", "g", "read {name: *"],
+        ["p_g", "g", "read {name: *}"],
         ["p_h", "h", "read {name: String, age: Int}"],
         ["p_i", "i", "read {name: String}"],
         ["p_j", "j", "read {age: Int}"]
