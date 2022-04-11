@@ -61,7 +61,7 @@ macro_rules! is_a {
         use crate::type_parser::read_type;
         let name = $type.name();
         let ty = read_type(&name);
-        ty.structure.name == $parent.name()
+        ty.name == $parent.name()
     }};
 }
 
@@ -71,7 +71,7 @@ macro_rules! arg {
         use crate::type_parser::read_type;
         let name = $type.name();
         let ty = read_type(&name);
-        ent!(&format!("{}", ty.structure.args[$ind]))
+        ent!(&format!("{}", ty.args[$ind]))
     }};
 }
 
