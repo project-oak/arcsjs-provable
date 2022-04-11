@@ -114,7 +114,10 @@ pub fn get_solutions(data: &str, loss: Option<usize>) -> Ibis {
     let mut runtime = Ibis::new();
 
     // TODO: Use ibis::Error and https://serde.rs/error-handling.html instead of expect.
-    let recipes: Ibis = serde_json::from_str(data).expect("JSON Error?");
+    let recipes: Ibis = serde_json::from_str(data).map_err(|e| {
+        eprintln!("{}", data);
+        e
+    }).expect("JSON Error?");
     runtime.add_recipes(recipes);
 
     runtime.extract_solutions_with_loss(loss)
