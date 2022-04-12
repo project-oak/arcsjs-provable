@@ -55,7 +55,7 @@ impl Ent {
         let guard = CTX.lock().expect("Shouldn't fail");
         let mut ctx = (*guard).borrow_mut();
         // Normalize the names using the parser
-        let name = format!("{}", crate::type_parser::read_type(name));
+        let name = format!("{}", crate::type_parser_cache::read_type(name));
         Ent::get_by_name(&mut ctx, &name).unwrap_or_else(|| Ent::new(&mut ctx, &name))
     }
 }

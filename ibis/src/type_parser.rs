@@ -13,7 +13,6 @@ use nom::{
     sequence::tuple,
     Finish, IResult,
 };
-
 use crate::type_struct::Type;
 
 fn is_name_char(c: char) -> bool {
@@ -109,7 +108,7 @@ fn type_parser(input: &str) -> IResult<&str, Type> {
     Ok((input, res))
 }
 
-pub fn read_type(og_input: &str) -> Type {
+pub fn read_type_uncached(og_input: &str) -> Type {
     // TODO: return errors instead of panics
     let (input, ty) = type_parser(og_input)
         .finish()
@@ -128,6 +127,8 @@ pub fn read_type(og_input: &str) -> Type {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    use read_type_uncached as read_type;
 
     fn parse_and_round_trip(s: &str, t: Type) {
         let ty = read_type(s);

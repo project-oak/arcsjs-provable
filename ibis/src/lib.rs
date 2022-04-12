@@ -11,6 +11,7 @@ mod error;
 mod solution_data;
 mod solution_id;
 mod type_parser;
+mod type_parser_cache;
 mod type_struct;
 #[macro_use]
 mod util;
@@ -58,7 +59,7 @@ macro_rules! apply {
 #[macro_export]
 macro_rules! is_a {
     ($type: expr, $parent: expr) => {{
-        use crate::type_parser::read_type;
+        use crate::type_parser_cache::read_type;
         let name = $type.name();
         let ty = read_type(&name);
         ty.name == $parent.name() && !ty.args.is_empty()
@@ -68,7 +69,7 @@ macro_rules! is_a {
 #[macro_export]
 macro_rules! name {
     ($type: expr) => {{
-        use crate::type_parser::read_type;
+        use crate::type_parser_cache::read_type;
         let name = $type.name();
         let ty = read_type(&name);
         ent!(&format!("{}", ty.name))
@@ -78,7 +79,7 @@ macro_rules! name {
 #[macro_export]
 macro_rules! arg {
     ($type: expr, $ind: expr) => {{
-        use crate::type_parser::read_type;
+        use crate::type_parser_cache::read_type;
         let name = $type.name();
         let ty = read_type(&name);
         let ind = $ind;
@@ -92,11 +93,8 @@ macro_rules! arg {
 #[macro_export]
 macro_rules! args {
     ($type: expr) => {{
-        use crate::type_parser::read_type;
-        read_type(&$type.name())
-            .args
-            .iter()
-            .map(|arg| ent!(&format!("{}", arg)))
+        use crate::type_parser_cache::read_type;
+        read_type(&$type.name()).args.iter().map(|arg| ent!(&format!("{}", arg)))
     }};
 }
 
