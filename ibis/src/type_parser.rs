@@ -6,7 +6,7 @@
 
 extern crate nom;
 use nom::{
-    bytes::complete::{tag, take_while1},
+    bytes::complete::{tag as simple_tag, take_while1},
     character::complete::{space0, space1},
     combinator::{cut, opt},
     multi::{separated_list0, separated_list1},
@@ -21,6 +21,13 @@ fn is_name_char(c: char) -> bool {
         c,
         '(' | ')' | '{' | '}' | ',' | ':' | ' ' | '\n' | '\r' | '\t'
     )
+}
+
+fn tag(exp: &'static str) -> impl Fn(&str) -> IResult<&str, &str> {
+    move |input| {
+        let (input, (_, s)) = tuple((space0, simple_tag(exp)))(input)?;
+        Ok((input, s))
+    }
 }
 
 fn is_lower_char(c: char) -> bool {
@@ -38,7 +45,7 @@ fn capability(input: &str) -> IResult<&str, &str> {
 }
 
 fn label(input: &str) -> IResult<&str, &str> {
-    let (input, (name, _, _)) = tuple((name, tag(":"), space0))(input)?;
+    let (input, (name, _)) = tuple((name, tag(":")))(input)?;
     Ok((input, name))
 }
 
@@ -52,15 +59,12 @@ fn type_args(input: &str) -> IResult<&str, Vec<Type>> {
 }
 
 fn parenthesized(input: &str) -> IResult<&str, Type> {
-    let (input, (_, _, ty, _)) = tuple((opt(space0), tag("("), cut(type_parser), tag(")")))(input)?;
+    let (input, (_, ty, _)) = tuple((tag("("), cut(type_parser), tag(")")))(input)?;
     Ok((input, ty))
 }
 
 fn simple_structure(input: &str) -> IResult<&str, Type> {
-    let (input, (mut name, args)) = tuple((name, opt(type_args)))(input)?;
-    if name == "*" {
-        name = "ibis.UniversalType";
-    }
+    let (input, (name, args)) = tuple((name, opt(type_args)))(input)?;
     Ok((input, Type::with_args(name, args.unwrap_or_default())))
 }
 
@@ -91,17 +95,18 @@ fn product_type(input: &str) -> IResult<&str, Type> {
 }
 
 fn structure_with_capability(input: &str) -> IResult<&str, Type> {
-    let (input, (cap, _, ty)) = tuple((capability, space0, cut(type_parser)))(input)?;
+    let (input, (cap, ty)) = tuple((capability, cut(type_parser)))(input)?;
     Ok((input, ty.with_capability(cap)))
 }
 
 fn type_parser(input: &str) -> IResult<&str, Type> {
-    let (input, _) = space0(input)?;
-    parenthesized(input)
+    let (input, res) = parenthesized(input)
         .or_else(|_| product_type(input))
         .or_else(|_| labelled_type(input))
         .or_else(|_| structure_with_capability(input))
-        .or_else(|_| simple_structure(input))
+        .or_else(|_| simple_structure(input))?;
+    let (input, _) = space0(input)?; // drop any following whitespace.
+    Ok((input, res))
 }
 
 pub fn read_type(og_input: &str) -> Type {
