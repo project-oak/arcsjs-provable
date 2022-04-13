@@ -17,19 +17,14 @@ use nom::{
 use crate::type_struct::Type;
 
 fn is_name_char(c: char) -> bool {
-    match c {
-        '(' | ')' | '{' | '}' | ',' | ':' => false, // Symbols
-        ' ' | '\n' | '\r' | '\t' => false,          // Whitespace
-        _ => true,                                  // Name char
-    }
+    !matches!(
+        c,
+        '(' | ')' | '{' | '}' | ',' | ':' | ' ' | '\n' | '\r' | '\t'
+    )
 }
 
 fn is_lower_char(c: char) -> bool {
-    match c {
-        'a'..='z' => true, // a to z
-        '_' => true,       // underscore
-        _ => false,        // Name char
-    }
+    matches!(c, 'a'..='z' | '_')
 }
 
 fn name(input: &str) -> IResult<&str, &str> {

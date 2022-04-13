@@ -64,7 +64,7 @@ impl<'a> std::fmt::Display for Type<'a> {
                 write!(f, ")")?;
             }
             Ok(())
-        } else if self.name == "ibis.ProductType" && self.args.len() > 0 {
+        } else if self.name == "ibis.ProductType" && !self.args.is_empty() {
             write!(f, "{{")?;
             format_arg_set(f, ", ", &self.args)?;
             write!(f, "}}")

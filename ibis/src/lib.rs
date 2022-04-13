@@ -61,7 +61,7 @@ macro_rules! is_a {
         use crate::type_parser::read_type;
         let name = $type.name();
         let ty = read_type(&name);
-        ty.name == $parent.name() && ty.args.len() > 0
+        ty.name == $parent.name() && !ty.args.is_empty()
     }};
 }
 
