@@ -21,7 +21,7 @@ pub struct Ctx {
     pub solution_id: SolutionIdBackingType,
     // TODO: Consider using https://docs.rs/bimap/latest/bimap/
     pub id_to_type: BiMap<Ent, Arc<Type>>,
-    pub id_to_solution: BiMap<Sol, SolutionData>,
+    pub id_to_solution: BiMap<Sol, Arc<SolutionData>>,
     #[cfg(feature = "ancestors")]
     pub ancestors: HashMap<Sol, BTreeSet<Sol>>,
 }
