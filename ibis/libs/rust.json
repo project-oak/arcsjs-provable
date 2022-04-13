@@ -1,0 +1,26 @@
+{
+  "subtypes": [
+    ["Ord", "PartialOrd"],
+    ["Eq", "PartialEq"],
+    ["Copy", "Clone"],
+    ["Num", "{Sized, Ord, Eq, Hash}"],
+    ["i8", "{Num, Copy}"],
+    ["i32", "{Num, Copy}"],
+    ["i64", "{Num, Copy}"],
+    ["u8", "{Num, Copy}"],
+    ["u32", "{Num, Copy}"],
+    ["u64", "{Num, Copy}"],
+    ["FnOnce", "ibis.GenericType"],
+    ["FnMut", "ibis.GenericType"],
+    ["Fn", "FnOnce"],
+    ["Fn", "FnMut"],
+    ["Deref", "ibis.GenericType"],
+    ["DerefMut", "Deref"],
+    ["String", "Deref(Ref(str))"],
+    ["mut String", "DerefMut(Ref(str))"],
+    ["Optional", "ibis.GenericType"],
+    ["Optional", "ibis.InductiveType"],
+    ["Optional(*)", "ibis.UnionType(*, undefined)"]
+  ]
+}
+
