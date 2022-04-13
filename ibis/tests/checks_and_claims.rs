@@ -17,9 +17,11 @@ fn create_tagged_type_checked_graphs() {
     "planning": true
   },
   "capabilities": [
-    ["any", "any"]
+    ["write", "read"]
   ],
   "subtypes": [
+    ["any", "read"],
+    ["any", "write"],
     ["Int", "Number"],
     ["Int", "Serializable"],
     ["String", "Serializable"],
@@ -42,11 +44,11 @@ fn create_tagged_type_checked_graphs() {
         ["d", "public"]
       ],
       "nodes": [
-        ["p_a", "a", "any Int"],
+        ["p_a", "a", "write Int"],
         ["p_b", "b", "any Number"],
         ["p_c", "c", "any String"],
-        ["p_de", "d", "any Serializable"],
-        ["p_de", "e", "any Or(Number, String)"]
+        ["p_de", "d", "write Serializable"],
+        ["p_de", "e", "read Or(Number, String)"]
       ]
     }
   ]
@@ -56,18 +58,10 @@ fn create_tagged_type_checked_graphs() {
         "",
         "a -> b",
         "a -> b, b -> e",
-        "a -> b, b -> e, c -> d",
-        "a -> b, b -> e, c -> d, c -> e",
         "a -> b, b -> e, c -> e",
-        "a -> b, c -> d",
-        "a -> b, c -> d, c -> e",
         "a -> b, c -> e",
         "b -> e",
-        "b -> e, c -> d",
-        "b -> e, c -> d, c -> e",
         "b -> e, c -> e",
-        "c -> d",
-        "c -> d, c -> e",
         "c -> e",
     ]
     .iter()

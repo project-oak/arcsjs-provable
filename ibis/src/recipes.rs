@@ -37,12 +37,13 @@ crepe! {
     @input
     #[derive(Debug, Ord, PartialOrd, Serialize, Deserialize)]
     pub struct Capability(pub Ent, pub Ent); // cap from, cap to
+
     @input
     #[derive(Debug, Ord, PartialOrd, Serialize, Deserialize)]
-    pub struct Subtype(pub Ent, pub Ent); // sub, super
+    pub struct SubtypeInput(pub Ent, pub Ent); // sub, super
 
-    struct ComputedSubtype(pub Ent, pub Ent); // sub, super
-    ComputedSubtype(x, y) <- Subtype(x, y);
+    struct Subtype(pub Ent, pub Ent); // sub, super
+    Subtype(x, y) <- SubtypeInput(x, y);
 
     struct CompatibleWith(pub Ent, pub Ent); // from, to
     struct HasCapability(pub Ent, pub Ent); // cap, ty
@@ -95,15 +96,16 @@ crepe! {
         KnownType(y),
         (!is_a!(y, WITH_CAPABILITY)),
         // ({eprintln!("checking subtyping ({}) ({})", x, y); true}),
-        ComputedSubtype(x, y);
+        Subtype(x, y);
 
     CompatibleWith(x, y) <- // Check that y has the capabilities required by x.
         KnownType(x),
         (is_a!(x, WITH_CAPABILITY)),
         KnownType(y),
-        HasCapability(cap, y), // For each of the capabilities y supports
-        // ({eprintln!("checking y has cap ({}) ({})", x, y); true}),
-        Capability(arg!(x, 0), cap), // If this one is supported we can continue.
+        HasCapability(y_cap, y), // For each of the capabilities y supports
+        Subtype(y_cap, y_cap_sup),
+        Subtype(arg!(x, 0), x_cap),
+        Capability(x_cap, y_cap_sup), // If this one is supported we can continue.
         CompatibleWith(arg!(x, 1), y);
 
     CompatibleWith(x, y) <- // If a type has no capabilities, discard the capabilities of it's possible super type.
@@ -114,79 +116,79 @@ crepe! {
         // ({eprintln!("discarding capability from y ({}) ({})", x, y); true}),
         CompatibleWith(x, arg!(y, 1));
 
-    ComputedSubtype(
+    Subtype(
         x,
         prod
     ) <-
         KnownType(prod),
         (is_a!(prod, PRODUCT)),
         KnownType(x),
-        ComputedSubtype(x, arg!(prod, 0)),
-        ComputedSubtype(x, arg!(prod, 1));
+        Subtype(x, arg!(prod, 0)),
+        Subtype(x, arg!(prod, 1));
 
-    ComputedSubtype(
+    Subtype(
         prod,
         arg!(prod, 0)
     ) <-
         KnownType(prod),
         (is_a!(prod, PRODUCT));
 
-    ComputedSubtype(
+    Subtype(
         prod,
         arg!(prod, 1)
     ) <-
         KnownType(prod),
         (is_a!(prod, PRODUCT));
 
-    ComputedSubtype(
+    Subtype(
         union_type,
         x
     ) <-
         KnownType(union_type),
         (is_a!(union_type, UNION)),
         KnownType(x),
-        ComputedSubtype(arg!(union_type, 0), x),
-        ComputedSubtype(arg!(union_type, 1), x);
+        Subtype(arg!(union_type, 0), x),
+        Subtype(arg!(union_type, 1), x);
 
-    ComputedSubtype(
+    Subtype(
         arg!(union_type, 0),
         union_type
     ) <-
         KnownType(union_type),
         (is_a!(union_type, UNION));
 
-    ComputedSubtype(
+    Subtype(
         arg!(union_type, 1),
         union_type
     ) <-
         KnownType(union_type),
         (is_a!(union_type, UNION));
 
-    ComputedSubtype(
+    Subtype(
         labelled,
         arg!(labelled, 1)
     ) <-
         KnownType(labelled),
         (is_a!(labelled, LABELLED));
 
-    ComputedSubtype(
+    Subtype(
         labelled,
         apply!(ent!(LABELLED), arg!(labelled, 0), sup)
     ) <-
         KnownType(labelled),
         (is_a!(labelled, LABELLED)),
-        ComputedSubtype(arg!(labelled, 1), sup);
+        Subtype(arg!(labelled, 1), sup);
 
-    ComputedSubtype(
+    Subtype(
         apply!(x_generic, x_arg),
         apply!(y_generic, y_arg)
     ) <-
-        ComputedSubtype(x_generic, ent!(GENERIC)),
-        ComputedSubtype(x_generic, ent!(INDUCTIVE)),
-        ComputedSubtype(y_generic, ent!(GENERIC)),
-        ComputedSubtype(y_generic, ent!(INDUCTIVE)),
-        ComputedSubtype(x_generic, y_generic),
-        ComputedSubtype(x_arg, y_arg),
+        Subtype(x_generic, ent!(GENERIC)),
+        Subtype(x_generic, ent!(INDUCTIVE)),
+        Subtype(y_generic, ent!(GENERIC)),
+        Subtype(y_generic, ent!(INDUCTIVE)),
+        Subtype(x_generic, y_generic),
+        Subtype(x_arg, y_arg),
         KnownType(apply!(x_generic, x_arg)),
         KnownType(apply!(y_generic, y_arg));
 
@@ -223,11 +225,11 @@ crepe! {
     KnownType(name!(ty)) <- KnownType(ty); // Types without their arguments are still types
     KnownType(arg) <- KnownType(ty), for arg in args!(ty); // Types arguments are types
     KnownType(x) <- Node(_par, _node, x); // Infer types that are used in the recipes.
-    KnownType(x) <- ComputedSubtype(x, _);
-    KnownType(y) <- ComputedSubtype(_, y);
-    ComputedSubtype(x, ent!(UNIVERSAL)) <- KnownType(x); // Create a universal type.
-    ComputedSubtype(x, x) <- KnownType(x); // Infer simple subtyping.
-    ComputedSubtype(x, z) <- ComputedSubtype(x, y), ComputedSubtype(y, z); // Infer the transitivity of subtyping.
+    KnownType(x) <- Subtype(x, _);
+    KnownType(y) <- Subtype(_, y);
+    Subtype(x, ent!(UNIVERSAL)) <- KnownType(x); // Create a universal type.
+    Subtype(x, x) <- KnownType(x); // Infer simple subtyping.
+    Subtype(x, z) <- Subtype(x, y), Subtype(y, z); // Infer the transitivity of subtyping.
 }
 
 fn is_default<T: Default + Eq>(v: &T) -> bool {
@@ -247,7 +249,7 @@ pub struct Config {
     #[serde(default, skip_serializing_if = "is_default")]
     pub metadata: serde_json::Value,
     #[serde(default, skip_serializing_if = "is_default")]
-    pub subtypes: Vec<Subtype>,
+    pub subtypes: Vec<SubtypeInput>,
     #[serde(default, skip_serializing_if = "is_default")]
     pub less_private_than: Vec<LessPrivateThan>,
     #[serde(default, skip_serializing_if = "is_default")]

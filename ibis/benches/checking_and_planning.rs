@@ -19,11 +19,11 @@ pub fn criterion_benchmark_noop_planning(c: &mut Criterion) {
     "planning": true
   },
   "capabilities": [
-    ["write", "read"],
-    ["any", "read"],
-    ["write", "any"]
+    ["write", "read"]
   ],
   "subtypes": [
+    ["any", "read"],
+    ["any", "write"],
     ["Int", "Number"],
     ["Int", "Serializable"],
     ["String", "Serializable"]
