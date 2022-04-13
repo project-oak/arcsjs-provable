@@ -15,7 +15,10 @@ impl Type {
         if name == "*" {
             name = "ibis.UniversalType";
         }
-        Self { name: name.to_string(), args }
+        Self {
+            name: name.to_string(),
+            args,
+        }
     }
     pub fn new(name: &str) -> Self {
         Self::with_args(name, vec![])

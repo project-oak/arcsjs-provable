@@ -36,11 +36,8 @@ shadow!(build);
 #[macro_export]
 macro_rules! ent {
     ($fmt: expr) => {
-        Ent::by_name($fmt)
+        Ent::by_type(crate::type_parser_cache::read_type($fmt))
     };
-    ($fmt: expr, $($names: expr),*) => {
-        Ent::by_name(&format!($fmt, $( $names, )*))
-    }
 }
 
 #[macro_export]
@@ -49,10 +46,13 @@ macro_rules! apply {
         crate::ent!($type)
     };
     ($type: expr, $($arg: expr),*) => {
-        {
-            let args: Vec<String> = vec![$($arg.name(),)*];
-            crate::ent!("{}({})", $type, args.join(", "))
-        }
+        {{
+             // TODO: Types should be made of ents to avoid cloning work.
+            let mut ty = (*$type.get_type()).clone();
+            let args = vec![$((*$arg.get_type()).clone(), )*];
+            ty.args.extend(args);
+            Ent::by_type(std::sync::Arc::new(ty))
+        }}
     };
 }
 
@@ -60,7 +60,7 @@ macro_rules! apply {
 macro_rules! is_a {
     ($type: expr, $parent: expr) => {{
         let ty = $type.get_type();
-        ty.name == $parent.get_type().name && !ty.args.is_empty()
+        ty.name == $parent && !ty.args.is_empty()
     }};
 }
 
@@ -87,8 +87,11 @@ macro_rules! arg {
 #[macro_export]
 macro_rules! args {
     ($type: expr) => {{
-        use crate::type_parser_cache::read_type;
-        read_type(&$type.name()).args.iter().map(|arg| ent!(&format!("{}", arg)))
+        $type
+            .get_type()
+            .args
+            .iter()
+            .map(|arg| ent!(&format!("{}", arg)))
     }};
 }
 

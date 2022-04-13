@@ -33,7 +33,7 @@ fn create_combinations() {
         &|recipe| {
             let mut in_nodes: Vec<String> = (&recipe.edges)
                 .iter()
-                .map(|(from, _to)| from.name())
+                .map(|(from, _to)| format!("{}", from.get_type()))
                 .collect();
             in_nodes.sort();
             in_nodes.join("")

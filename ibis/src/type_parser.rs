@@ -5,6 +5,7 @@
 // https://developers.google.com/open-source/licenses/bsd
 
 extern crate nom;
+use crate::type_struct::Type;
 use nom::{
     bytes::complete::{tag as simple_tag, take_while1},
     character::complete::{space0, space1},
@@ -13,7 +14,6 @@ use nom::{
     sequence::tuple,
     Finish, IResult,
 };
-use crate::type_struct::Type;
 
 fn is_name_char(c: char) -> bool {
     !matches!(

@@ -18,7 +18,7 @@ use utils::*;
 
 criterion_group!(
     name = micro_benches;
-    config = Criterion::default().sample_size(10000);
+    config = Criterion::default().sample_size(1000);
     targets = criterion_benchmark_new_vec_push
 );
 criterion_group!(
