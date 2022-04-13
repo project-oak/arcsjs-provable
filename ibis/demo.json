@@ -7,11 +7,11 @@
     "date": "2022/02/03"
   },
   "capabilities": [
-    ["write", "read"],
-    ["any", "read"],
-    ["write", "any"]
+    ["write", "read"]
   ],
   "subtypes": [
+    ["any", "read"],
+    ["any", "write"],
     ["Int", "Number"],
     ["Int", "Serializable"],
     ["String", "Serializable"]
