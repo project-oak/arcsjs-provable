@@ -11,6 +11,7 @@ mod error;
 mod solution_data;
 mod solution_id;
 mod type_parser;
+mod type_parser_cache;
 mod type_struct;
 #[macro_use]
 mod util;
@@ -35,11 +36,8 @@ shadow!(build);
 #[macro_export]
 macro_rules! ent {
     ($fmt: expr) => {
-        Ent::by_name($fmt)
+        Ent::by_type(crate::type_parser_cache::read_type($fmt))
     };
-    ($fmt: expr, $($names: expr),*) => {
-        Ent::by_name(&format!($fmt, $( $names, )*))
-    }
 }
 
 #[macro_export]
@@ -48,29 +46,28 @@ macro_rules! apply {
         crate::ent!($type)
     };
     ($type: expr, $($arg: expr),*) => {
-        {
-            let args: Vec<String> = vec![$($arg.name(),)*];
-            crate::ent!("{}({})", $type, args.join(", "))
-        }
+        {{
+             // TODO: Types should be made of ents to avoid cloning work.
+            let mut ty = (*$type.get_type()).clone();
+            let args = vec![$((*$arg.get_type()).clone(), )*];
+            ty.args.extend(args);
+            Ent::by_type(std::sync::Arc::new(ty))
+        }}
     };
 }
 
 #[macro_export]
 macro_rules! is_a {
     ($type: expr, $parent: expr) => {{
-        use crate::type_parser::read_type;
-        let name = $type.name();
-        let ty = read_type(&name);
-        ty.name == $parent.name() && !ty.args.is_empty()
+        let ty = $type.get_type();
+        ty.name == $parent && !ty.args.is_empty()
     }};
 }
 
 #[macro_export]
 macro_rules! name {
     ($type: expr) => {{
-        use crate::type_parser::read_type;
-        let name = $type.name();
-        let ty = read_type(&name);
+        let ty = $type.get_type();
         ent!(&format!("{}", ty.name))
     }};
 }
@@ -78,12 +75,10 @@ macro_rules! name {
 #[macro_export]
 macro_rules! arg {
     ($type: expr, $ind: expr) => {{
-        use crate::type_parser::read_type;
-        let name = $type.name();
-        let ty = read_type(&name);
+        let ty = $type.get_type();
         let ind = $ind;
         if ind >= ty.args.len() {
-            panic!("Cannot access argument {} of {}", ind, name);
+            panic!("Cannot access argument {} of {}", ind, ty);
         }
         ent!(&format!("{}", ty.args[ind]))
     }};
@@ -92,8 +87,8 @@ macro_rules! arg {
 #[macro_export]
 macro_rules! args {
     ($type: expr) => {{
-        use crate::type_parser::read_type;
-        read_type(&$type.name())
+        $type
+            .get_type()
             .args
             .iter()
             .map(|arg| ent!(&format!("{}", arg)))

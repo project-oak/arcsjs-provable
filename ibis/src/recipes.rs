@@ -33,25 +33,25 @@ ibis! {
 
     HasCapability(arg!(ty, 0), ty) <-
         KnownType(ty),
-        (is_a!(ty, ent!("ibis.WithCapability")));
+        (is_a!(ty, "ibis.WithCapability"));
 
     HasCapability(cap, ty) <-
         KnownType(ty),
-        (is_a!(ty, ent!("ibis.WithCapability"))),
+        (is_a!(ty, "ibis.WithCapability")),
         HasCapability(cap, arg!(ty, 1)); // Has all the child capabilities too.
 
     // Base case: just types.
     CompatibleWith(x, y) <-
         KnownType(x),
-        (!is_a!(x, ent!("ibis.WithCapability"))),
+        (!is_a!(x, "ibis.WithCapability")),
         KnownType(y),
-        (!is_a!(y, ent!("ibis.WithCapability"))),
+        (!is_a!(y, "ibis.WithCapability")),
         // ({eprintln!("checking subtyping ({}) ({})", x, y); true}),
         Subtype(x, y);
 
     CompatibleWith(x, y) <- // Check that y has the capabilities required by x.
         KnownType(x),
-        (is_a!(x, ent!("ibis.WithCapability"))),
+        (is_a!(x, "ibis.WithCapability")),
         KnownType(y),
         HasCapability(cap, y), // For each of the capabilities y supports
         // ({eprintln!("checking y has cap ({}) ({})", x, y); true}),
@@ -60,9 +60,9 @@ ibis! {
 
     CompatibleWith(x, y) <- // If a type has no capabilities, discard the capabilities of it's possible super type.
         KnownType(x),
-        (!is_a!(x, ent!("ibis.WithCapability"))),
+        (!is_a!(x, "ibis.WithCapability")),
         KnownType(y),
-        (is_a!(y, ent!("ibis.WithCapability"))),
+        (is_a!(y, "ibis.WithCapability")),
         // ({eprintln!("discarding capability from y ({}) ({})", x, y); true}),
         CompatibleWith(x, arg!(y, 1));
 
@@ -71,7 +71,7 @@ ibis! {
         prod
     ) <-
         KnownType(prod),
-        (is_a!(prod, ent!("ibis.ProductType"))),
+        (is_a!(prod, "ibis.ProductType")),
         KnownType(x),
         Subtype(x, arg!(prod, 0)),
         Subtype(x, arg!(prod, 1));
@@ -81,21 +81,21 @@ ibis! {
         arg!(prod, 0)
     ) <-
         KnownType(prod),
-        (is_a!(prod, ent!("ibis.ProductType")));
+        (is_a!(prod, "ibis.ProductType"));
 
     Subtype(
         prod,
         arg!(prod, 1)
     ) <-
         KnownType(prod),
-        (is_a!(prod, ent!("ibis.ProductType")));
+        (is_a!(prod, "ibis.ProductType"));
 
     Subtype(
         union_type,
         x
     ) <-
         KnownType(union_type),
-        (is_a!(union_type, ent!("ibis.UnionType"))),
+        (is_a!(union_type, "ibis.UnionType")),
         KnownType(x),
         Subtype(arg!(union_type, 0), x),
         Subtype(arg!(union_type, 1), x);
@@ -105,28 +105,28 @@ ibis! {
         union_type
     ) <-
         KnownType(union_type),
-        (is_a!(union_type, ent!("ibis.UnionType")));
+        (is_a!(union_type, "ibis.UnionType"));
 
     Subtype(
         arg!(union_type, 1),
         union_type
     ) <-
         KnownType(union_type),
-        (is_a!(union_type, ent!("ibis.UnionType")));
+        (is_a!(union_type, "ibis.UnionType"));
 
     Subtype(
         labelled,
         arg!(labelled, 1)
     ) <-
         KnownType(labelled),
-        (is_a!(labelled, ent!("ibis.Labelled")));
+        (is_a!(labelled, "ibis.Labelled"));
 
     Subtype(
         labelled,
-        apply!("ibis.Labelled", arg!(labelled, 0), sup)
+        apply!(ent!("ibis.Labelled"), arg!(labelled, 0), sup)
     ) <-
         KnownType(labelled),
-        (is_a!(labelled, ent!("ibis.Labelled"))),
+        (is_a!(labelled, "ibis.Labelled")),
         Subtype(arg!(labelled, 1), sup);
 
     Subtype(
