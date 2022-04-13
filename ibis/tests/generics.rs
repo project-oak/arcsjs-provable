@@ -30,10 +30,10 @@ fn precomputed_subtypes() {
   "recipes": [
     {
       "nodes": [
-        ["p_a", "a", "any", "List(Man)"],
-        ["p_b", "b", "any", "List(Mortal)"],
-        ["p_c", "c", "any", "Iterable(Man)"],
-        ["p_d", "d", "any", "Iterable(Mortal)"]
+        ["p_a", "a", "any List(Man)"],
+        ["p_b", "b", "any List(Mortal)"],
+        ["p_c", "c", "any Iterable(Man)"],
+        ["p_d", "d", "any Iterable(Mortal)"]
       ]
     }
   ]
@@ -65,8 +65,8 @@ fn generics_are_not_necessarily_abstractable() {
   "recipes": [
     {
       "nodes": [
-        ["p_a", "a", "any", "List(Man)"],
-        ["p_b", "b", "any", "List"]
+        ["p_a", "a", "any List(Man)"],
+        ["p_b", "b", "any List"]
       ]
     }
   ]
@@ -96,12 +96,12 @@ fn dynamic_subtypes() {
   "recipes": [
     {
       "nodes": [
-        ["p_a", "a", "any", "List(Man)"],
-        ["p_b", "b", "any", "List(Mortal)"],
-        ["p_c", "c", "any", "Iterable(Man)"],
-        ["p_d", "d", "any", "Iterable(Mortal)"],
-        ["p_e", "e", "any", "List(ibis.UniversalType)"],
-        ["p_f", "f", "any", "List"]
+        ["p_a", "a", "any List(Man)"],
+        ["p_b", "b", "any List(Mortal)"],
+        ["p_c", "c", "any Iterable(Man)"],
+        ["p_d", "d", "any Iterable(Mortal)"],
+        ["p_e", "e", "any List(ibis.UniversalType)"],
+        ["p_f", "f", "any List"]
       ]
     }
   ]
@@ -132,8 +132,8 @@ fn all_subtype_the_universal_type() {
   "recipes": [
     {
       "nodes": [
-        ["p_a", "a", "any", "List(Man)"],
-        ["p_b", "b", "any", "List(ibis.UniversalType)"]
+        ["p_a", "a", "any List(Man)"],
+        ["p_b", "b", "any List(ibis.UniversalType)"]
       ]
     }
   ]

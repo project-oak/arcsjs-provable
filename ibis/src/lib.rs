@@ -61,7 +61,17 @@ macro_rules! is_a {
         use crate::type_parser::read_type;
         let name = $type.name();
         let ty = read_type(&name);
-        ty.name == $parent.name()
+        ty.name == $parent.name() && !ty.args.is_empty()
+    }};
+}
+
+#[macro_export]
+macro_rules! name {
+    ($type: expr) => {{
+        use crate::type_parser::read_type;
+        let name = $type.name();
+        let ty = read_type(&name);
+        ent!(&format!("{}", ty.name))
     }};
 }
 
@@ -71,7 +81,22 @@ macro_rules! arg {
         use crate::type_parser::read_type;
         let name = $type.name();
         let ty = read_type(&name);
-        ent!(&format!("{}", ty.args[$ind]))
+        let ind = $ind;
+        if ind >= ty.args.len() {
+            panic!("Cannot access argument {} of {}", ind, name);
+        }
+        ent!(&format!("{}", ty.args[ind]))
+    }};
+}
+
+#[macro_export]
+macro_rules! args {
+    ($type: expr) => {{
+        use crate::type_parser::read_type;
+        read_type(&$type.name())
+            .args
+            .iter()
+            .map(|arg| ent!(&format!("{}", arg)))
     }};
 }
 
@@ -92,7 +117,12 @@ pub fn get_solutions(data: &str, loss: Option<usize>) -> Ibis {
     let mut runtime = Ibis::new();
 
     // TODO: Use ibis::Error and https://serde.rs/error-handling.html instead of expect.
-    let recipes: Ibis = serde_json::from_str(data).expect("JSON Error?");
+    let recipes: Ibis = serde_json::from_str(data)
+        .map_err(|e| {
+            eprintln!("{}", data);
+            e
+        })
+        .expect("JSON Error?");
     runtime.add_recipes(recipes);
 
     runtime.extract_solutions_with_loss(loss)

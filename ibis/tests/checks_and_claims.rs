@@ -42,11 +42,11 @@ fn create_tagged_type_checked_graphs() {
         ["d", "public"]
       ],
       "nodes": [
-        ["p_a", "a", "any", "Int"],
-        ["p_b", "b", "any", "Number"],
-        ["p_c", "c", "any", "String"],
-        ["p_de", "d", "any", "Serializable"],
-        ["p_de", "e", "any", "Or(Number, String)"]
+        ["p_a", "a", "any Int"],
+        ["p_b", "b", "any Number"],
+        ["p_c", "c", "any String"],
+        ["p_de", "d", "any Serializable"],
+        ["p_de", "e", "any Or(Number, String)"]
       ]
     }
   ]

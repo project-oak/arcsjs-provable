@@ -22,10 +22,10 @@ fn create_combinations() {
   "recipes": [
     {
       "nodes": [
-        ["p_a", "a", "write", "Unit"],
-        ["p_b", "b", "write", "Unit"],
-        ["p_c", "c", "write", "Unit"],
-        ["p_out", "out", "read", "Unit"]
+        ["p_a", "a", "write Unit"],
+        ["p_b", "b", "write Unit"],
+        ["p_c", "c", "write Unit"],
+        ["p_out", "out", "read Unit"]
       ]
     }
   ]
@@ -60,8 +60,8 @@ fn create_edges() {
   "recipes": [
     {
       "nodes": [
-        ["p_a", "a", "any", "Char"],
-        ["p_b", "b", "any", "Char"]
+        ["p_a", "a", "any Char"],
+        ["p_b", "b", "any Char"]
       ]
     }
   ]
@@ -88,9 +88,9 @@ fn create_typed_edges() {
   "recipes": [
     {
       "nodes": [
-        ["p_a", "a", "any", "Char"],
-        ["p_b", "b", "any", "Char"],
-        ["p_c", "c", "any", "Int"]
+        ["p_a", "a", "any Char"],
+        ["p_b", "b", "any Char"],
+        ["p_c", "c", "any Int"]
       ]
     }
   ]
@@ -124,10 +124,10 @@ fn create_all_directed_graphs_with_4_nodes() {
   "recipes": [
     {
       "nodes": [
-        ["p_a", "a", "any", "Char"],
-        ["p_b", "b", "any", "Char"],
-        ["p_c", "c", "any", "Char"],
-        ["p_d", "d", "any", "Char"]
+        ["p_a", "a", "any Char"],
+        ["p_b", "b", "any Char"],
+        ["p_c", "c", "any Char"],
+        ["p_d", "d", "any Char"]
       ]
     }
   ]

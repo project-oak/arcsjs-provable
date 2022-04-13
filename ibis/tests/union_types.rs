@@ -22,9 +22,9 @@ fn a_union_is_a_subtype_of_its_arguments() {
   "recipes": [
     {
       "nodes": [
-        ["p_a", "a", "any", "ibis.UnionType(Man, Dog)"],
-        ["p_b", "b", "any", "Dog"],
-        ["p_c", "c", "any", "Man"]
+        ["p_a", "a", "any ibis.UnionType(Man, Dog)"],
+        ["p_b", "b", "any Dog"],
+        ["p_c", "c", "any Man"]
       ]
     }
   ]
@@ -52,8 +52,8 @@ fn a_union_is_a_subtype_of_its_arguments_shared_super_types() {
   "recipes": [
     {
       "nodes": [
-        ["p_a", "a", "any", "ibis.UnionType(TallMan, ShortMan)"],
-        ["p_b", "b", "any", "Man"]
+        ["p_a", "a", "any ibis.UnionType(TallMan, ShortMan)"],
+        ["p_b", "b", "any Man"]
       ]
     }
   ]
@@ -80,8 +80,8 @@ fn a_type_is_equal_to_the_union_of_it_and_its_super_types() {
   "recipes": [
     {
       "nodes": [
-        ["p_a", "a", "any", "ibis.UnionType(Man, Mortal)"],
-        ["p_b", "b", "any", "Man"]
+        ["p_a", "a", "any ibis.UnionType(Man, Mortal)"],
+        ["p_b", "b", "any Man"]
       ]
     }
   ]
@@ -105,11 +105,11 @@ fn union_of_unions() {
   "recipes": [
     {
       "nodes": [
-        ["p_abc", "abc", "any", "ibis.UnionType(A, ibis.UnionType(B, C))"],
-        ["p_acb", "acb", "any", "ibis.UnionType(ibis.UnionType(A, C), B)"],
-        ["p_a", "a", "any", "A"],
-        ["p_b", "b", "any", "B"],
-        ["p_c", "c", "any", "C"]
+        ["p_abc", "abc", "any ibis.UnionType(A, ibis.UnionType(B, C))"],
+        ["p_acb", "acb", "any ibis.UnionType(ibis.UnionType(A, C), B)"],
+        ["p_a", "a", "any A"],
+        ["p_b", "b", "any B"],
+        ["p_c", "c", "any C"]
       ]
     }
   ]
