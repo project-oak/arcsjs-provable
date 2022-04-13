@@ -1,0 +1,31 @@
+{
+  "subtypes": [
+    ["*", "any"],
+    ["unknown", "any"],
+    ["Object", "any"],
+    ["undefined", "any"],
+    ["null", "any"],
+    ["String", "string"],
+    ["String", "Object"],
+    ["Number", "number"],
+    ["Number", "Object"],
+    ["Map", "Object"],
+    ["List", "Object"],
+    ["Set", "Object"],
+    ["Promise", "Object"],
+    ["Function", "Object"],
+    ["Function", "Callable"],
+    ["Function", "ibis.GenericType"],
+    ["Optional", "ibis.GenericType"],
+    ["Optional", "ibis.InductiveType"],
+    ["Map", "ibis.GenericType"],
+    ["Map", "ibis.InductiveType"],
+    ["List", "ibis.GenericType"],
+    ["List", "ibis.InductiveType"],
+    ["Set", "ibis.GenericType"],
+    ["Set", "ibis.InductiveType"],
+    ["undefined", "Optional(*)"],
+    ["*", "Optional(*)"],
+    ["Optional(*)", "ibis.UnionType(*, undefined)"]
+  ]
+}
