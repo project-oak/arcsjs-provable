@@ -1,7 +1,7 @@
+use crate::type_struct::*;
 use crate::util::make;
 use crate::{apply, arg, args, ent, ibis, is_a, name, Ent, Sol, SolutionData, ToInput};
 use serde::{Deserialize, Serialize};
-use crate::type_struct::*;
 
 ibis! {
     PlanningIsEnabled(bool);

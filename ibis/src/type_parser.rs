@@ -71,9 +71,7 @@ fn labelled_type(input: &str) -> IResult<&str, Type> {
     let (input, (label, ty)) = tuple((label, cut(type_parser)))(input)?;
     Ok((
         input,
-        Type::new(LABELLED)
-            .with_arg(Type::new(label))
-            .with_arg(ty),
+        Type::new(LABELLED).with_arg(Type::new(label)).with_arg(ty),
     ))
 }
 
@@ -176,11 +174,7 @@ mod tests {
             "name: {JSON, age: Number}",
             Type::new(LABELLED)
                 .with_arg(Type::new("name"))
-                .with_arg(
-                    Type::new(PRODUCT)
-                        .with_arg(json)
-                        .with_arg(age_number),
-                ),
+                .with_arg(Type::new(PRODUCT).with_arg(json).with_arg(age_number)),
         );
     }
 
