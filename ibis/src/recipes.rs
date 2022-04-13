@@ -1,3 +1,5 @@
+#![allow(clippy::collapsible_if)]
+
 use crate::type_struct::*;
 use crate::util::make;
 use crate::{apply, arg, args, ent, is_a, name, Ent, Sol, SolutionData};
