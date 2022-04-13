@@ -4,6 +4,8 @@
 // license that can be found in the LICENSE file or at
 // https://developers.google.com/open-source/licenses/bsd
 #![allow(clippy::unused_unit)] // rustwasm/wasm-bindgen#2774 awaiting next `wasm-bindgen` release
+#![feature(hash_drain_filter)] // Enables the handy drain_filter function
+#![feature(drain_filter)] // Enables the handy drain_filter function
 
 mod context;
 mod ent;

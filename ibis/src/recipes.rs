@@ -413,7 +413,7 @@ impl Ibis {
             runtime.extend(trusted_to_remove_tag);
         }
 
-        let (solutions, unchecked_solutions, has_tags, leaks, type_errors) = runtime.run();
+        let (solutions, unchecked_solutions, mut has_tags, mut leaks, mut type_errors) = runtime.run();
         let recipes: Vec<Sol> = if self.config.flags.planning {
             solutions.iter().map(|Solution(s)| *s).collect()
         } else {
@@ -426,21 +426,9 @@ impl Ibis {
             .iter()
             .map(|s| {
                 Recipe::from_sol(*s).with_feedback(Feedback {
-                    leaks: leaks
-                        .iter()
-                        .filter(|Leak(leak_s, _, _, _, _)| leak_s == s)
-                        .cloned()
-                        .collect(),
-                    type_errors: type_errors
-                        .iter()
-                        .filter(|TypeError(type_s, _, _, _, _)| type_s == s)
-                        .cloned()
-                        .collect(),
-                    has_tags: has_tags
-                        .iter()
-                        .filter(|HasTag(has_tag_s, _, _, _)| has_tag_s == s)
-                        .cloned()
-                        .collect(),
+                    leaks: leaks.drain_filter(|leak| leak.0 == *s).collect(),
+                    type_errors: type_errors.drain_filter(|ty| ty.0 == *s).collect(),
+                    has_tags: has_tags.drain_filter(|has_tag| has_tag.0 == *s).collect(),
                 })
             })
             .collect();
@@ -453,8 +441,7 @@ impl Ibis {
                 }
             }
             recipes
-                .drain(0..)
-                .filter(|recipe| recipe.edges.len() >= max - loss)
+                .drain_filter(|recipe| recipe.edges.len() >= max - loss)
                 .collect()
         } else {
             recipes
