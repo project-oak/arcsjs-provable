@@ -1,3 +1,4 @@
+use crate::type_struct::*;
 use crate::util::make;
 use crate::{apply, arg, args, ent, ibis, is_a, name, Ent, Sol, SolutionData, ToInput};
 use serde::{Deserialize, Serialize};
@@ -33,25 +34,25 @@ ibis! {
 
     HasCapability(arg!(ty, 0), ty) <-
         KnownType(ty),
-        (is_a!(ty, "ibis.WithCapability"));
+        (is_a!(ty, WITH_CAPABILITY));
 
     HasCapability(cap, ty) <-
         KnownType(ty),
-        (is_a!(ty, "ibis.WithCapability")),
+        (is_a!(ty, WITH_CAPABILITY)),
         HasCapability(cap, arg!(ty, 1)); // Has all the child capabilities too.
 
     // Base case: just types.
     CompatibleWith(x, y) <-
         KnownType(x),
-        (!is_a!(x, "ibis.WithCapability")),
+        (!is_a!(x, WITH_CAPABILITY)),
         KnownType(y),
-        (!is_a!(y, "ibis.WithCapability")),
+        (!is_a!(y, WITH_CAPABILITY)),
         // ({eprintln!("checking subtyping ({}) ({})", x, y); true}),
         Subtype(x, y);
 
     CompatibleWith(x, y) <- // Check that y has the capabilities required by x.
         KnownType(x),
-        (is_a!(x, "ibis.WithCapability")),
+        (is_a!(x, WITH_CAPABILITY)),
         KnownType(y),
         HasCapability(cap, y), // For each of the capabilities y supports
         // ({eprintln!("checking y has cap ({}) ({})", x, y); true}),
@@ -60,9 +61,9 @@ ibis! {
 
     CompatibleWith(x, y) <- // If a type has no capabilities, discard the capabilities of it's possible super type.
         KnownType(x),
-        (!is_a!(x, "ibis.WithCapability")),
+        (!is_a!(x, WITH_CAPABILITY)),
         KnownType(y),
-        (is_a!(y, "ibis.WithCapability")),
+        (is_a!(y, WITH_CAPABILITY)),
         // ({eprintln!("discarding capability from y ({}) ({})", x, y); true}),
         CompatibleWith(x, arg!(y, 1));
 
@@ -71,7 +72,7 @@ ibis! {
         prod
     ) <-
         KnownType(prod),
-        (is_a!(prod, "ibis.ProductType")),
+        (is_a!(prod, PRODUCT)),
         KnownType(x),
         Subtype(x, arg!(prod, 0)),
         Subtype(x, arg!(prod, 1));
@@ -81,21 +82,21 @@ ibis! {
         arg!(prod, 0)
     ) <-
         KnownType(prod),
-        (is_a!(prod, "ibis.ProductType"));
+        (is_a!(prod, PRODUCT));
 
     Subtype(
         prod,
         arg!(prod, 1)
     ) <-
         KnownType(prod),
-        (is_a!(prod, "ibis.ProductType"));
+        (is_a!(prod, PRODUCT));
 
     Subtype(
         union_type,
         x
     ) <-
         KnownType(union_type),
-        (is_a!(union_type, "ibis.UnionType")),
+        (is_a!(union_type, UNION)),
         KnownType(x),
         Subtype(arg!(union_type, 0), x),
         Subtype(arg!(union_type, 1), x);
@@ -105,38 +106,38 @@ ibis! {
         union_type
     ) <-
         KnownType(union_type),
-        (is_a!(union_type, "ibis.UnionType"));
+        (is_a!(union_type, UNION));
 
     Subtype(
         arg!(union_type, 1),
         union_type
     ) <-
         KnownType(union_type),
-        (is_a!(union_type, "ibis.UnionType"));
+        (is_a!(union_type, UNION));
 
     Subtype(
         labelled,
         arg!(labelled, 1)
     ) <-
         KnownType(labelled),
-        (is_a!(labelled, "ibis.Labelled"));
+        (is_a!(labelled, LABELLED));
 
     Subtype(
         labelled,
-        apply!(ent!("ibis.Labelled"), arg!(labelled, 0), sup)
+        apply!(ent!(LABELLED), arg!(labelled, 0), sup)
     ) <-
         KnownType(labelled),
-        (is_a!(labelled, "ibis.Labelled")),
+        (is_a!(labelled, LABELLED)),
         Subtype(arg!(labelled, 1), sup);
 
     Subtype(
         apply!(x_generic, x_arg),
         apply!(y_generic, y_arg)
     ) <-
-        Subtype(x_generic, ent!("ibis.GenericType")),
-        Subtype(x_generic, ent!("ibis.InductiveType")),
-        Subtype(y_generic, ent!("ibis.GenericType")),
-        Subtype(y_generic, ent!("ibis.InductiveType")),
+        Subtype(x_generic, ent!(GENERIC)),
+        Subtype(x_generic, ent!(INDUCTIVE)),
+        Subtype(y_generic, ent!(GENERIC)),
+        Subtype(y_generic, ent!(INDUCTIVE)),
         Subtype(x_generic, y_generic),
         Subtype(x_arg, y_arg),
         KnownType(apply!(x_generic, x_arg)),
@@ -177,7 +178,7 @@ ibis! {
     KnownType(x) <- Node(_par, _node, x); // Infer types that are used in the recipes.
     KnownType(x) <- Subtype(x, _);
     KnownType(y) <- Subtype(_, y);
-    Subtype(x, ent!("ibis.UniversalType")) <- KnownType(x); // Create a universal type.
+    Subtype(x, ent!(UNIVERSAL)) <- KnownType(x); // Create a universal type.
     Subtype(x, x) <- KnownType(x); // Infer simple subtyping.
     Subtype(x, z) <- Subtype(x, y), Subtype(y, z) // Infer the transitivity of subtyping.
 }
