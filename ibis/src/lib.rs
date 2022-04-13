@@ -20,11 +20,9 @@ pub mod dot;
 pub mod recipes;
 #[cfg(feature = "dot")]
 pub mod to_dot_impls;
-extern crate ibis_macros;
 
 pub use ent::Ent;
 pub use error::IbisError;
-pub use ibis_macros::*;
 pub use recipes::*;
 pub use solution_data::SolutionData;
 pub use solution_id::Sol;
@@ -93,19 +91,6 @@ macro_rules! args {
             .iter()
             .map(|arg| ent!(&format!("{}", arg)))
     }};
-}
-
-pub trait ToInput {
-    type U;
-    fn to_claim(self) -> Self::U;
-}
-
-impl<T: ToInput + Clone> ToInput for &T {
-    type U = T::U;
-
-    fn to_claim(self) -> Self::U {
-        self.clone().to_claim()
-    }
 }
 
 pub fn get_solutions(data: &str, loss: Option<usize>) -> Ibis {

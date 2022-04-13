@@ -64,7 +64,7 @@ fn parenthesized(input: &str) -> IResult<&str, Type> {
 
 fn simple_structure(input: &str) -> IResult<&str, Type> {
     let (input, (name, args)) = tuple((name, opt(type_args)))(input)?;
-    Ok((input, Type::with_args(name, args.unwrap_or_default())))
+    Ok((input, Type::new(name).with_args(args.unwrap_or_default())))
 }
 
 fn labelled_type(input: &str) -> IResult<&str, Type> {
@@ -86,7 +86,7 @@ fn product_type(input: &str) -> IResult<&str, Type> {
         .pop()
         .expect("A product type requires at least one type");
     for new_ty in types {
-        ty = Type::with_args(PRODUCT, vec![ty, new_ty]);
+        ty = Type::new(PRODUCT).with_arg(ty).with_arg(new_ty);
     }
     Ok((input, ty))
 }

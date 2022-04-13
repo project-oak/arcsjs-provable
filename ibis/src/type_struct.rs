@@ -19,17 +19,18 @@ pub struct Type {
 }
 
 impl Type {
-    pub fn with_args(mut name: &str, args: Vec<Type>) -> Self {
+    pub fn new(mut name: &str) -> Self {
         if name == "*" {
             name = UNIVERSAL;
         }
         Self {
             name: name.to_string(),
-            args,
+            args: vec![],
         }
     }
-    pub fn new(name: &str) -> Self {
-        Self::with_args(name, vec![])
+    pub fn with_args(mut self, args: Vec<Type>) -> Self {
+        self.args.extend(args);
+        self
     }
     pub fn with_arg(mut self, arg: Type) -> Self {
         self.args.push(arg);

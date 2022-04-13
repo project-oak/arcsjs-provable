@@ -1,32 +1,74 @@
+#![allow(clippy::collapsible_if)]
+
 use crate::type_struct::*;
 use crate::util::make;
-use crate::{apply, arg, args, ent, ibis, is_a, name, Ent, Sol, SolutionData, ToInput};
+use crate::{apply, arg, args, ent, is_a, name, Ent, Sol, SolutionData};
+use crepe::crepe;
 use serde::{Deserialize, Serialize};
 
-ibis! {
-    PlanningIsEnabled(bool);
-    Solution(Sol);
-    UncheckedSolution(Sol);
-    KnownType(Ent); // type
-    LessPrivateThan(Ent, Ent); // tag, tag
-    Capability(Ent, Ent); // cap from, cap to
-    Subtype(Ent, Ent); // sub, super
-    CompatibleWith(Ent, Ent); // from, to
-    HasCapability(Ent, Ent); // cap, ty
-    Node(Ent, Ent, Ent); // particle-identifier, identifier, capability, type
-    Claim(Ent, Ent); // identifier, tag
-    Check(Ent, Ent); // identifier, tag
-    TrustedToRemoveTag(Ent, Ent); // node, tag
+crepe! {
+    @input
+    #[derive(Debug, Ord, PartialOrd, Serialize, Deserialize)]
+    pub struct PlanningIsEnabled(pub bool);
+    @output
+    #[derive(Debug, Ord, PartialOrd, Serialize, Deserialize)]
+    pub struct Solution(pub Sol);
+
+    @input
+    #[derive(Debug, Ord, PartialOrd, Serialize, Deserialize)]
+    pub struct Seed(pub Sol);
+
+    @output
+    #[derive(Debug, Ord, PartialOrd, Serialize, Deserialize)]
+    pub struct UncheckedSolution(pub Sol);
+
+    UncheckedSolution(s) <- Seed(s);
+
+    struct KnownType(pub Ent); // type
+
+    @input
+    #[derive(Debug, Ord, PartialOrd, Serialize, Deserialize)]
+    pub struct LessPrivateThan(pub Ent, pub Ent); // tag, tag
+    @input
+    #[derive(Debug, Ord, PartialOrd, Serialize, Deserialize)]
+    pub struct Capability(pub Ent, pub Ent); // cap from, cap to
+    @input
+    #[derive(Debug, Ord, PartialOrd, Serialize, Deserialize)]
+    pub struct Subtype(pub Ent, pub Ent); // sub, super
+
+    struct ComputedSubtype(pub Ent, pub Ent); // sub, super
+    ComputedSubtype(x, y) <- Subtype(x, y);
+
+    struct CompatibleWith(pub Ent, pub Ent); // from, to
+    struct HasCapability(pub Ent, pub Ent); // cap, ty
+
+    @input
+    #[derive(Debug, Ord, PartialOrd, Serialize, Deserialize)]
+    pub struct Node(pub Ent, pub Ent, pub Ent); // particle-identifier, identifier, capability, type
+    @input
+    #[derive(Debug, Ord, PartialOrd, Serialize, Deserialize)]
+    pub struct Claim(pub Ent, pub Ent); // identifier, tag
+    @input
+    #[derive(Debug, Ord, PartialOrd, Serialize, Deserialize)]
+    pub struct Check(pub Ent, pub Ent); // identifier, tag
+    @input
+    #[derive(Debug, Ord, PartialOrd, Serialize, Deserialize)]
+    pub struct TrustedToRemoveTag(pub Ent, pub Ent); // node, tag
 
     // Feedback
-    HasTag(Sol, Ent, Ent, Ent); // solution, source node, node with tag, tag
-    Leak(Sol, Ent, Ent, Ent, Ent); // sol, node, expected_tag, source, tag2
-    TypeError(Sol, Ent, Ent, Ent, Ent); // sol, node, ty, source, ty
-
+    @output
+    #[derive(Debug, Ord, PartialOrd, Serialize, Deserialize)]
+    pub struct HasTag(pub Sol, pub Ent, pub Ent, pub Ent); // solution, source node, node with tag, tag
+    @output
+    #[derive(Debug, Ord, PartialOrd, Serialize, Deserialize)]
+    pub struct Leak(pub Sol, pub Ent, pub Ent, pub Ent, pub Ent); // sol, node, expected_tag, source, tag2
+    @output
+    #[derive(Debug, Ord, PartialOrd, Serialize, Deserialize)]
+    pub struct TypeError(pub Sol, pub Ent, pub Ent, pub Ent, pub Ent); // sol, node, ty, source, ty
     UncheckedSolution(parent.add_edge(from, to)) <-
         PlanningIsEnabled(true),
-        Node(from_particle, from, from_type),
-        Node(to_particle, to, to_type),
+        Node(_from_particle, from, from_type),
+        Node(_to_particle, to, to_type),
         (from != to),
         CompatibleWith(from_type, to_type),
         // ({eprintln!("Connecting {}: {} to {}: {}", from, from_type, to, to_type); true}),
@@ -48,7 +90,7 @@ ibis! {
         KnownType(y),
         (!is_a!(y, WITH_CAPABILITY)),
         // ({eprintln!("checking subtyping ({}) ({})", x, y); true}),
-        Subtype(x, y);
+        ComputedSubtype(x, y);
 
     CompatibleWith(x, y) <- // Check that y has the capabilities required by x.
         KnownType(x),
@@ -67,79 +109,79 @@ ibis! {
         // ({eprintln!("discarding capability from y ({}) ({})", x, y); true}),
         CompatibleWith(x, arg!(y, 1));
 
-    Subtype(
+    ComputedSubtype(
         x,
         prod
     ) <-
         KnownType(prod),
         (is_a!(prod, PRODUCT)),
         KnownType(x),
-        Subtype(x, arg!(prod, 0)),
-        Subtype(x, arg!(prod, 1));
+        ComputedSubtype(x, arg!(prod, 0)),
+        ComputedSubtype(x, arg!(prod, 1));
 
-    Subtype(
+    ComputedSubtype(
         prod,
         arg!(prod, 0)
     ) <-
         KnownType(prod),
         (is_a!(prod, PRODUCT));
 
-    Subtype(
+    ComputedSubtype(
         prod,
         arg!(prod, 1)
     ) <-
         KnownType(prod),
         (is_a!(prod, PRODUCT));
 
-    Subtype(
+    ComputedSubtype(
         union_type,
         x
     ) <-
         KnownType(union_type),
         (is_a!(union_type, UNION)),
         KnownType(x),
-        Subtype(arg!(union_type, 0), x),
-        Subtype(arg!(union_type, 1), x);
+        ComputedSubtype(arg!(union_type, 0), x),
+        ComputedSubtype(arg!(union_type, 1), x);
 
-    Subtype(
+    ComputedSubtype(
         arg!(union_type, 0),
         union_type
     ) <-
         KnownType(union_type),
         (is_a!(union_type, UNION));
 
-    Subtype(
+    ComputedSubtype(
         arg!(union_type, 1),
         union_type
     ) <-
         KnownType(union_type),
         (is_a!(union_type, UNION));
 
-    Subtype(
+    ComputedSubtype(
         labelled,
         arg!(labelled, 1)
     ) <-
         KnownType(labelled),
         (is_a!(labelled, LABELLED));
 
-    Subtype(
+    ComputedSubtype(
         labelled,
         apply!(ent!(LABELLED), arg!(labelled, 0), sup)
     ) <-
         KnownType(labelled),
         (is_a!(labelled, LABELLED)),
-        Subtype(arg!(labelled, 1), sup);
+        ComputedSubtype(arg!(labelled, 1), sup);
 
-    Subtype(
+    ComputedSubtype(
         apply!(x_generic, x_arg),
         apply!(y_generic, y_arg)
     ) <-
-        Subtype(x_generic, ent!(GENERIC)),
-        Subtype(x_generic, ent!(INDUCTIVE)),
-        Subtype(y_generic, ent!(GENERIC)),
-        Subtype(y_generic, ent!(INDUCTIVE)),
-        Subtype(x_generic, y_generic),
-        Subtype(x_arg, y_arg),
+        ComputedSubtype(x_generic, ent!(GENERIC)),
+        ComputedSubtype(x_generic, ent!(INDUCTIVE)),
+        ComputedSubtype(y_generic, ent!(GENERIC)),
+        ComputedSubtype(y_generic, ent!(INDUCTIVE)),
+        ComputedSubtype(x_generic, y_generic),
+        ComputedSubtype(x_arg, y_arg),
         KnownType(apply!(x_generic, x_arg)),
         KnownType(apply!(y_generic, y_arg));
 
@@ -176,11 +218,11 @@ ibis! {
     KnownType(name!(ty)) <- KnownType(ty); // Types without their arguments are still types
     KnownType(arg) <- KnownType(ty), for arg in args!(ty); // Types arguments are types
     KnownType(x) <- Node(_par, _node, x); // Infer types that are used in the recipes.
-    KnownType(x) <- Subtype(x, _);
-    KnownType(y) <- Subtype(_, y);
-    Subtype(x, ent!(UNIVERSAL)) <- KnownType(x); // Create a universal type.
-    Subtype(x, x) <- KnownType(x); // Infer simple subtyping.
-    Subtype(x, z) <- Subtype(x, y), Subtype(y, z) // Infer the transitivity of subtyping.
+    KnownType(x) <- ComputedSubtype(x, _);
+    KnownType(y) <- ComputedSubtype(_, y);
+    ComputedSubtype(x, ent!(UNIVERSAL)) <- KnownType(x); // Create a universal type.
+    ComputedSubtype(x, x) <- KnownType(x); // Infer simple subtyping.
+    ComputedSubtype(x, z) <- ComputedSubtype(x, y), ComputedSubtype(y, z); // Infer the transitivity of subtyping.
 }
 
 fn is_default<T: Default + Eq>(v: &T) -> bool {
@@ -199,8 +241,6 @@ pub struct Flags {
 pub struct Config {
     #[serde(default, skip_serializing_if = "is_default")]
     pub metadata: serde_json::Value,
-    #[serde(default, skip_serializing_if = "is_default")]
-    pub types: Vec<KnownType>,
     #[serde(default, skip_serializing_if = "is_default")]
     pub subtypes: Vec<Subtype>,
     #[serde(default, skip_serializing_if = "is_default")]
@@ -328,7 +368,6 @@ impl Ibis {
             config:
                 Config {
                     metadata: _,
-                    types,
                     subtypes,
                     less_private_than,
                     capabilities,
@@ -341,7 +380,6 @@ impl Ibis {
             shared,
         } = recipes;
         self.config.flags = flags; // TODO: Merge not overwrite.
-        self.config.types.extend(types);
         self.config.subtypes.extend(subtypes);
         self.config.less_private_than.extend(less_private_than);
         self.config.capabilities.extend(capabilities);
@@ -351,21 +389,10 @@ impl Ibis {
 
     pub fn extract_solutions_with_loss(self, loss: Option<usize>) -> Ibis {
         let mut runtime = Crepe::new();
-        runtime.extend(&[PlanningIsEnabled(self.config.flags.planning).to_claim()]);
-        runtime.extend(self.config.types.iter().map(|ty| ty.to_claim()));
-        runtime.extend(self.config.subtypes.iter().map(|sub_ty| sub_ty.to_claim()));
-        runtime.extend(
-            self.config
-                .less_private_than
-                .iter()
-                .map(|lpt| lpt.to_claim()),
-        );
-        runtime.extend(
-            self.config
-                .capabilities
-                .iter()
-                .map(|capability| capability.to_claim()),
-        );
+        runtime.extend(&[PlanningIsEnabled(self.config.flags.planning)]);
+        runtime.extend(self.config.subtypes.clone());
+        runtime.extend(self.config.less_private_than.clone());
+        runtime.extend(self.config.capabilities.clone());
 
         let maybe_shared = if Sol::from(&self.shared) == Sol::default() {
             None
@@ -375,10 +402,10 @@ impl Ibis {
         for recipe in self.recipes.iter().chain(maybe_shared.iter()) {
             // Add necessary data to this module and add a 'new solution'.
             let sol = Sol::from(recipe);
-            runtime.extend(vec![UncheckedSolutionInput(sol)]);
+            runtime.extend(vec![Seed(sol)]);
         }
 
-        for recipe in self.recipes.iter().chain(Some(self.shared).iter()) {
+        for recipe in self.recipes.iter().chain(Some(self.shared.clone()).iter()) {
             // Add necessary data to this module and add a 'new solution'.
             let Recipe {
                 checks,
@@ -392,34 +419,13 @@ impl Ibis {
                 #[cfg(feature = "ancestors")]
                     ancestors: _,
             } = recipe;
-            runtime.extend(checks.iter().map(|check| check.to_claim()));
-            runtime.extend(claims.iter().map(|claim| claim.to_claim()));
-            runtime.extend(nodes.iter().map(|node| node.to_claim()));
-            runtime.extend(
-                trusted_to_remove_tag
-                    .iter()
-                    .map(|trusted| trusted.to_claim()),
-            );
+            runtime.extend(checks);
+            runtime.extend(claims);
+            runtime.extend(nodes);
+            runtime.extend(trusted_to_remove_tag);
         }
 
-        let (
-            _flags,
-            solutions,
-            unchecked_solutions,
-            mut types,
-            mut less_private_than,
-            mut capabilities,
-            mut subtypes,
-            _compatible_with,
-            _has_capability,
-            nodes,
-            claims,
-            checks,
-            trusted_to_remove_tag,
-            has_tags,
-            leaks,
-            type_errors,
-        ) = runtime.run();
+        let (solutions, unchecked_solutions, has_tags, leaks, type_errors) = runtime.run();
         let recipes: Vec<Sol> = if self.config.flags.planning {
             solutions.iter().map(|Solution(s)| *s).collect()
         } else {
@@ -466,30 +472,12 @@ impl Ibis {
             recipes
         };
         Ibis {
-            config: Config {
-                metadata: serde_json::Value::Null,
-                types: types.drain().collect(),
-                subtypes: subtypes.drain().collect(),
-                less_private_than: less_private_than.drain().collect(),
-                capabilities: capabilities.drain().collect(),
-                flags: self.config.flags.clone(),
-            },
+            config: self.config,
             num_unchecked_solutions: unchecked_solutions.len(),
             num_solutions: solutions.len(),
             num_selected: recipes.len(),
             recipes,
-            shared: Recipe {
-                edges: vec![],
-                metadata: serde_json::Value::Null,
-                feedback: Feedback::default(),
-                id: None,
-                nodes: nodes.iter().cloned().collect(),
-                checks: checks.iter().cloned().collect(),
-                claims: claims.iter().cloned().collect(),
-                trusted_to_remove_tag: trusted_to_remove_tag.iter().cloned().collect(),
-                #[cfg(feature = "ancestors")]
-                ancestors: vec![],
-            },
+            shared: self.shared,
         }
     }
 }
