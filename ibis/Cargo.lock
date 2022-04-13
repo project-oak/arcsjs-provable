@@ -15,7 +15,6 @@ dependencies = [
 name = "arcsjs-ibis"
 version = "0.1.0"
 dependencies = [
- "arcsjs_ibis_macros",
  "console_error_panic_hook",
  "crepe",
  "criterion",
@@ -28,10 +27,6 @@ dependencies = [
  "shadow-rs",
  "wasm-bindgen",
 ]
-
-[[package]]
-name = "arcsjs_ibis_macros"
-version = "0.1.0"
 
 [[package]]
 name = "atty"
