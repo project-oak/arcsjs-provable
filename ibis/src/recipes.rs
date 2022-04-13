@@ -1,5 +1,5 @@
 use crate::util::make;
-use crate::{apply, arg, args, name, ent, ibis, is_a, Ent, Sol, SolutionData, ToInput};
+use crate::{apply, arg, args, ent, ibis, is_a, name, Ent, Sol, SolutionData, ToInput};
 use serde::{Deserialize, Serialize};
 
 ibis! {

@@ -93,7 +93,10 @@ macro_rules! arg {
 macro_rules! args {
     ($type: expr) => {{
         use crate::type_parser::read_type;
-        read_type(&$type.name()).args.iter().map(|arg| ent!(&format!("{}", arg)))
+        read_type(&$type.name())
+            .args
+            .iter()
+            .map(|arg| ent!(&format!("{}", arg)))
     }};
 }
 
@@ -114,10 +117,12 @@ pub fn get_solutions(data: &str, loss: Option<usize>) -> Ibis {
     let mut runtime = Ibis::new();
 
     // TODO: Use ibis::Error and https://serde.rs/error-handling.html instead of expect.
-    let recipes: Ibis = serde_json::from_str(data).map_err(|e| {
-        eprintln!("{}", data);
-        e
-    }).expect("JSON Error?");
+    let recipes: Ibis = serde_json::from_str(data)
+        .map_err(|e| {
+            eprintln!("{}", data);
+            e
+        })
+        .expect("JSON Error?");
     runtime.add_recipes(recipes);
 
     runtime.extract_solutions_with_loss(loss)
