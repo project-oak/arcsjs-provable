@@ -121,7 +121,8 @@ impl ToDot for (&Ibis, &Recipe) {
             sol_graph.add_edge(node_id(from), node_id(to), vec![format!("style=dotted color=red label=<<font color=\"red\">expected '{}', found incompatible type '{}'</font>>", to_ty, from_ty)]);
         }
 
-        for (from_id, to_id) in &recipe.id.expect("WAT").edges() {
+        let sol = &recipe.id.expect("WAT").solution();
+        for (from_id, to_id) in &sol.edges {
             let from = format!("{}:s", node_id(from_id));
             let to = format!("{}:n", node_id(to_id));
             sol_graph.add_edge(from.clone(), to.clone(), vec![]);

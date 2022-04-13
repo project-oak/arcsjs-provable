@@ -37,9 +37,7 @@ impl Type {
         self
     }
     pub fn with_capability(self, cap: &str) -> Self {
-        Type::new(WITH_CAPABILITY)
-            .with_arg(Type::new(cap))
-            .with_arg(self)
+        Self::new(WITH_CAPABILITY).with_args(vec![Type::new(cap), self])
     }
 }
 

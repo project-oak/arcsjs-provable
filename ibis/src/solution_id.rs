@@ -12,6 +12,7 @@ use serde::{Deserialize, Serialize};
 use std::borrow::Borrow;
 #[cfg(feature = "ancestors")]
 use std::collections::BTreeSet;
+use std::sync::Arc;
 
 pub type SolutionIdBackingType = u32;
 
@@ -41,7 +42,7 @@ impl Default for Sol {
 
 impl Sol {
     fn new_with_id(ctx: &mut Ctx, sol: Sol, solution: SolutionData) -> Self {
-        ctx.id_to_solution.insert(sol, solution);
+        ctx.id_to_solution.insert(sol, Arc::new(solution));
         #[cfg(feature = "ancestors")]
         ctx.ancestors.insert(sol, BTreeSet::default());
         sol
@@ -69,7 +70,7 @@ impl Sol {
         Sol::new_blocking(SolutionData::default())
     }
 
-    fn get_solution(&self, ctx: &Ctx) -> SolutionData {
+    fn get_solution(&self, ctx: &Ctx) -> Arc<SolutionData> {
         ctx.borrow()
             .id_to_solution
             .get(self)
@@ -77,7 +78,7 @@ impl Sol {
             .expect("All solution ids should have a solution")
     }
 
-    pub fn solution(&self) -> SolutionData {
+    pub fn solution(&self) -> Arc<SolutionData> {
         let guard = CTX.lock().expect("Shouldn't fail");
         let ctx = (*guard).borrow();
         self.get_solution(&ctx)
@@ -116,10 +117,6 @@ impl Sol {
 
     pub fn add_edge(&self, from: Ent, to: Ent) -> Sol {
         self.make_child(&|sol| sol.add_edge(from, to))
-    }
-
-    pub fn edges(&self) -> std::collections::BTreeSet<(Ent, Ent)> {
-        self.solution().edges
     }
 
     pub fn has_edge(&self, from: Ent, to: Ent) -> bool {
