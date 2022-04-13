@@ -5,7 +5,7 @@
 // https://developers.google.com/open-source/licenses/bsd
 
 extern crate nom;
-use crate::type_struct::Type;
+use crate::type_struct::*;
 use nom::{
     bytes::complete::{tag as simple_tag, take_while1},
     character::complete::{space0, space1},
@@ -71,7 +71,7 @@ fn labelled_type(input: &str) -> IResult<&str, Type> {
     let (input, (label, ty)) = tuple((label, cut(type_parser)))(input)?;
     Ok((
         input,
-        Type::new("ibis.Labelled")
+        Type::new(LABELLED)
             .with_arg(Type::new(label))
             .with_arg(ty),
     ))
@@ -88,7 +88,7 @@ fn product_type(input: &str) -> IResult<&str, Type> {
         .pop()
         .expect("A product type requires at least one type");
     for new_ty in types {
-        ty = Type::with_args("ibis.ProductType", vec![ty, new_ty]);
+        ty = Type::with_args(PRODUCT, vec![ty, new_ty]);
     }
     Ok((input, ty))
 }
@@ -162,7 +162,7 @@ mod tests {
         let age_number = read_type("{age: Number}");
         parse_and_round_trip(
             "{name: String, age: Number}",
-            Type::new("ibis.ProductType")
+            Type::new(PRODUCT)
                 .with_arg(name_string)
                 .with_arg(age_number),
         );
@@ -174,10 +174,10 @@ mod tests {
         let age_number = read_type("{age: Number}");
         parse_and_round_trip(
             "name: {JSON, age: Number}",
-            Type::new("ibis.Labelled")
+            Type::new(LABELLED)
                 .with_arg(Type::new("name"))
                 .with_arg(
-                    Type::new("ibis.ProductType")
+                    Type::new(PRODUCT)
                         .with_arg(json)
                         .with_arg(age_number),
                 ),
@@ -208,7 +208,7 @@ mod tests {
     fn read_type_with_label() {
         parse_and_round_trip(
             "name: Type",
-            Type::new("ibis.Labelled")
+            Type::new(LABELLED)
                 .with_arg(Type::new("name"))
                 .with_arg(Type::new("Type")),
         );

@@ -4,6 +4,14 @@
 // license that can be found in the LICENSE file or at
 // https://developers.google.com/open-source/licenses/bsd
 
+pub const UNIVERSAL: &str = "ibis.UniversalType";
+pub const WITH_CAPABILITY: &str = "ibis.WithCapability";
+pub const PRODUCT: &str = "ibis.ProductType";
+pub const UNION: &str = "ibis.UnionType";
+pub const GENERIC: &str = "ibis.GenericType";
+pub const INDUCTIVE: &str = "ibis.InductiveType";
+pub const LABELLED: &str = "ibis.Labelled";
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct Type {
     pub name: String,
@@ -13,7 +21,7 @@ pub struct Type {
 impl Type {
     pub fn with_args(mut name: &str, args: Vec<Type>) -> Self {
         if name == "*" {
-            name = "ibis.UniversalType";
+            name = UNIVERSAL;
         }
         Self {
             name: name.to_string(),
@@ -28,7 +36,7 @@ impl Type {
         self
     }
     pub fn with_capability(self, cap: &str) -> Self {
-        Type::new("ibis.WithCapability")
+        Type::new(WITH_CAPABILITY)
             .with_arg(Type::new(cap))
             .with_arg(self)
     }
@@ -50,7 +58,7 @@ fn format_arg_set(
 
 impl std::fmt::Display for Type {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        if self.name == "ibis.WithCapability" && self.args.len() > 1 {
+        if self.name == WITH_CAPABILITY && self.args.len() > 1 {
             write!(f, "{} ", self.args[0])?;
             if self.args.len() > 2 {
                 write!(f, "(")?;
@@ -60,7 +68,7 @@ impl std::fmt::Display for Type {
                 write!(f, ")")?;
             }
             Ok(())
-        } else if self.name == "ibis.Labelled" && self.args.len() > 1 {
+        } else if self.name == LABELLED && self.args.len() > 1 {
             write!(f, "{}: ", self.args[0])?;
             if self.args.len() > 2 {
                 write!(f, "(")?;
@@ -70,7 +78,7 @@ impl std::fmt::Display for Type {
                 write!(f, ")")?;
             }
             Ok(())
-        } else if self.name == "ibis.ProductType" && !self.args.is_empty() {
+        } else if self.name == PRODUCT && !self.args.is_empty() {
             write!(f, "{{")?;
             format_arg_set(f, ", ", &self.args)?;
             write!(f, "}}")
@@ -78,7 +86,7 @@ impl std::fmt::Display for Type {
             let res = write!(
                 f,
                 "{}",
-                if self.name == "ibis.UniversalType" {
+                if self.name == UNIVERSAL {
                     "*"
                 } else {
                     &self.name
