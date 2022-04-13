@@ -4,9 +4,11 @@
 // license that can be found in the LICENSE file or at
 // https://developers.google.com/open-source/licenses/bsd
 
+use crate::{type_struct::Type, type_parser_cache::read_type};
+
 use super::context::{Ctx, CTX};
 use serde::{Deserialize, Serialize};
-use std::borrow::Borrow;
+use std::{borrow::Borrow, sync::Arc};
 
 pub type EntityIdBackingType = u64;
 
@@ -35,6 +37,11 @@ impl Ent {
         let ent = Ent { id };
         ctx.id_to_name.insert(ent, name.to_string());
         ent
+    }
+
+    pub fn get_type(&self) -> Arc<Type> {
+        let name = self.name();
+        read_type(&name)
     }
 
     pub fn name(&self) -> String {
