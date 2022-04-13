@@ -347,19 +347,7 @@ impl From<&Recipe> for Sol {
 
 impl From<Sol> for Recipe {
     fn from(sol: Sol) -> Self {
-        let solution = sol.solution();
-        Recipe {
-            id: Some(sol),
-            feedback: Feedback::default(),
-            metadata: serde_json::Value::Null,
-            nodes: vec![],
-            claims: vec![],
-            checks: vec![],
-            trusted_to_remove_tag: vec![],
-            edges: make(&solution.edges, Clone::clone),
-            #[cfg(feature = "ancestors")]
-            ancestors: sol.ancestors().iter().cloned().collect(),
-        }
+        Recipe::from_sol(sol)
     }
 }
 
@@ -399,15 +387,15 @@ impl Ibis {
         runtime.extend(self.config.less_private_than.clone());
         runtime.extend(self.config.capabilities.clone());
 
-        let maybe_shared = if Sol::from(&self.shared) == Sol::default() {
+        let maybe_shared: Option<&Recipe> = if Sol::from(&self.shared) == Sol::default() {
             None
         } else {
-            Some(self.shared.clone())
+            Some(&self.shared)
         };
-        for recipe in self.recipes.iter().chain(maybe_shared.iter()) {
+        for recipe in self.recipes.iter().chain(maybe_shared) {
             // Add necessary data to this module and add a 'new solution'.
             let sol = Sol::from(recipe);
-            runtime.extend(vec![Seed(sol)]);
+            runtime.extend(&[Seed(sol)]);
         }
 
         for recipe in self.recipes.iter().chain(Some(self.shared.clone()).iter()) {
