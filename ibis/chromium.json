@@ -1,0 +1,122 @@
+{
+  "flags": {
+    "planning": false
+  },
+  "capabilities": [
+    ["write", "read"]
+  ],
+  "subtypes": [
+    ["any", "read"],
+    ["any", "write"],
+    ["Int", "Number"],
+    ["Int", "Serializable"],
+    ["String", "Serializable"],
+    ["Item", "{family: String, fullName: String, weight: Number, style: String}"],
+    ["Data", "{privateData: *}"],
+    ["Items", "List(Item)"],
+    ["List", "ibis.GenericType"],
+    ["List", "ibis.InductiveType"],
+    ["Key", "{item: Item, data: Data}"],
+    ["UserAction(Key)", "Key"],
+    ["Eventlet", "UserAction(Key)"],
+    ["T", "{html: String, key: Key}"],
+    ["{html: String, key: Key}", "T"]
+  ],
+  "less_private_than": [
+    ["public", "private"],
+    ["not_downstream_p_decorator", "downstream_p_decorator"],
+    ["not_downstream_p_filter", "downstream_p_filter"],
+    ["not_downstream_p_template", "downstream_p_template"]
+  ],
+  "recipes": [
+    {
+      "metadata": {
+        "name": "demo"
+      },
+      "nodes": [
+        ["s_inputs", "inputs", "write Inputs"],
+        ["s_service", "services", "write Services"],
+        ["s_item", "item", "write Item"],
+
+        ["p_return", "r_event", "read Eventlet"],
+        ["p_return", "r_render", "read {html: String, key: Key}"],
+        ["p_return", "r_result", "write Key"],
+
+        ["service_map", "s_input", "read Opaque(List(Item))"],
+        ["service_map", "s_inner_write", "write Item"],
+        ["service_map", "s_inner_read", "read T"],
+        ["service_map", "s_output", "write List(T)"],
+
+        ["p_decorator", "d_item", "read Item"],
+        ["p_decorator", "d_state", "read State"],
+        ["p_decorator", "d_inputs", "read Inputs"],
+        ["p_decorator", "d_services", "read Services"],
+        ["p_decorator", "d_decorated", "write {item: Item, memo: Memo, data: Data}"],
+        ["p_decorator", "d_memo_in", "read Memo"],
+        ["p_decorator", "d_memo_out", "write Memo"],
+
+        ["p_filter", "f_state", "read State"],
+        ["p_filter", "f_candidate", "read {item: Item, memo: Memo, data: Data}"],
+        ["p_filter", "f_selected", "write {item: Item, data: Data, selected: Bool}"],
+
+        ["p_template", "t_inputs", "read Inputs"],
+        ["p_template", "t_items_in", "read Opaque(List(Item))"],
+        ["p_template", "t_items_out", "write Opaque(List(Item))"],
+        ["p_template", "t_render", "write read List({html: String, key: Key})"],
+        ["p_template_return", "t_return", "write read Eventlet"],
+
+        ["p_inner_template", "it_inputs", "read Inputs"],
+        ["p_inner_template", "it_item", "read {item: Item, data: Data, selected: Bool}"],
+        ["p_inner_template", "it_render", "write {html: String, key: Key}"],
+
+        ["p_user", "u_event", "write Eventlet"]
+     ],
+      "claims": [
+        ["u_event", "user_action"],
+        ["s_inner_write", "private"],
+        ["it_render", "private"],
+        ["t_render", "private"],
+        ["d_decorated", "downstream_p_decorator"],
+        ["d_memo_out", "downstream_p_decorator"],
+        ["f_selected", "downstream_p_filter"]
+      ],
+      "checks": [
+        ["t_return", "user_action"],
+        ["t_render", "private"],
+        ["r_result", "public"],
+        ["d_item", "not_downstream_p_decorator"],
+        ["d_state", "not_downstream_p_decorator"],
+        ["d_inputs", "not_downstream_p_decorator"],
+        ["d_memo_in", "not_downstream_p_decorator"],
+        ["f_state", "not_downstream_p_filter"],
+        ["f_candidate", "not_downstream_p_filter"],
+        ["f_item", "not_downstream_p_filter"],
+        ["it_inputs", "not_downstream_p_template"],
+        ["it_item", "not_downstream_p_template"]
+      ],
+      "edges": [
+        ["inputs", "d_inputs"],
+        ["services", "d_services"],
+        ["state", "d_state"],
+
+        ["d_decorated", "f_candidate"],
+        ["state", "f_state"],
+
+        ["f_selected", "it_item"],
+        ["inputs", "it_inputs"],
+
+        ["s_inner_write", "d_item"],
+        ["it_render", "s_inner_read"],
+
+        ["t_items_out", "s_input"],
+        ["s_output", "t_render"],
+
+        ["u_event", "t_return"]
+      ],
+      "trusted_to_remove_tag": [
+        ["s_output", "private"]
+      ]
+    }
+  ]
+}
+
