@@ -466,13 +466,17 @@ impl Ibis {
         } else {
             recipes
         };
+        let mut shared = self.shared;
+        for recipe in self.recipes.iter() {
+            shared.nodes.extend(recipe.nodes.clone());
+        }
         Ibis {
             config: self.config,
             num_unchecked_solutions: unchecked_solutions.len(),
             num_solutions: solutions.len(),
             num_selected: recipes.len(),
             recipes,
-            shared: self.shared,
+            shared,
         }
     }
 }
