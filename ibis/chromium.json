@@ -36,7 +36,8 @@
       "nodes": [
         ["s_inputs", "inputs", "write Inputs"],
         ["s_service", "services", "write Services"],
-        ["s_item", "item", "write Item"],
+
+        ["p_active", "state", "read write State"],
 
         ["p_return", "r_event", "read Eventlet"],
         ["p_return", "r_render", "read {html: String, key: Key}"],
@@ -59,12 +60,14 @@
         ["p_filter", "f_candidate", "read {item: Item, memo: Memo, data: Data}"],
         ["p_filter", "f_selected", "write {item: Item, data: Data, selected: Bool}"],
 
+        ["p_template", "t_state", "read State"],
         ["p_template", "t_inputs", "read Inputs"],
         ["p_template", "t_items_in", "read Opaque(List(Item))"],
         ["p_template", "t_items_out", "write Opaque(List(Item))"],
         ["p_template", "t_render", "write read List({html: String, key: Key})"],
         ["p_template_return", "t_return", "write read Eventlet"],
 
+        ["p_inner_template", "it_state", "read State"],
         ["p_inner_template", "it_inputs", "read Inputs"],
         ["p_inner_template", "it_item", "read {item: Item, data: Data, selected: Bool}"],
         ["p_inner_template", "it_render", "write {html: String, key: Key}"],
@@ -104,12 +107,14 @@
 
         ["f_selected", "it_item"],
         ["inputs", "it_inputs"],
+        ["state", "it_state"],
 
         ["s_inner_write", "d_item"],
         ["it_render", "s_inner_read"],
 
         ["t_items_out", "s_input"],
         ["s_output", "t_render"],
+        ["state", "t_state"],
 
         ["u_event", "t_return"]
       ],

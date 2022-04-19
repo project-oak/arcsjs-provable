@@ -80,9 +80,10 @@ crepe! {
         // ({eprintln!("Connecting {}: {} to {}: {}", from, from_type, to, to_type); true}),
         UncheckedSolution(parent);
 
-    HasCapability(arg!(ty, 0), ty) <-
+    HasCapability(cap, ty) <-
         KnownType(ty),
-        (is_a!(ty, WITH_CAPABILITY));
+        (is_a!(ty, WITH_CAPABILITY)),
+        Subtype(arg!(ty, 0), cap);
 
     HasCapability(cap, ty) <-
         KnownType(ty),
@@ -103,9 +104,8 @@ crepe! {
         (is_a!(x, WITH_CAPABILITY)),
         KnownType(y),
         HasCapability(y_cap, y), // For each of the capabilities y supports
-        Subtype(y_cap, y_cap_sup),
         Subtype(arg!(x, 0), x_cap),
-        Capability(x_cap, y_cap_sup), // If this one is supported we can continue.
+        Capability(x_cap, y_cap), // If this one is supported we can continue.
         CompatibleWith(arg!(x, 1), y);
 
     CompatibleWith(x, y) <- // If a type has no capabilities, discard the capabilities of it's possible super type.
