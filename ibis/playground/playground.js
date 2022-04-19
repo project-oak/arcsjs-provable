@@ -80,6 +80,7 @@ async function startup() {
         ),
         getDemoContent()
     ]);
+    await to_dot_callback();
 }
 
 async function run(ibis_function, formatter) {
