@@ -60,6 +60,9 @@ crepe! {
     @input
     #[derive(Debug, Ord, PartialOrd, Serialize, Deserialize)]
     pub struct TrustedToRemoveTag(pub Ent, pub Ent); // node, tag
+    @input
+    #[derive(Debug, Ord, PartialOrd, Serialize, Deserialize)]
+    pub struct TrustedToRemoveTagFromNode(pub Ent, pub Ent); // node, node from
 
     // Feedback
     @output
@@ -80,9 +83,10 @@ crepe! {
         // ({eprintln!("Connecting {}: {} to {}: {}", from, from_type, to, to_type); true}),
         UncheckedSolution(parent);
 
-    HasCapability(arg!(ty, 0), ty) <-
+    HasCapability(cap, ty) <-
         KnownType(ty),
-        (is_a!(ty, WITH_CAPABILITY));
+        (is_a!(ty, WITH_CAPABILITY)),
+        Subtype(arg!(ty, 0), cap);
 
     HasCapability(cap, ty) <-
         KnownType(ty),
@@ -103,9 +107,8 @@ crepe! {
         (is_a!(x, WITH_CAPABILITY)),
         KnownType(y),
         HasCapability(y_cap, y), // For each of the capabilities y supports
-        Subtype(y_cap, y_cap_sup),
         Subtype(arg!(x, 0), x_cap),
-        Capability(x_cap, y_cap_sup), // If this one is supported we can continue.
+        Capability(x_cap, y_cap), // If this one is supported we can continue.
         CompatibleWith(arg!(x, 1), y);
 
     CompatibleWith(x, y) <- // If a type has no capabilities, discard the capabilities of it's possible super type.
@@ -197,13 +200,20 @@ crepe! {
         HasTag(s, source, curr, tag),
         for (up, down) in &s.solution().edges,
         (*up == curr),
-        !TrustedToRemoveTag(*down, tag);
+        !TrustedToRemoveTag(*down, tag),
+        !TrustedToRemoveTagFromNode(*down, curr);
 
     HasTag(s, source, down, tag) <- // Propagate tags 'across stream' (i.e. inside a particle)
         HasTag(s, source, curr, tag),
-        Node(particle, curr, _),
-        Node(particle, down, _),
-        !TrustedToRemoveTag(down, tag);
+        Node(particle, curr, curr_ty),
+        HasCapability(curr_cap, curr_ty),
+        Capability(_, curr_cap), // Is input (e.g. read)
+        Node(particle, down, down_ty),
+        (curr != down),
+        !TrustedToRemoveTag(down, tag),
+        !TrustedToRemoveTagFromNode(down, curr),
+        HasCapability(down_cap, down_ty), // Has to be able to output it.
+        Capability(down_cap, _); // Is output (e.g. write)
 
     Leak(s, n, t1, source, t2) <-
         Check(n, t1),
@@ -309,6 +319,8 @@ pub struct Recipe {
     #[serde(default, skip_serializing_if = "is_default")]
     pub trusted_to_remove_tag: Vec<TrustedToRemoveTag>,
     #[serde(default, skip_serializing_if = "is_default")]
+    pub trusted_to_remove_tag_from_node: Vec<TrustedToRemoveTagFromNode>,
+    #[serde(default, skip_serializing_if = "is_default")]
     pub edges: Vec<(Ent, Ent)>,
     #[cfg(feature = "ancestors")]
     #[serde(default, skip_serializing_if = "is_default")]
@@ -328,6 +340,7 @@ impl Recipe {
             claims: vec![],
             checks: vec![],
             trusted_to_remove_tag: vec![],
+            trusted_to_remove_tag_from_node: vec![],
             edges: solution.edges.iter().cloned().collect(),
         }
     }
@@ -382,7 +395,7 @@ impl Ibis {
         self.shared = shared; // TODO: Merge not overwrite.
     }
 
-    pub fn extract_solutions_with_loss(self, loss: Option<usize>) -> Ibis {
+    pub fn extract_solutions_with_loss(mut self, loss: Option<usize>) -> Ibis {
         let mut runtime = Crepe::new();
         runtime.extend(&[PlanningIsEnabled(self.config.flags.planning)]);
         runtime.extend(self.config.subtypes.clone());
@@ -407,6 +420,7 @@ impl Ibis {
                 claims,
                 nodes,
                 trusted_to_remove_tag,
+                trusted_to_remove_tag_from_node,
                 feedback: _,
                 metadata: _,
                 id: _,
@@ -418,6 +432,7 @@ impl Ibis {
             runtime.extend(claims);
             runtime.extend(nodes);
             runtime.extend(trusted_to_remove_tag);
+            runtime.extend(trusted_to_remove_tag_from_node);
         }
 
         let (solutions, unchecked_solutions, has_tags, leaks, type_errors) = runtime.run();
@@ -467,8 +482,16 @@ impl Ibis {
             recipes
         };
         let mut shared = self.shared;
-        for recipe in self.recipes.iter() {
-            shared.nodes.extend(recipe.nodes.clone());
+        for recipe in self.recipes.drain(0..) {
+            shared.nodes.extend(recipe.nodes);
+            shared.claims.extend(recipe.claims);
+            shared.checks.extend(recipe.checks);
+            shared
+                .trusted_to_remove_tag
+                .extend(recipe.trusted_to_remove_tag);
+            shared
+                .trusted_to_remove_tag_from_node
+                .extend(recipe.trusted_to_remove_tag_from_node);
         }
         Ibis {
             config: self.config,
