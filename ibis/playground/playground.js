@@ -30,7 +30,7 @@ function render(dot, options) {
 }
 
 async function getDemoContent() {
-    const demo = await fetch('../demo.json');
+    const demo = await fetch('../chromium.json');
     const demoText = await demo.text();
     const filePane = document.getElementById('filePane');
     filePane.addFile(undefined, demoText);

@@ -1,5 +1,0 @@
-
-        ["p_render", "c_photos", "read Opaque(Item)"],
-        ["p_render", "c_startFilter", "read StarFilter"],
-        ["p_render", "c_structure", "write {items: {models: Opaque(Items), filter: String, template: String, decorator: String}, starFilter: StarFilter}"],
-
