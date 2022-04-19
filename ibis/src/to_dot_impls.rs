@@ -6,7 +6,7 @@
 
 use crate::dot::{DotGraph, ToDot};
 use crate::recipes::{
-    Check, Claim, HasTag, Ibis, Leak, Node, Recipe, TrustedToRemoveTag, TypeError,
+    Check, Claim, HasTag, Ibis, Leak, Node, Recipe, TrustedToRemoveTag, TrustedToRemoveTagFromNode, TypeError,
 };
 use crate::Sol;
 use std::collections::HashMap;
@@ -86,7 +86,12 @@ impl ToDot for (&Ibis, &Recipe) {
             }
             for TrustedToRemoveTag(trusted_n, tag) in &ibis.shared.trusted_to_remove_tag {
                 if trusted_n == node {
-                    extras.push(format!("trusted to remove tag '{}'", tag));
+                    extras.push(format!("trusted to drop tag '{}'", tag));
+                }
+            }
+            for TrustedToRemoveTagFromNode(trusted_n, source_node) in &ibis.shared.trusted_to_remove_tag_from_node {
+                if trusted_n == node {
+                    extras.push(format!("trusted to drop tags from '{}'", source_node));
                 }
             }
             for Claim(claim_node, tag) in &ibis.shared.claims {

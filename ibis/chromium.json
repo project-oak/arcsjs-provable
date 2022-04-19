@@ -27,7 +27,8 @@
     ["public", "private"],
     ["not_downstream_p_decorator", "downstream_p_decorator"],
     ["not_downstream_p_filter", "downstream_p_filter"],
-    ["not_downstream_p_template", "downstream_p_template"]
+    ["not_downstream_p_template", "downstream_p_template"],
+    ["not_downstream_p_inner_template", "downstream_p_inner_template"]
   ],
   "recipes": [
     {
@@ -45,17 +46,15 @@
         ["p_return", "r_result", "write Eventlet"],
 
         ["service_map", "s_input", "read Opaque(List(Item))"],
-        ["service_map", "s_inner_write", "write Item"],
+        ["service_map", "s_inner_write", "write {item: Item, memo: ibis.UnionType(Memo, undefined)}"],
         ["service_map", "s_inner_read", "read T"],
         ["service_map", "s_output", "write List(T)"],
 
-        ["p_decorator", "d_item", "read Item"],
+        ["p_decorator", "d_item", "read {item: Item, memo: ibis.UnionType(Memo, undefined)}"],
         ["p_decorator", "d_state", "read State"],
         ["p_decorator", "d_inputs", "read Inputs"],
         ["p_decorator", "d_services", "read Services"],
         ["p_decorator", "d_decorated", "write {item: Item, memo: Memo, data: Data}"],
-        ["p_decorator", "d_memo_in", "read Memo"],
-        ["p_decorator", "d_memo_out", "write Memo"],
 
         ["p_filter", "f_state", "read State"],
         ["p_filter", "f_candidate", "read {item: Item, memo: Memo, data: Data}"],
@@ -63,6 +62,7 @@
 
         ["p_template", "t_state", "read State"],
         ["p_template", "t_inputs", "read Inputs"],
+        ["p_template", "t_items_in", "read Opaque(List(Item))"],
         ["p_template", "t_items_out", "write Opaque(List(Item))"],
         ["p_template", "t_render", "write read List({html: String, key: Key})"],
 
@@ -71,15 +71,16 @@
         ["p_inner_template", "it_item", "read {item: Item, data: Data, selected: Bool}"],
         ["p_inner_template", "it_render", "write {html: String, key: Key}"],
 
-        ["p_user", "u_event", "write Eventlet"]
+        ["p_runtime", "runtime.event", "write Eventlet"],
+        ["p_runtime", "runtime.items", "write Opaque(List(Item))"]
      ],
       "claims": [
-        ["u_event", "user_action"],
+        ["runtime.event", "user_action"],
+        ["runtime.items", "private"],
         ["s_inner_write", "private"],
         ["it_render", "private"],
         ["t_render", "private"],
         ["d_decorated", "downstream_p_decorator"],
-        ["d_memo_out", "downstream_p_decorator"],
         ["f_selected", "downstream_p_filter"]
       ],
       "checks": [
@@ -89,12 +90,11 @@
         ["d_item", "not_downstream_p_decorator"],
         ["d_state", "not_downstream_p_decorator"],
         ["d_inputs", "not_downstream_p_decorator"],
-        ["d_memo_in", "not_downstream_p_decorator"],
         ["f_state", "not_downstream_p_filter"],
         ["f_candidate", "not_downstream_p_filter"],
         ["f_item", "not_downstream_p_filter"],
-        ["it_inputs", "not_downstream_p_template"],
-        ["it_item", "not_downstream_p_template"]
+        ["it_inputs", "not_downstream_p_inner_template"],
+        ["it_item", "not_downstream_p_inner_template"]
       ],
       "edges": [
         ["inputs", "d_inputs"],
@@ -116,7 +116,11 @@
         ["inputs", "t_inputs"],
         ["state", "t_state"],
 
-        ["u_event", "r_event"]
+        ["runtime.event", "r_event"]
+      ],
+      "trusted_to_remove_tag_from_node": [
+        ["s_inner_write", "s_inner_read"],
+        ["t_items_out", "t_render"]
       ],
       "trusted_to_remove_tag": [
         ["s_output", "private"]
