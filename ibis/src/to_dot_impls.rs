@@ -86,14 +86,20 @@ impl ToDot for (&Ibis, &Recipe) {
             }
             for TrustedToRemoveTag(trusted_n, tag) in &ibis.shared.trusted_to_remove_tag {
                 if trusted_n == node {
-                    extras.push(format!("<font color=\"red\">trusted to drop tag '{}'</font>", tag));
+                    extras.push(format!(
+                        "<font color=\"red\">trusted to drop tag '{}'</font>",
+                        tag
+                    ));
                 }
             }
             for TrustedToRemoveTagFromNode(trusted_n, source_node) in
                 &ibis.shared.trusted_to_remove_tag_from_node
             {
                 if trusted_n == node {
-                    extras.push(format!("<font color=\"red\">trusted to drop tags from '{}'</font>", source_node));
+                    extras.push(format!(
+                        "<font color=\"red\">trusted to drop tags from '{}'</font>",
+                        source_node
+                    ));
                 }
             }
             for Claim(claim_node, tag) in &ibis.shared.claims {
@@ -113,7 +119,11 @@ impl ToDot for (&Ibis, &Recipe) {
                 }
             }
             for (tag, sources) in &tags {
-                extras.push(format!("<font color=\"purple\">'{}' from {}</font>", tag, sources.join(", ")));
+                extras.push(format!(
+                    "<font color=\"purple\">'{}' from {}</font>",
+                    tag,
+                    sources.join(", ")
+                ));
             }
             let extras: Vec<String> = extras
                 .iter()
@@ -136,9 +146,9 @@ impl ToDot for (&Ibis, &Recipe) {
 
         let sol = &recipe.id.expect("WAT").solution();
         for (from_id, to_id) in &sol.edges {
-            let from = format!("{}", node_id(from_id));
-            let to = format!("{}", node_id(to_id));
-            sol_graph.add_edge(from.clone(), to.clone(), vec![]);
+            let from = node_id(from_id).to_string();
+            let to = node_id(to_id).to_string();
+            sol_graph.add_edge(from, to, vec![]);
         }
         sol_graph
     }
