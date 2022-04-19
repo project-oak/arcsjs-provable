@@ -37,7 +37,7 @@
         ["s_inputs", "inputs", "write Inputs"],
         ["s_service", "services", "write Services"],
 
-        ["p_active", "state", "read write State"],
+        ["p_active", "state", "any State"],
 
         ["p_return", "r_event", "read Eventlet"],
         ["p_return", "r_render", "read {html: String, key: Key}"],
