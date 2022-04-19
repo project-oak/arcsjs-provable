@@ -202,8 +202,11 @@ crepe! {
     HasTag(s, source, down, tag) <- // Propagate tags 'across stream' (i.e. inside a particle)
         HasTag(s, source, curr, tag),
         Node(particle, curr, _),
-        Node(particle, down, _),
-        !TrustedToRemoveTag(down, tag);
+        Node(particle, down, down_ty),
+        (curr != down),
+        !TrustedToRemoveTag(down, tag),
+        HasCapability(down_cap, down_ty), // Has to be able to output it.
+        Capability(down_cap, _); // Is output (e.g. write)
 
     Leak(s, n, t1, source, t2) <-
         Check(n, t1),

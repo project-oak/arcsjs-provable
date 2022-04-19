@@ -14,6 +14,7 @@
     ["Item", "{family: String, fullName: String, weight: Number, style: String}"],
     ["Data", "{privateData: *}"],
     ["Items", "List(Item)"],
+    ["List(Item)", "Items"],
     ["List", "ibis.GenericType"],
     ["List", "ibis.InductiveType"],
     ["Key", "{item: Item, data: Data}"],
@@ -41,7 +42,7 @@
 
         ["p_return", "r_event", "read Eventlet"],
         ["p_return", "r_render", "read {html: String, key: Key}"],
-        ["p_return", "r_result", "write Key"],
+        ["p_return", "r_result", "write Eventlet"],
 
         ["service_map", "s_input", "read Opaque(List(Item))"],
         ["service_map", "s_inner_write", "write Item"],
@@ -62,10 +63,8 @@
 
         ["p_template", "t_state", "read State"],
         ["p_template", "t_inputs", "read Inputs"],
-        ["p_template", "t_items_in", "read Opaque(List(Item))"],
         ["p_template", "t_items_out", "write Opaque(List(Item))"],
         ["p_template", "t_render", "write read List({html: String, key: Key})"],
-        ["p_template_return", "t_return", "write read Eventlet"],
 
         ["p_inner_template", "it_state", "read State"],
         ["p_inner_template", "it_inputs", "read Inputs"],
@@ -84,7 +83,7 @@
         ["f_selected", "downstream_p_filter"]
       ],
       "checks": [
-        ["t_return", "user_action"],
+        ["r_result", "user_action"],
         ["t_render", "private"],
         ["r_result", "public"],
         ["d_item", "not_downstream_p_decorator"],
@@ -114,9 +113,10 @@
 
         ["t_items_out", "s_input"],
         ["s_output", "t_render"],
+        ["inputs", "t_inputs"],
         ["state", "t_state"],
 
-        ["u_event", "t_return"]
+        ["u_event", "r_event"]
       ],
       "trusted_to_remove_tag": [
         ["s_output", "private"]

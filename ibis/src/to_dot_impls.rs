@@ -112,23 +112,23 @@ impl ToDot for (&Ibis, &Recipe) {
         for (particle, particle_g) in particles {
             sol_graph.add_child(
                 particle_id(particle),
-                format!("{} : Particle", particle),
+                format!("{}", particle),
                 particle_g,
             );
         }
 
         for Leak(_leak_s, node, expected, source, tag) in &recipe.feedback.leaks {
-            sol_graph.add_edge(node_id(source), node_id(node), vec![format!("style=dotted color=red label=<<font color=\"red\">expected '{}', found contradiction '{}'</font>>", expected, tag)]);
+            sol_graph.add_edge(node_id(source), node_id(node), vec![format!("style=dotted color=red label=<<font color=\"red\">expected '{}', found '{}'</font>>", expected, tag)]);
         }
 
         for TypeError(_error_s, from, from_ty, to, to_ty) in &recipe.feedback.type_errors {
-            sol_graph.add_edge(node_id(from), node_id(to), vec![format!("style=dotted color=red label=<<font color=\"red\">expected '{}', found incompatible type '{}'</font>>", to_ty, from_ty)]);
+            sol_graph.add_edge(node_id(from), node_id(to), vec![format!("style=dotted color=red label=<<font color=\"red\">expected '{}', found '{}'</font>>", to_ty, from_ty)]);
         }
 
         let sol = &recipe.id.expect("WAT").solution();
         for (from_id, to_id) in &sol.edges {
-            let from = format!("{}:s", node_id(from_id));
-            let to = format!("{}:n", node_id(to_id));
+            let from = format!("{}", node_id(from_id));
+            let to = format!("{}", node_id(to_id));
             sol_graph.add_edge(from.clone(), to.clone(), vec![]);
         }
         sol_graph
