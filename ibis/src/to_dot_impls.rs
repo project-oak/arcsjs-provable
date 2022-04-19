@@ -75,10 +75,14 @@ impl ToDot for (&Ibis, &Recipe) {
         let mut particles = HashMap::new();
         for Node(particle, node, ty) in &ibis.shared.nodes {
             let mut extras: Vec<String> = vec![];
+            let mut tags: HashMap<String, Vec<String>> = HashMap::new();
             for HasTag(_hts, source, sink, tag) in &recipe.feedback.has_tags {
                 if sink == node && source != node {
-                    extras.push(format!("'{}' from {}", tag, source));
+                    tags.entry(tag.to_string()).or_insert(vec![]).push(source.to_string());
                 }
+            }
+            for (tag, sources) in &tags {
+                extras.push(format!("'{}' from {}", tag, sources.join(", ")));
             }
             for TrustedToRemoveTag(trusted_n, tag) in &ibis.shared.trusted_to_remove_tag {
                 if trusted_n == node {
