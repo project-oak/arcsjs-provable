@@ -486,8 +486,12 @@ impl Ibis {
             shared.nodes.extend(recipe.nodes);
             shared.claims.extend(recipe.claims);
             shared.checks.extend(recipe.checks);
-            shared.trusted_to_remove_tag.extend(recipe.trusted_to_remove_tag);
-            shared.trusted_to_remove_tag_from_node.extend(recipe.trusted_to_remove_tag_from_node);
+            shared
+                .trusted_to_remove_tag
+                .extend(recipe.trusted_to_remove_tag);
+            shared
+                .trusted_to_remove_tag_from_node
+                .extend(recipe.trusted_to_remove_tag_from_node);
         }
         Ibis {
             config: self.config,

@@ -6,7 +6,8 @@
 
 use crate::dot::{DotGraph, ToDot};
 use crate::recipes::{
-    Check, Claim, HasTag, Ibis, Leak, Node, Recipe, TrustedToRemoveTag, TrustedToRemoveTagFromNode, TypeError,
+    Check, Claim, HasTag, Ibis, Leak, Node, Recipe, TrustedToRemoveTag, TrustedToRemoveTagFromNode,
+    TypeError,
 };
 use crate::Sol;
 use std::collections::HashMap;
@@ -78,25 +79,29 @@ impl ToDot for (&Ibis, &Recipe) {
             let mut tags: HashMap<String, Vec<String>> = HashMap::new();
             for HasTag(_hts, source, sink, tag) in &recipe.feedback.has_tags {
                 if sink == node && source != node {
-                    tags.entry(tag.to_string()).or_insert(vec![]).push(source.to_string());
+                    tags.entry(tag.to_string())
+                        .or_insert(vec![])
+                        .push(source.to_string());
                 }
-            }
-            for (tag, sources) in &tags {
-                extras.push(format!("'{}' from {}", tag, sources.join(", ")));
             }
             for TrustedToRemoveTag(trusted_n, tag) in &ibis.shared.trusted_to_remove_tag {
                 if trusted_n == node {
-                    extras.push(format!("trusted to drop tag '{}'", tag));
+                    extras.push(format!("<font color=\"red\">trusted to drop tag '{}'</font>", tag));
                 }
             }
-            for TrustedToRemoveTagFromNode(trusted_n, source_node) in &ibis.shared.trusted_to_remove_tag_from_node {
+            for TrustedToRemoveTagFromNode(trusted_n, source_node) in
+                &ibis.shared.trusted_to_remove_tag_from_node
+            {
                 if trusted_n == node {
-                    extras.push(format!("trusted to drop tags from '{}'", source_node));
+                    extras.push(format!("<font color=\"red\">trusted to drop tags from '{}'</font>", source_node));
                 }
             }
             for Claim(claim_node, tag) in &ibis.shared.claims {
                 if claim_node == node {
-                    extras.push(format!("claims to be '{}'", tag));
+                    extras.push(format!(
+                        "<font color=\"orange\">claims to be '{}'</font>",
+                        tag
+                    ));
                 }
             }
             for Check(check_node, tag) in &ibis.shared.checks {
@@ -107,6 +112,9 @@ impl ToDot for (&Ibis, &Recipe) {
                     ));
                 }
             }
+            for (tag, sources) in &tags {
+                extras.push(format!("<font color=\"purple\">'{}' from {}</font>", tag, sources.join(", ")));
+            }
             let extras: Vec<String> = extras
                 .iter()
                 .map(|ex| format!("<tr><td>{}</td></tr>", ex))
@@ -115,11 +123,7 @@ impl ToDot for (&Ibis, &Recipe) {
             particle_g.add_node(format!("{node_id} [shape=record label=< <table border=\"0\"><tr><td>{node} : {ty}</td></tr>{extras}</table>>]", node_id=node_id(node), node=node, ty=ty, extras=extras.join("")));
         }
         for (particle, particle_g) in particles {
-            sol_graph.add_child(
-                particle_id(particle),
-                format!("{}", particle),
-                particle_g,
-            );
+            sol_graph.add_child(particle_id(particle), format!("{}", particle), particle_g);
         }
 
         for Leak(_leak_s, node, expected, source, tag) in &recipe.feedback.leaks {

@@ -71,12 +71,12 @@
         ["p_inner_template", "it_item", "read {item: Item, data: Data, selected: Bool}"],
         ["p_inner_template", "it_render", "write {html: String, key: Key}"],
 
-        ["p_runtime", "runtime.event", "write Eventlet"],
-        ["p_runtime", "runtime.items", "write Opaque(List(Item))"]
+        ["runtime", "runtime_event", "write Eventlet"],
+        ["runtime", "runtime_items", "write Opaque(List(Item))"]
      ],
       "claims": [
-        ["runtime.event", "user_action"],
-        ["runtime.items", "private"],
+        ["runtime_event", "user_action"],
+        ["runtime_items", "private"],
         ["s_inner_write", "private"],
         ["it_render", "private"],
         ["t_render", "private"],
@@ -116,7 +116,8 @@
         ["inputs", "t_inputs"],
         ["state", "t_state"],
 
-        ["runtime.event", "r_event"]
+        ["runtime_event", "r_event"],
+        ["runtime_items", "t_items_in"]
       ],
       "trusted_to_remove_tag_from_node": [
         ["s_inner_write", "s_inner_read"],

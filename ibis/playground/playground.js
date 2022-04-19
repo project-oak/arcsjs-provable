@@ -10,10 +10,12 @@ import {FilePane} from './file-pane.js';
 
 window.customElements.define('file-pane', FilePane);
 
-function render(dot) {
+const options = {}; // Can include engine: dot|fdp|circo|osage...
+
+function render(dot, options) {
   var viz = new Viz();
 
-  viz.renderSVGElement(dot)
+  viz.renderSVGElement(dot, options)
   .then(function(element) {
     const graph = document.getElementById('graph');
     graph.replaceChildren(element);
@@ -44,7 +46,7 @@ async function startup() {
     ));
 
     const to_dot_callback = () => run(best_solutions_to_dot, dot => {
-        render(dot);
+        render(dot, options);
         return dot;
     });
     const to_dot = document.getElementById('to_dot');
@@ -52,7 +54,7 @@ async function startup() {
     filePane.addExecuteCallback(to_dot_callback);
 
     outputPane.addTabSwitchCallback(() => {
-        render(outputPane.active.value);
+        render(outputPane.active.value, options);
     });
 
     clear_output.addEventListener("click", () => {
