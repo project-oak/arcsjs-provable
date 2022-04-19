@@ -205,7 +205,9 @@ crepe! {
 
     HasTag(s, source, down, tag) <- // Propagate tags 'across stream' (i.e. inside a particle)
         HasTag(s, source, curr, tag),
-        Node(particle, curr, _),
+        Node(particle, curr, curr_ty),
+        HasCapability(curr_cap, curr_ty),
+        Capability(_, curr_cap), // Is input (e.g. read)
         Node(particle, down, down_ty),
         (curr != down),
         !TrustedToRemoveTag(down, tag),
