@@ -29,17 +29,34 @@ function render(dot, options) {
   });
 }
 
-async function getDemoContent() {
-    const demo = await fetch('../chromium.json');
-    const demoText = await demo.text();
+async function getInputsFromURI() {
     const filePane = document.getElementById('filePane');
-    filePane.addFile(undefined, demoText);
+    filePane.dropAllFiles(); // Empty things out.
+
+    const uri = new URL(window.location);
+    // Read the inputs from the URI.
+    const contentsParam = uri.searchParams && uri.searchParams.get('inputs');
+    if (contentsParam) {
+        const contents = JSON.parse(decodeURIComponent(contentsParam));
+        for (let content of contents) {
+            filePane.addFile(undefined, content);
+        }
+    } else {
+        const demo = await fetch('../chromium.json');
+        const demoText = await demo.text();
+        filePane.addFile(undefined, demoText);
+    }
+}
+
+window.onpopstate = function(event) {
+  getInputsFromURI();
 }
 
 async function startup() {
     const filePane = document.getElementById('filePane');
     const outputPane = document.getElementById('outputPane');
     const to_json = document.getElementById('to_json');
+    const clear_input = document.getElementById('clear_input');
     const clear_output = document.getElementById('clear_output');
     to_json.addEventListener("click", () => run(best_solutions_to_json,
         input => JSON.stringify(JSON.parse(input), undefined, 2)
@@ -54,7 +71,18 @@ async function startup() {
     filePane.addExecuteCallback(to_dot_callback);
 
     outputPane.addTabSwitchCallback(() => {
-        render(outputPane.active.value, options);
+        const contents = outputPane.active.value;
+        if (contents.startsWith('digraph')) {
+            render(contents, options);
+        } else {
+            console.log(JSON.parse(contents));
+        }
+    });
+
+    clear_input.addEventListener("click", () => {
+        filePane.dropAllFiles();
+        filePane.addFile(undefined, '');
+        setURIFromInputs();
     });
 
     clear_output.addEventListener("click", () => {
@@ -78,14 +106,26 @@ async function startup() {
                 version_info_display.innerText = version_info;
             }
         ),
-        getDemoContent()
+        getInputsFromURI()
     ]);
     await to_dot_callback();
+}
+
+function setURIFromInputs() {
+    const contents = filePane.getFileContents();
+    // Store the inputs in the URI.
+    const uri = new URL(window.location);
+    const param = encodeURIComponent(JSON.stringify(contents));
+    if (param != uri.searchParams.get('inputs')) {
+        uri.searchParams.set('inputs', encodeURIComponent(JSON.stringify(contents)));
+    }
+    window.history.pushState({},"", uri);
 }
 
 async function run(ibis_function, formatter) {
     const filePane = document.getElementById('filePane');
     const outputPane = document.getElementById('outputPane');
+    setURIFromInputs();
     const result = ibis_function(filePane.getFileContents());
     const outputFile = outputPane.addFile(undefined, formatter(result));
     outputFile.disabled = true;
