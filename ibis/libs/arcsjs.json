@@ -1,0 +1,18 @@
+{
+  "capabilities": [
+    ["write", "read"]
+  ],
+  "subtypes": [
+    ["any", "read"],
+    ["any", "write"]
+    ["Set", "ibis.GenericType"],
+    ["Set", "ibis.InductiveType"],
+    ["List", "ibis.GenericType"],
+    ["List", "ibis.InductiveType"],
+    ["Opaque", "ibis.GenericType"],
+    ["Opaque", "ibis.InductiveType"]
+  ],
+  "less_private_than": [
+    ["public", "private"]
+  ]
+}
