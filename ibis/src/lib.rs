@@ -102,7 +102,7 @@ pub fn get_solutions(data: &str, loss: Option<usize>) -> Ibis {
             eprintln!("{}", data);
             e
         })
-        .expect(&format!("JSON Error in {}", data));
+        .unwrap_or_else(|_| panic!("JSON Error in {}", data));
     runtime.add_recipes(recipes);
 
     runtime.extract_solutions_with_loss(loss)
