@@ -46,17 +46,19 @@ fn capability(input: &str) -> IResult<&str, &str> {
 
 enum DataTag<'a> {
     Add(&'a str),
-    Remove(&'a str)
+    Remove(&'a str),
 }
 
 fn data_tag(input: &str) -> IResult<&str, DataTag> {
-    let (input, (sign, data_tag)) = tuple((alt((tag("+"), tag("-"))), take_while1(is_lower_char)))(input)?;
-    Ok((input,
+    let (input, (sign, data_tag)) =
+        tuple((alt((tag("+"), tag("-"))), take_while1(is_lower_char)))(input)?;
+    Ok((
+        input,
         match sign {
-        "+" => DataTag::Add(data_tag),
-        "-" => DataTag::Remove(data_tag),
-        _ => todo!(),
-        }
+            "+" => DataTag::Add(data_tag),
+            "-" => DataTag::Remove(data_tag),
+            _ => todo!(),
+        },
     ))
 }
 
@@ -261,13 +263,11 @@ mod tests {
     fn read_a_product_type_with_field_tags() {
         parse_and_round_trip(
             "name: String +fullname",
-            Type::new(LABELLED)
-                .with_arg(Type::new("name"))
-                .with_arg(
-                    Type::new(ADD_TAG)
-                        .with_arg(Type::new("String"))
-                        .with_arg(Type::new("fullname")),
-                ),
+            Type::new(LABELLED).with_arg(Type::new("name")).with_arg(
+                Type::new(ADD_TAG)
+                    .with_arg(Type::new("String"))
+                    .with_arg(Type::new("fullname")),
+            ),
         );
     }
 
@@ -301,13 +301,11 @@ mod tests {
     fn read_a_product_type_with_field_remove_tags() {
         parse_and_round_trip(
             "name: String -fullname",
-            Type::new(LABELLED)
-                .with_arg(Type::new("name"))
-                .with_arg(
-                    Type::new(REMOVE_TAG)
-                        .with_arg(Type::new("String"))
-                        .with_arg(Type::new("fullname")),
-                ),
+            Type::new(LABELLED).with_arg(Type::new("name")).with_arg(
+                Type::new(REMOVE_TAG)
+                    .with_arg(Type::new("String"))
+                    .with_arg(Type::new("fullname")),
+            ),
         );
     }
 
@@ -315,17 +313,15 @@ mod tests {
     fn read_a_product_type_with_field_add_and_remove_tags() {
         parse_and_round_trip(
             "name: String +fullname -private",
-            Type::new(LABELLED)
-                .with_arg(Type::new("name"))
-                .with_arg(
-                    Type::new(REMOVE_TAG)
-                        .with_arg(
-                            Type::new(ADD_TAG)
-                                .with_arg(Type::new("String"))
-                                .with_arg(Type::new("fullname"))
-                                )
-                        .with_arg(Type::new("private")),
-                ),
+            Type::new(LABELLED).with_arg(Type::new("name")).with_arg(
+                Type::new(REMOVE_TAG)
+                    .with_arg(
+                        Type::new(ADD_TAG)
+                            .with_arg(Type::new("String"))
+                            .with_arg(Type::new("fullname")),
+                    )
+                    .with_arg(Type::new("private")),
+            ),
         );
     }
 
