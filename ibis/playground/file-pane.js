@@ -43,15 +43,18 @@ const template = `
       border: 1px solid #ccc;
     }
   </style>
-  <div class="tab-panel">
-    <div class="tab-row">
-        <div id="tabs"></div>
-        <button id="add-button">+</button>
-        <button id="delete-button">-</button>
-        <button id="download-button">&darr;</button>
-    </div>
-    <div id="files"></div>
-    </div>
+  <div id="self">
+      <div id="name"></div>
+      <div class="tab-panel">
+        <div class="tab-row">
+            <div id="tabs"></div>
+            <button id="add-button">+</button>
+            <button id="delete-button">-</button>
+            <button id="download-button">&darr;</button>
+        </div>
+        <div id="files"></div>
+        </div>
+      </div>
   </div>`;
 
 export class FilePane extends HTMLElement {
@@ -61,6 +64,8 @@ export class FilePane extends HTMLElement {
         const shadowRoot = this.attachShadow({mode: 'open'});
         shadowRoot.innerHTML = template;
 
+        this.self = shadowRoot.getElementById('self');
+        this.name = shadowRoot.getElementById('name');
         this.tabs = shadowRoot.getElementById('tabs');
         this.files = shadowRoot.getElementById('files');
         this.addButton = shadowRoot.getElementById('add-button');
@@ -69,7 +74,7 @@ export class FilePane extends HTMLElement {
 
         this.files.addEventListener('keypress', this.interceptCtrlEnter.bind(this));
         this.addButton.addEventListener('click', this.addFile.bind(this));
-        this.deleteButton.addEventListener('click', this.removeCurrent.bind(this));
+        this.deleteButton.addEventListener('click', this.deleteCurrent.bind(this));
         this.downloadButton.addEventListener('click', this.download.bind(this));
         this.fileBase = 'a'.charCodeAt(0);
         this.ext = '';
@@ -113,7 +118,7 @@ export class FilePane extends HTMLElement {
     }
 
     static get observedAttributes() {
-        return ['no-add-button', 'ext'];
+        return ['no-add-button', 'ext', 'name'];
     }
 
     attributeChangedCallback(name, oldValue, newValue) {
@@ -123,8 +128,19 @@ export class FilePane extends HTMLElement {
             } else {
                 this.addButton.style.display = '';
             }
+            this.updateHiddenState();
         } else if (name === 'ext') {
             this.ext = newValue;
+        } else if (name === 'name') {
+            this.name.textContent = newValue;
+        }
+    }
+
+    updateHiddenState() {
+        if (this.addButton.style.display === 'none' && this.files.children.length === 0) {
+            this.self.style.display = 'none';
+        } else {
+            this.self.style.display = '';
         }
     }
 
@@ -142,6 +158,7 @@ export class FilePane extends HTMLElement {
 
         this.tabs.appendChild(tab);
         this.files.appendChild(file);
+        this.updateHiddenState();
         tab.click();
 
         if (this.fileBase > 'z'.charCodeAt(0)) {
@@ -150,7 +167,7 @@ export class FilePane extends HTMLElement {
         return file;
     }
 
-    removeCurrent() {
+    deleteCurrent() {
         if (!this.active) {
             console.log('no active file');
             return;
@@ -161,6 +178,7 @@ export class FilePane extends HTMLElement {
             }
         }
         this.active.remove();
+        this.updateHiddenState();
         const firstTab = this.tabs.children[0];
         if (firstTab) {
             this.showFile({target: firstTab});
