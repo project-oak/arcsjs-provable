@@ -49,6 +49,7 @@ const template = `
         <div id="tabs"></div>
         <button id="add-button">+</button>
         <button id="delete-button">-</button>
+        <button id="download-button">&darr;</button>
     </div>
     <div id="files"></div>
     </div>
