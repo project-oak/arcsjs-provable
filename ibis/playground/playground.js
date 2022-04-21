@@ -11,8 +11,8 @@ import {FilePane} from './file-pane.js';
 window.customElements.define('file-pane', FilePane);
 
 const known_files = {
-    chromium: '../chromium.json',
-    demo: '../demo.json',
+    chromium: '/chromium.json',
+    demo: '/demo.json',
 };
 
 const graphviz_options = {}; // Can include engine: dot|fdp|circo|osage...
@@ -52,11 +52,11 @@ async function getInputsFromURI() {
     }
     const files = uri.searchParams && uri.searchParams.getAll('p') || [];
     for (let file of files) {
-        addFileFromPath(filePane, file);
+        await addFileFromPath(filePane, file);
     }
 
     if (filePane.getFileContents().length === 0) {
-        addFileFromPath(filePane, known_files.chromium);
+        await addFileFromPath(filePane, known_files.chromium);
     }
 }
 
