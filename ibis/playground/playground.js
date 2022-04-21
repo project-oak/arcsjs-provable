@@ -10,6 +10,11 @@ import {FilePane} from './file-pane.js';
 
 window.customElements.define('file-pane', FilePane);
 
+const known_files = {
+    chromium: '../chromium.json',
+    demo: '../demo.json',
+};
+
 const graphviz_options = {}; // Can include engine: dot|fdp|circo|osage...
 
 function render(dot, options) {
@@ -29,21 +34,29 @@ function render(dot, options) {
   });
 }
 
+async function addFileFromPath(pane, file) {
+    const content = await fetch(file);
+    const contentText = await content.text();
+    pane.addFile(undefined, contentText);
+}
+
 async function getInputsFromURI() {
     const filePane = document.getElementById('filePane');
     filePane.dropAllFiles(); // Empty things out.
 
     const uri = new URL(window.location);
     // Read the inputs from the URI.
-    const contentsParams = uri.searchParams && uri.searchParams.getAll('i');
-    if (contentsParams && contentsParams.length > 0) {
-        for (let content of contentsParams) {
-            filePane.addFile(undefined, content);
-        }
-    } else {
-        const demo = await fetch('../chromium.json');
-        const demoText = await demo.text();
-        filePane.addFile(undefined, demoText);
+    const inputs = uri.searchParams && uri.searchParams.getAll('i') || [];
+    for (let input of inputs) {
+        filePane.addFile(undefined, input);
+    }
+    const files = uri.searchParams && uri.searchParams.getAll('p') || [];
+    for (let file of files) {
+        addFileFromPath(filePane, file);
+    }
+
+    if (filePane.getFileContents().length === 0) {
+        addFileFromPath(filePane, known_files.chromium);
     }
 }
 
@@ -52,38 +65,43 @@ window.onpopstate = function(event) {
 }
 
 async function startup() {
-    const filePane = document.getElementById('filePane');
-    const outputPane = document.getElementById('outputPane');
+    const outputPaneDot = document.getElementById('outputPaneDot');
+    const outputPaneJSON = document.getElementById('outputPaneJSON');
+
+    const to_json_callback = () => run(best_solutions_to_json, json => {
+        return JSON.stringify(JSON.parse(json), undefined, 2);
+    }, outputPaneJSON);
     const to_json = document.getElementById('to_json');
-    const share = document.getElementById('share');
-    to_json.addEventListener("click", () => run(best_solutions_to_json,
-        input => JSON.stringify(JSON.parse(input), undefined, 2)
-    ));
+    to_json.addEventListener("click", to_json_callback);
 
     const to_dot_callback = () => run(best_solutions_to_dot, dot => {
         render(dot, graphviz_options);
         return dot;
-    });
+    }, outputPaneDot);
     const to_dot = document.getElementById('to_dot');
     to_dot.addEventListener("click", to_dot_callback);
+
+    const filePane = document.getElementById('filePane');
     filePane.addExecuteCallback(to_dot_callback);
 
-    outputPane.addTabSwitchCallback(() => {
-        const contents = outputPane.active.value;
-        if (contents.startsWith('digraph')) {
-            render(contents, graphviz_options);
-        } else {
-            console.log(JSON.parse(contents));
-        }
+    outputPaneDot.addTabSwitchCallback(() => {
+        const contents = outputPaneDot.active.value;
+        render(contents, graphviz_options);
+    });
+
+    outputPaneJSON.addTabSwitchCallback(() => {
+        const contents = outputPaneJSON.active.value;
+        console.log(JSON.parse(contents));
     });
 
     const feedback = document.getElementById('feedback');
+    const share = document.getElementById('share');
     share.addEventListener("click", () => {
         setURIFromInputs();
         navigator.clipboard.writeText(window.location).then(function() {
-          alert('Link copied to clipboard!');
+          feedback.innerText = 'Link copied to clipboard!';
         }, function(err) {
-          alert('Could not copy link (please copy the URL manually): ', err);
+          feedback.innerText = `Could not copy link (please copy the URL manually): ${err}`;
         });
     });
 
@@ -123,11 +141,10 @@ async function setURIFromInputs() {
 }
 
 
-async function run(ibis_function, formatter) {
+async function run(ibis_function, formatter, destination) {
     const filePane = document.getElementById('filePane');
-    const outputPane = document.getElementById('outputPane');
     const result = ibis_function(filePane.getFileContents());
-    const outputFile = outputPane.addFile(undefined, formatter(result));
+    const outputFile = destination.addFile(undefined, formatter(result));
     outputFile.disabled = true;
 }
 

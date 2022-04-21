@@ -97,7 +97,6 @@ export class FilePane extends HTMLElement {
     }
 
     attributeChangedCallback(name, oldValue, newValue) {
-        console.log(this, name, oldValue, newValue);
         if (name === 'no-add-button') {
             if (newValue) {
                 this.addButton.style.display = 'none';
