@@ -10,7 +10,7 @@ import {FilePane} from './file-pane.js';
 
 window.customElements.define('file-pane', FilePane);
 
-const options = {}; // Can include engine: dot|fdp|circo|osage...
+const graphviz_options = {}; // Can include engine: dot|fdp|circo|osage...
 
 function render(dot, options) {
   var viz = new Viz();
@@ -35,10 +35,9 @@ async function getInputsFromURI() {
 
     const uri = new URL(window.location);
     // Read the inputs from the URI.
-    const contentsParam = uri.searchParams && uri.searchParams.get('inputs');
-    if (contentsParam) {
-        const contents = JSON.parse(decodeURIComponent(contentsParam));
-        for (let content of contents) {
+    const contentsParams = uri.searchParams && uri.searchParams.getAll('i');
+    if (contentsParams && contentsParams.length > 0) {
+        for (let content of contentsParams) {
             filePane.addFile(undefined, content);
         }
     } else {
@@ -63,7 +62,7 @@ async function startup() {
     ));
 
     const to_dot_callback = () => run(best_solutions_to_dot, dot => {
-        render(dot, options);
+        render(dot, graphviz_options);
         return dot;
     });
     const to_dot = document.getElementById('to_dot');
@@ -73,7 +72,7 @@ async function startup() {
     outputPane.addTabSwitchCallback(() => {
         const contents = outputPane.active.value;
         if (contents.startsWith('digraph')) {
-            render(contents, options);
+            render(contents, graphviz_options);
         } else {
             console.log(JSON.parse(contents));
         }
@@ -111,21 +110,25 @@ async function startup() {
     await to_dot_callback();
 }
 
-function setURIFromInputs() {
+async function setURIFromInputs() {
     const contents = filePane.getFileContents();
     // Store the inputs in the URI.
     const uri = new URL(window.location);
-    const param = encodeURIComponent(JSON.stringify(contents));
-    if (param != uri.searchParams.get('inputs')) {
-        uri.searchParams.set('inputs', encodeURIComponent(JSON.stringify(contents)));
+    if (uri.searchParams && contents === uri.searchParams.getAll('i')) {
+        return;
+    }
+    uri.searchParams.delete('i');
+    for (let content of contents) {
+        uri.searchParams.append('i', content);
     }
     window.history.pushState({},"", uri);
 }
 
+
 async function run(ibis_function, formatter) {
     const filePane = document.getElementById('filePane');
     const outputPane = document.getElementById('outputPane');
-    setURIFromInputs();
+    await setURIFromInputs();
     const result = ibis_function(filePane.getFileContents());
     const outputFile = outputPane.addFile(undefined, formatter(result));
     outputFile.disabled = true;
