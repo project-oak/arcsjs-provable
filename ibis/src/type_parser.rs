@@ -311,5 +311,23 @@ mod tests {
         );
     }
 
+    #[test]
+    fn read_a_product_type_with_field_add_and_remove_tags() {
+        parse_and_round_trip(
+            "name: String +fullname -private",
+            Type::new(LABELLED)
+                .with_arg(Type::new("name"))
+                .with_arg(
+                    Type::new(REMOVE_TAG)
+                        .with_arg(
+                            Type::new(ADD_TAG)
+                                .with_arg(Type::new("String"))
+                                .with_arg(Type::new("fullname"))
+                                )
+                        .with_arg(Type::new("private")),
+                ),
+        );
+    }
+
     // TODO: tests for error messages
 }
