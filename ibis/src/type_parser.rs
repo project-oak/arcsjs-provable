@@ -7,6 +7,7 @@
 extern crate nom;
 use crate::type_struct::*;
 use nom::{
+    branch::alt,
     bytes::complete::{tag as simple_tag, take_while1},
     character::complete::{space0, space1},
     combinator::{cut, opt},
@@ -43,9 +44,20 @@ fn capability(input: &str) -> IResult<&str, &str> {
     Ok((input, cap))
 }
 
-fn data_tag(input: &str) -> IResult<&str, &str> {
-    let (input, (_, data_tag)) = tuple((tag("+"), take_while1(is_lower_char)))(input)?;
-    Ok((input, data_tag))
+enum DataTag<'a> {
+    Add(&'a str),
+    Remove(&'a str)
+}
+
+fn data_tag(input: &str) -> IResult<&str, DataTag> {
+    let (input, (sign, data_tag)) = tuple((alt((tag("+"), tag("-"))), take_while1(is_lower_char)))(input)?;
+    Ok((input,
+        match sign {
+        "+" => DataTag::Add(data_tag),
+        "-" => DataTag::Remove(data_tag),
+        _ => todo!(),
+        }
+    ))
 }
 
 fn label(input: &str) -> IResult<&str, &str> {
@@ -109,7 +121,11 @@ fn type_parser(input: &str) -> IResult<&str, Type> {
         .or_else(|_| simple_structure(input))?;
     let (input, tags) = many0(data_tag)(input)?;
     for tag in tags {
-        res = Type::new(TAGGED).with_arg(res).with_arg(Type::new(tag));
+        let (op, tag) = match tag {
+            DataTag::Add(tag) => (ADD_TAG, tag),
+            DataTag::Remove(tag) => (REMOVE_TAG, tag),
+        };
+        res = Type::new(op).with_arg(res).with_arg(Type::new(tag));
     }
     let (input, _) = space0(input)?; // drop any following whitespace.
     Ok((input, res))
@@ -221,7 +237,7 @@ mod tests {
     fn read_type_with_a_tag() {
         parse_and_round_trip(
             "String +name",
-            Type::new(TAGGED)
+            Type::new(ADD_TAG)
                 .with_arg(Type::new("String"))
                 .with_arg(Type::new("name")),
         );
@@ -231,9 +247,9 @@ mod tests {
     fn read_type_with_tags() {
         parse_and_round_trip(
             "String +name +fullname",
-            Type::new(TAGGED)
+            Type::new(ADD_TAG)
                 .with_arg(
-                    Type::new(TAGGED)
+                    Type::new(ADD_TAG)
                         .with_arg(Type::new("String"))
                         .with_arg(Type::new("name")),
                 )
@@ -248,7 +264,47 @@ mod tests {
             Type::new(LABELLED)
                 .with_arg(Type::new("name"))
                 .with_arg(
-                    Type::new(TAGGED)
+                    Type::new(ADD_TAG)
+                        .with_arg(Type::new("String"))
+                        .with_arg(Type::new("fullname")),
+                ),
+        );
+    }
+
+    // TODO: tests for error messages
+
+    #[test]
+    fn read_type_with_a_remove_tag() {
+        parse_and_round_trip(
+            "String -name",
+            Type::new(REMOVE_TAG)
+                .with_arg(Type::new("String"))
+                .with_arg(Type::new("name")),
+        );
+    }
+
+    #[test]
+    fn read_type_with_remove_tags() {
+        parse_and_round_trip(
+            "String -name -fullname",
+            Type::new(REMOVE_TAG)
+                .with_arg(
+                    Type::new(REMOVE_TAG)
+                        .with_arg(Type::new("String"))
+                        .with_arg(Type::new("name")),
+                )
+                .with_arg(Type::new("fullname")),
+        );
+    }
+
+    #[test]
+    fn read_a_product_type_with_field_remove_tags() {
+        parse_and_round_trip(
+            "name: String -fullname",
+            Type::new(LABELLED)
+                .with_arg(Type::new("name"))
+                .with_arg(
+                    Type::new(REMOVE_TAG)
                         .with_arg(Type::new("String"))
                         .with_arg(Type::new("fullname")),
                 ),
