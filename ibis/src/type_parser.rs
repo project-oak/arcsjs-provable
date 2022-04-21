@@ -10,7 +10,7 @@ use nom::{
     bytes::complete::{tag as simple_tag, take_while1},
     character::complete::{space0, space1},
     combinator::{cut, opt},
-    multi::{separated_list0, separated_list1},
+    multi::{many0, separated_list0, separated_list1},
     sequence::tuple,
     Finish, IResult,
 };
@@ -41,6 +41,11 @@ fn name(input: &str) -> IResult<&str, &str> {
 fn capability(input: &str) -> IResult<&str, &str> {
     let (input, (_, cap, _)) = tuple((space0, take_while1(is_lower_char), space1))(input)?;
     Ok((input, cap))
+}
+
+fn data_tag(input: &str) -> IResult<&str, &str> {
+    let (input, (_, data_tag)) = tuple((tag("#"), take_while1(is_lower_char)))(input)?;
+    Ok((input, data_tag))
 }
 
 fn label(input: &str) -> IResult<&str, &str> {
@@ -97,11 +102,15 @@ fn structure_with_capability(input: &str) -> IResult<&str, Type> {
 }
 
 fn type_parser(input: &str) -> IResult<&str, Type> {
-    let (input, res) = parenthesized(input)
+    let (input, mut res) = parenthesized(input)
         .or_else(|_| product_type(input))
         .or_else(|_| labelled_type(input))
         .or_else(|_| structure_with_capability(input))
         .or_else(|_| simple_structure(input))?;
+    let (input, tags) = many0(data_tag)(input)?;
+    for tag in tags {
+        res = Type::new(TAGGED).with_arg(res).with_arg(Type::new(tag));
+    }
     let (input, _) = space0(input)?; // drop any following whitespace.
     Ok((input, res))
 }
@@ -205,6 +214,44 @@ mod tests {
             Type::new(LABELLED)
                 .with_arg(Type::new("name"))
                 .with_arg(Type::new("Type")),
+        );
+    }
+
+    #[test]
+    fn read_type_with_a_tag() {
+        parse_and_round_trip(
+            "String #name",
+            Type::new(TAGGED)
+                .with_arg(Type::new("String"))
+                .with_arg(Type::new("name")),
+        );
+    }
+
+    #[test]
+    fn read_type_with_tags() {
+        parse_and_round_trip(
+            "String #name #fullname",
+            Type::new(TAGGED)
+                .with_arg(
+                    Type::new(TAGGED)
+                        .with_arg(Type::new("String"))
+                        .with_arg(Type::new("name")),
+                )
+                .with_arg(Type::new("fullname")),
+        );
+    }
+
+    #[test]
+    fn read_a_product_type_with_field_tags() {
+        parse_and_round_trip(
+            "name: String #fullname",
+            Type::new(LABELLED)
+                .with_arg(Type::new("name"))
+                .with_arg(
+                    Type::new(TAGGED)
+                        .with_arg(Type::new("String"))
+                        .with_arg(Type::new("fullname")),
+                ),
         );
     }
 

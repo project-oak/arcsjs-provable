@@ -11,6 +11,7 @@ pub const UNION: &str = "ibis.UnionType";
 pub const GENERIC: &str = "ibis.GenericType";
 pub const INDUCTIVE: &str = "ibis.InductiveType";
 pub const LABELLED: &str = "ibis.Labelled";
+pub const TAGGED: &str = "ibis.Tagged";
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct Type {
@@ -66,6 +67,10 @@ impl std::fmt::Display for Type {
             if self.args.len() > 2 {
                 write!(f, ")")?;
             }
+            Ok(())
+        } else if self.name == TAGGED && self.args.len() > 1 {
+            write!(f, "{} #", self.args[0])?;
+            format_arg_set(f, " #", &self.args[1..])?;
             Ok(())
         } else if self.name == LABELLED && self.args.len() > 1 {
             write!(f, "{}: ", self.args[0])?;
