@@ -8,9 +8,13 @@
   <body>
     <h1>Ibis - Playground</h1>
     <div id="feedback">Waiting...</div>
-    <button id="to_json">Run (to json)</button>
-    <button id="to_dot">Run (to dot)</button>
-    <button id="share">Share</button>
+    <input class="button" type="button" id="to_json" value="Run (to json)"></input>
+    <input class="button" type="button" id="to_dot" value="Run (to dot)"></input>
+    <input class="button" type="button" id="share" value="Share"></input>
+    <label for="add_file">
+      <span class="button">Choose files to upload</span>
+    </label>
+    <input id="add_file" style="opacity: 0" type="file" multiple="multiple"></input>
     <div><a href=".">Load demo</a></div>
     <file-pane id="filePane"></file-pane>
     <div id="graph" class="graph"></div>

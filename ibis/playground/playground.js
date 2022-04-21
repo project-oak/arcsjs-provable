@@ -81,6 +81,13 @@ async function startup() {
     const to_dot = document.getElementById('to_dot');
     to_dot.addEventListener("click", to_dot_callback);
 
+    const addFile = document.getElementById('add_file');
+    addFile.addEventListener('change', async () => {
+        for (const file of addFile.files) {
+            filePane.addFile(undefined, await file.text());
+        }
+    });
+
     const filePane = document.getElementById('filePane');
     filePane.addExecuteCallback(to_dot_callback);
 
