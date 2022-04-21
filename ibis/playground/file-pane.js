@@ -65,11 +65,14 @@ export class FilePane extends HTMLElement {
         this.files = shadowRoot.getElementById('files');
         this.addButton = shadowRoot.getElementById('add-button');
         this.deleteButton = shadowRoot.getElementById('delete-button');
+        this.downloadButton = shadowRoot.getElementById('download-button');
 
         this.files.addEventListener('keypress', this.interceptCtrlEnter.bind(this));
         this.addButton.addEventListener('click', this.addFile.bind(this));
         this.deleteButton.addEventListener('click', this.removeCurrent.bind(this));
+        this.downloadButton.addEventListener('click', this.download.bind(this));
         this.fileBase = 'a'.charCodeAt(0);
+        this.ext = '';
     }
 
     connectedCallback() {
@@ -92,8 +95,25 @@ export class FilePane extends HTMLElement {
         }
     }
 
+    download() {
+        const textInput = this.active.value;
+        let filename = 'unknown';
+        for (const tab of this.tabs.children) {
+            if (tab.linkedFile === this.active) {
+                filename = tab.textContent;
+                break;
+            }
+        }
+        var element = document.createElement('a');
+        element.setAttribute('href','data:text/plain;charset=utf-8, ' + encodeURIComponent(textInput));
+        element.setAttribute('download', filename);
+        document.body.appendChild(element);
+        element.click();
+        document.body.removeChild(element);
+    }
+
     static get observedAttributes() {
-        return ['no-add-button'];
+        return ['no-add-button', 'ext'];
     }
 
     attributeChangedCallback(name, oldValue, newValue) {
@@ -103,6 +123,8 @@ export class FilePane extends HTMLElement {
             } else {
                 this.addButton.style.display = '';
             }
+        } else if (name === 'ext') {
+            this.ext = newValue;
         }
     }
 
@@ -114,7 +136,7 @@ export class FilePane extends HTMLElement {
         file.value = content || '';
 
         const tab = document.createElement('button');
-        tab.textContent = `${String.fromCharCode(this.fileBase++)}`;
+        tab.textContent = `${String.fromCharCode(this.fileBase++)}${this.ext || ''}`;
         tab.linkedFile = file;
         tab.addEventListener('click', this.showFile.bind(this))
 
