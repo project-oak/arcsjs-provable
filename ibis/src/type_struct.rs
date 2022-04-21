@@ -69,8 +69,8 @@ impl std::fmt::Display for Type {
             }
             Ok(())
         } else if self.name == TAGGED && self.args.len() > 1 {
-            write!(f, "{} #", self.args[0])?;
-            format_arg_set(f, " #", &self.args[1..])?;
+            write!(f, "{} +", self.args[0])?;
+            format_arg_set(f, " +", &self.args[1..])?;
             Ok(())
         } else if self.name == LABELLED && self.args.len() > 1 {
             write!(f, "{}: ", self.args[0])?;

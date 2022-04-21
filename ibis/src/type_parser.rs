@@ -44,7 +44,7 @@ fn capability(input: &str) -> IResult<&str, &str> {
 }
 
 fn data_tag(input: &str) -> IResult<&str, &str> {
-    let (input, (_, data_tag)) = tuple((tag("#"), take_while1(is_lower_char)))(input)?;
+    let (input, (_, data_tag)) = tuple((tag("+"), take_while1(is_lower_char)))(input)?;
     Ok((input, data_tag))
 }
 
@@ -220,7 +220,7 @@ mod tests {
     #[test]
     fn read_type_with_a_tag() {
         parse_and_round_trip(
-            "String #name",
+            "String +name",
             Type::new(TAGGED)
                 .with_arg(Type::new("String"))
                 .with_arg(Type::new("name")),
@@ -230,7 +230,7 @@ mod tests {
     #[test]
     fn read_type_with_tags() {
         parse_and_round_trip(
-            "String #name #fullname",
+            "String +name +fullname",
             Type::new(TAGGED)
                 .with_arg(
                     Type::new(TAGGED)
@@ -244,7 +244,7 @@ mod tests {
     #[test]
     fn read_a_product_type_with_field_tags() {
         parse_and_round_trip(
-            "name: String #fullname",
+            "name: String +fullname",
             Type::new(LABELLED)
                 .with_arg(Type::new("name"))
                 .with_arg(
