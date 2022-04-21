@@ -4,7 +4,7 @@
   ],
   "subtypes": [
     ["any", "read"],
-    ["any", "write"]
+    ["any", "write"],
     ["Set", "ibis.GenericType"],
     ["Set", "ibis.InductiveType"],
     ["List", "ibis.GenericType"],

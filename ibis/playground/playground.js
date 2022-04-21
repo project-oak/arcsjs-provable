@@ -13,6 +13,9 @@ window.customElements.define('file-pane', FilePane);
 const known_files = {
     chromium: '/chromium.json',
     demo: '/demo.json',
+    "ArcsJs stdlib": '/libs/arcsjs.json',
+    "TS stdlib": '/libs/typescript.json',
+    "Rust stdlib": '/libs/rust.json',
 };
 
 const graphviz_options = {}; // Can include engine: dot|fdp|circo|osage...
@@ -141,6 +144,7 @@ async function setURIFromInputs() {
         return;
     }
     uri.searchParams.delete('i');
+    uri.searchParams.delete('p'); // Avoid sharing local file paths.
     for (let content of contents) {
         uri.searchParams.append('i', content);
     }
