@@ -48,6 +48,7 @@ const template = `
     <div class="tab-row">
         <div id="tabs"></div>
         <button id="add-button">+</button>
+        <button id="delete-button">-</button>
     </div>
     <div id="files"></div>
     </div>
@@ -63,9 +64,11 @@ export class FilePane extends HTMLElement {
         this.tabs = shadowRoot.getElementById('tabs');
         this.files = shadowRoot.getElementById('files');
         this.addButton = shadowRoot.getElementById('add-button');
+        this.deleteButton = shadowRoot.getElementById('delete-button');
 
         this.files.addEventListener('keypress', this.interceptCtrlEnter.bind(this));
         this.addButton.addEventListener('click', this.addFile.bind(this));
+        this.deleteButton.addEventListener('click', this.removeCurrent.bind(this));
         this.fileBase = 'a'.charCodeAt(0);
     }
 
@@ -124,6 +127,23 @@ export class FilePane extends HTMLElement {
             this.addButton.style.display = 'none';
         }
         return file;
+    }
+
+    removeCurrent() {
+        if (!this.active) {
+            console.log('no active file');
+            return;
+        }
+        for (const tab of this.tabs.children) {
+            if (tab.linkedFile === this.active) {
+                tab.remove();
+            }
+        }
+        this.active.remove();
+        const firstTab = this.tabs.children[0];
+        if (firstTab) {
+            this.showFile({target: firstTab});
+        }
     }
 
     dropAllFiles() {

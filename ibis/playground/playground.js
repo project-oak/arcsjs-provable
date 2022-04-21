@@ -55,8 +55,7 @@ async function startup() {
     const filePane = document.getElementById('filePane');
     const outputPane = document.getElementById('outputPane');
     const to_json = document.getElementById('to_json');
-    const clear_input = document.getElementById('clear_input');
-    const clear_output = document.getElementById('clear_output');
+    const share = document.getElementById('share');
     to_json.addEventListener("click", () => run(best_solutions_to_json,
         input => JSON.stringify(JSON.parse(input), undefined, 2)
     ));
@@ -78,21 +77,20 @@ async function startup() {
         }
     });
 
-    clear_input.addEventListener("click", () => {
-        filePane.dropAllFiles();
-        filePane.addFile(undefined, '');
+    const feedback = document.getElementById('feedback');
+    share.addEventListener("click", () => {
         setURIFromInputs();
-    });
-
-    clear_output.addEventListener("click", () => {
-        outputPane.dropAllFiles();
+        navigator.clipboard.writeText(window.location).then(function() {
+          alert('Link copied to clipboard!');
+        }, function(err) {
+          alert('Could not copy link (please copy the URL manually): ', err);
+        });
     });
 
     await Promise.all([
         loadIbis(
             '../pkg/ibis_bg.wasm',
             (status_text, style) => {
-            const feedback = document.getElementById('feedback');
             feedback.innerText = status_text;
             if (style === "error") {
                 feedback.classList.add('error');
@@ -128,7 +126,6 @@ async function setURIFromInputs() {
 async function run(ibis_function, formatter) {
     const filePane = document.getElementById('filePane');
     const outputPane = document.getElementById('outputPane');
-    await setURIFromInputs();
     const result = ibis_function(filePane.getFileContents());
     const outputFile = outputPane.addFile(undefined, formatter(result));
     outputFile.disabled = true;
