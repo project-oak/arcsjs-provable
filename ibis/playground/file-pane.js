@@ -39,8 +39,7 @@ const template = `
     #files textarea {
       font-size: 12px;
       min-width: 700px;
-      width: 90vw;
-      padding: 10px;
+      width: 100%-10px;
       border: 1px solid #ccc;
     }
   </style>
