@@ -8,14 +8,17 @@
   <body>
     <h1>Ibis - Playground</h1>
     <div id="feedback">Waiting...</div>
-    <button id="to_json">Run (to json)</button>
-    <button id="to_dot">Run (to dot)</button>
-    <button id="clear_input">Clear input</button>
-    <button id="clear_output">Clear output</button>
-    <div><a href=".">Load demo</a></div>
-    <file-pane id="filePane"></file-pane>
-    <file-pane id="outputPane" no-add-button="true"></file-pane>
+    <input class="button" type="button" id="to_dot" value="Run"></input>
+    <input class="button" type="button" id="to_json" value="Debug"></input>
+    <input class="button" type="button" id="share" value="Share"></input>
+    <label for="add_file">
+      <span class="button">Upload local file</span>
+    </label>
+    <input id="add_file" style="opacity: 0" type="file" multiple="multiple"></input>
+    <file-pane id="filePane" ext=".json"></file-pane>
     <div id="graph" class="graph"></div>
+      <file-pane id="outputPaneDot" name="Dot output" ext=".dot" no-add-button="true"></file-pane>
+      <file-pane id="outputPaneJSON" name="JSON Output" ext=".json" no-add-button="true"></file-pane>
     <div id="version_info"></div>
     <div class="footer">
       Thanks to <a href="https://github.com/mdaines/viz.js">vis.js</a> (<a href="https://github.com/mdaines/viz.js/blob/master/LICENSE">license</a>).

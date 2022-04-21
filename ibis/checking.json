@@ -25,8 +25,8 @@
         "name": "checking_demo"
       },
       "nodes": [
-        ["p_a", "a", "write", "NotInt"],
-        ["p_b", "b", "read", "ibis.UnionType(Number, String)"]
+        ["p_a", "a", "write NotInt"],
+        ["p_b", "b", "read ibis.UnionType(Number, String)"]
       ],
       "edges": [
         ["a", "b"]
