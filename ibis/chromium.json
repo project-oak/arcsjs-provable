@@ -112,6 +112,7 @@
         ["inputs", "t_inputs"],
         ["state", "t_state"],
 
+        ["surface_event", "from_surface_event"],
         ["runtime_event", "p_event"],
         ["runtime_items", "t_items_in"]
       ],
