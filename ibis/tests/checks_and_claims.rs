@@ -33,22 +33,12 @@ fn create_tagged_type_checked_graphs() {
   ],
   "recipes": [
     {
-      "trusted_to_remove_tag": [
-        ["b", "private"]
-      ],
-      "claims": [
-        ["a", "private"]
-      ],
-      "checks": [
-        ["e", "public"],
-        ["d", "public"]
-      ],
       "nodes": [
-        ["p_a", "a", "write Int"],
-        ["p_b", "b", "any Number"],
+        ["p_a", "a", "write Int +private"],
+        ["p_b", "b", "any Number -private"],
         ["p_c", "c", "any String"],
-        ["p_de", "d", "write Serializable"],
-        ["p_de", "e", "read Or(Number, String)"]
+        ["p_de", "d", "write Serializable +public"],
+        ["p_de", "e", "read Or(Number, String) +public"]
       ]
     }
   ]
