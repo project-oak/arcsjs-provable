@@ -30,11 +30,11 @@ impl ToDot for Ibis {
             }
             vec![best.expect("Expected a 'best' solution")]
         };
-        for recipe in solutions {
+        for recipe in solutions.iter().chain(Some(&self.shared).iter()) {
             let sol = &recipe.id.expect("Every recipe should have an id?");
             let s_id = sol_id(sol);
             #[allow(unused_mut)]
-            let mut sol_graph = (self, recipe).to_dot_repr();
+            let mut sol_graph = (self, *recipe).to_dot_repr();
             #[cfg(feature = "ancestors")]
             {
                 let s = Sol::from(recipe);
