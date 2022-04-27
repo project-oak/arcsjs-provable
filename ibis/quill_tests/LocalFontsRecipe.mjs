@@ -25,9 +25,11 @@ export const LocalFontsRecipe = {
   },
   main: {
     $kind: '$local/LocalFonts',
-    $bindings: {
-      fonts: '',
-      families: '',
+    $inputs: {
+      fonts: '', // Becomes {family, fullName, weight, style}
+      families: '', // TODO: Becomes ???
+    },
+    $outputs: {
       pickedFont: ''
     }
   }
