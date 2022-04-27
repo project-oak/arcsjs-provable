@@ -10,7 +10,7 @@ use crate::recipes::{
     TypeError,
 };
 use crate::Sol;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 impl ToDot for Ibis {
     fn to_dot_repr(&self) -> DotGraph {
@@ -75,7 +75,7 @@ impl ToDot for (&Ibis, &Recipe) {
         let mut sol_graph = DotGraph::default();
         let mut particles = HashMap::new();
         for Node(particle, node, ty) in &ibis.shared.nodes {
-            let mut extras: Vec<String> = vec![];
+            let mut extras: HashSet<String> = HashSet::new();
             let mut tags: HashMap<String, Vec<String>> = HashMap::new();
             for HasTag(_hts, source, sink, tag) in &recipe.feedback.has_tags {
                 if sink == node && source != node {
@@ -86,7 +86,7 @@ impl ToDot for (&Ibis, &Recipe) {
             }
             for TrustedToRemoveTag(trusted_n, tag) in &ibis.shared.trusted_to_remove_tag {
                 if trusted_n == node {
-                    extras.push(format!(
+                    extras.insert(format!(
                         "<font color=\"red\">trusted to drop tag '{}'</font>",
                         tag
                     ));
@@ -96,7 +96,7 @@ impl ToDot for (&Ibis, &Recipe) {
                 &ibis.shared.trusted_to_remove_tag_from_node
             {
                 if trusted_n == node {
-                    extras.push(format!(
+                    extras.insert(format!(
                         "<font color=\"red\">trusted to drop tags from '{}'</font>",
                         source_node
                     ));
@@ -104,7 +104,7 @@ impl ToDot for (&Ibis, &Recipe) {
             }
             for Claim(claim_node, tag) in &ibis.shared.claims {
                 if claim_node == node {
-                    extras.push(format!(
+                    extras.insert(format!(
                         "<font color=\"orange\">claims to be '{}'</font>",
                         tag
                     ));
@@ -112,14 +112,14 @@ impl ToDot for (&Ibis, &Recipe) {
             }
             for Check(check_node, tag) in &ibis.shared.checks {
                 if check_node == node {
-                    extras.push(format!(
+                    extras.insert(format!(
                         "<font color=\"blue\">checked to be '{}'</font>",
                         tag
                     ));
                 }
             }
             for (tag, sources) in &tags {
-                extras.push(format!(
+                extras.insert(format!(
                     "<font color=\"purple\">'{}' from {}</font>",
                     tag,
                     sources.join(", ")
