@@ -38,5 +38,3 @@ export const QuillFontPickerRecipe = {
     }
   }
 };
-
-console.log(JSON.stringify(QuillFontPickerRecipe));
