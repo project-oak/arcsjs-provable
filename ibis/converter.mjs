@@ -15,7 +15,7 @@ function add_store(ir, store_types, store_name, meta) {
     ir.nodes.push([store_id, `${store_id}_in`, `read ${ty}`]);
     ir.nodes.push([store_id, `${store_id}_out`, `write ${ty}`]);
     for (const tag of tags) {
-        ir.claims.push([store_id, tag]);
+        ir.claims.push([`${store_id}_out`, tag]);
     }
 }
 
