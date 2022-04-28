@@ -9,10 +9,11 @@ function add_store(ir, store_types, store_name, meta) {
         structure = `List(${structure.substr(1, structure.length - 2)})`;
     }
     const tags = meta.$tags || [];//.map(tag => ` +${tag}`).join('');
-    const ty = `read write ` + structure;// + tags;
+    const ty = structure;// + tags;
     const store_id = `store_${store_name}`;
     store_types[store_name] = ty;
-    ir.nodes.push([store_id, store_id, ty]);
+    ir.nodes.push([store_id, `${store_id}_in`, `read ${ty}`]);
+    ir.nodes.push([store_id, `${store_id}_out`, `write ${ty}`]);
     for (const tag of tags) {
         ir.claims.push([store_id, tag]);
     }
@@ -39,16 +40,18 @@ function add_particle(ir, recipe_name, particle_name, meta) {
         if (store_name === '') {
             store_name = handle_name;
         }
-        ir.nodes.push([particle_id, handle_id(handle_name), 'read *']);
-        ir.edges.push([store_id(store_name), handle_id(handle_name)]);
+        const store_type = store_types[store_name];
+        ir.nodes.push([particle_id, handle_id(handle_name), `read ${store_type}`]);
+        ir.edges.push([`${store_id(store_name)}_out`, handle_id(handle_name)]);
     }
     const outputs = meta.$outputs || {};
     for (let [handle_name, store_name] of entries(outputs)) {
         if (store_name === '') {
             store_name = handle_name;
         }
-        ir.nodes.push([particle_id, handle_id(handle_name), 'write *']);
-        ir.edges.push([handle_id(handle_name), store_id(store_name)]);
+        const store_type = store_types[store_name];
+        ir.nodes.push([particle_id, handle_id(handle_name), `write ${store_type}`]);
+        ir.edges.push([handle_id(handle_name), `${store_id(store_name)}_in`]);
     }
 
     const slots = meta.$slots;
@@ -57,11 +60,10 @@ function add_particle(ir, recipe_name, particle_name, meta) {
     }
 }
 
-function convert_to_ibis(ir, recipe_name, recipe) {
+function convert_to_ibis(ir, store_types, recipe_name, recipe) {
     // console.dir(recipe, {depth: null});
     const particles = fromEntries(entries(recipe).filter(([key, value]) => !key.startsWith(META)));
     const stores = recipe.$stores;
-    const store_types = {};
     for (const [store_name, meta] of entries(stores)) {
         add_store(ir, store_types, store_name, meta);
     }
@@ -93,8 +95,10 @@ const all_ir = {
     trusted_to_remove_tag: [],
 };
 
+const store_types = {};
 for(let [key, value] of entries(all)) {
-    convert_to_ibis(all_ir, key, value);
+    convert_to_ibis(all_ir, store_types, key, value);
 }
 // console.dir(all_ir, {depth: null});
-console.log(JSON.stringify(all_ir, undefined, 2));
+// console.log(JSON.stringify(all_ir, undefined, 2));
+console.log(JSON.stringify(all_ir));

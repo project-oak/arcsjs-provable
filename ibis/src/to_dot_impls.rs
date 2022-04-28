@@ -31,7 +31,7 @@ impl ToDot for Ibis {
             vec![best.expect("Expected a 'best' solution")]
         };
         for recipe in solutions.iter().chain(Some(&self.shared).iter()) {
-            let sol = &recipe.id.expect("Every recipe should have an id?");
+            let sol = &recipe.id.unwrap_or_else(Sol::empty);
             let s_id = sol_id(sol);
             #[allow(unused_mut)]
             let mut sol_graph = (self, *recipe).to_dot_repr();
@@ -68,7 +68,7 @@ fn sol_id(sol: &Sol) -> String {
 impl ToDot for (&Ibis, &Recipe) {
     fn to_dot_repr(&self) -> DotGraph {
         let (ibis, recipe) = &self;
-        let sol = &recipe.id.expect("Every recipe should have an id?");
+        let sol = &recipe.id.unwrap_or_else(Sol::empty);
         let s_id = sol_id(sol);
         let particle_id = |particle| format!("{}_p_{}", &s_id, particle);
         let node_id = |node| format!("{}_h_{}", &s_id, node).replace('.', "_");
@@ -144,7 +144,7 @@ impl ToDot for (&Ibis, &Recipe) {
             sol_graph.add_edge(node_id(from), node_id(to), vec![format!("style=dotted color=red label=<<font color=\"red\">expected '{}', found '{}'</font>>", to_ty, from_ty)]);
         }
 
-        let sol = &recipe.id.expect("WAT").solution();
+        let sol = &recipe.id.unwrap_or_else(Sol::empty).solution();
         for (from_id, to_id) in &sol.edges {
             let from = node_id(from_id).to_string();
             let to = node_id(to_id).to_string();

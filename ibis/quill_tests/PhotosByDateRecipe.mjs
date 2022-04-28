@@ -43,11 +43,11 @@ export const PhotosByDateRecipe = {
     $kind: '$local/PhotosByDate',
     $inputs: {
       photos: 'photos',
+      hoverUrl: 'hoverUrl'
     },
     $outputs: {
       pickedPhoto: 'pickedPhoto',
-      urlWithStars: 'urlWithStars',
-      hoverUrl: 'hoverUrl'
+      urlWithStars: 'urlWithStars'
     },
     $slots: {
       pickedPhotoRecipe: {

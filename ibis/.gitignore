@@ -3,3 +3,4 @@ watch/last.*
 flamegraph.svg
 perf.data*
 pkg
+out.*
