@@ -3,8 +3,6 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file or at
 // https://developers.google.com/open-source/licenses/bsd
-import './third_party/viz.js';
-import './third_party/full.render.js';
 import {loadIbis, best_solutions_to_json, best_solutions_to_dot} from '../ibis.js';
 import {FilePane} from './file-pane.js';
 
@@ -18,23 +16,23 @@ const known_files = {
     "Rust stdlib": '/libs/rust.json',
 };
 
-const graphviz_options = {}; // Can include engine: dot|fdp|circo|osage...
+var graphviz = d3.select('#graph').graphviz().transition(function () {
+    return d3.transition('main')
+    .ease(d3.easeLinear)
+    .delay(0)
+    .duration(1500);
+});
 
-function render(dot, options) {
-  var viz = new Viz();
-
-  viz.renderSVGElement(dot, options)
-  .then(function(element) {
-    const graph = document.getElementById('graph');
-    graph.replaceChildren(element);
-  })
-  .catch(error => {
-    // Create a new Viz instance (@see Caveats page for more info)
-    viz = new Viz();
-
-    // Possibly display the error
-    console.error(error);
-  });
+function render(dot) {
+    try {
+        console.log('RENDERING');
+        graphviz
+            .renderDot(dot)
+        console.log('DONE RENDERING');
+    } catch(error) {
+        // Possibly display the error
+        console.error(error);
+    };
 }
 
 async function addFileFromPath(pane, file) {
@@ -77,10 +75,7 @@ async function startup() {
     const to_json = document.getElementById('to_json');
     to_json.addEventListener("click", to_json_callback);
 
-    const to_dot_callback = () => run(best_solutions_to_dot, dot => {
-        render(dot, graphviz_options);
-        return dot;
-    }, outputPaneDot);
+    const to_dot_callback = () => run(best_solutions_to_dot, dot => dot, outputPaneDot);
     const to_dot = document.getElementById('to_dot');
     to_dot.addEventListener("click", to_dot_callback);
 
@@ -96,7 +91,7 @@ async function startup() {
 
     outputPaneDot.addTabSwitchCallback(() => {
         const contents = outputPaneDot.active.value;
-        render(contents, graphviz_options);
+        render(contents);
     });
 
     outputPaneJSON.addTabSwitchCallback(() => {
