@@ -10,7 +10,7 @@ use crate::recipes::{
     TypeError,
 };
 use crate::Sol;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 impl ToDot for Ibis {
     fn to_dot_repr(&self) -> DotGraph {
@@ -30,14 +30,14 @@ impl ToDot for Ibis {
             }
             vec![best.expect("Expected a 'best' solution")]
         };
-        for recipe in solutions {
-            let sol = &recipe.id.expect("Every recipe should have an id?");
+        for recipe in solutions.iter() {
+            let sol = &recipe.id.unwrap_or_else(Sol::empty);
             let s_id = sol_id(sol);
             #[allow(unused_mut)]
-            let mut sol_graph = (self, recipe).to_dot_repr();
+            let mut sol_graph = (self, *recipe).to_dot_repr();
             #[cfg(feature = "ancestors")]
             {
-                let s = Sol::from(recipe);
+                let s = Sol::from(*recipe);
                 let solution_head = |sol| format!("{}_head", sol_id(sol));
                 sol_graph.add_node(format!(
                     "{}[style=invis height = 0 width = 0 label=\"\"]",
@@ -68,14 +68,14 @@ fn sol_id(sol: &Sol) -> String {
 impl ToDot for (&Ibis, &Recipe) {
     fn to_dot_repr(&self) -> DotGraph {
         let (ibis, recipe) = &self;
-        let sol = &recipe.id.expect("Every recipe should have an id?");
+        let sol = &recipe.id.unwrap_or_else(Sol::empty);
         let s_id = sol_id(sol);
         let particle_id = |particle| format!("{}_p_{}", &s_id, particle);
         let node_id = |node| format!("{}_h_{}", &s_id, node).replace('.', "_");
         let mut sol_graph = DotGraph::default();
         let mut particles = HashMap::new();
         for Node(particle, node, ty) in &ibis.shared.nodes {
-            let mut extras: Vec<String> = vec![];
+            let mut extras: HashSet<String> = HashSet::new();
             let mut tags: HashMap<String, Vec<String>> = HashMap::new();
             for HasTag(_hts, source, sink, tag) in &recipe.feedback.has_tags {
                 if sink == node && source != node {
@@ -86,7 +86,7 @@ impl ToDot for (&Ibis, &Recipe) {
             }
             for TrustedToRemoveTag(trusted_n, tag) in &ibis.shared.trusted_to_remove_tag {
                 if trusted_n == node {
-                    extras.push(format!(
+                    extras.insert(format!(
                         "<font color=\"red\">trusted to drop tag '{}'</font>",
                         tag
                     ));
@@ -96,7 +96,7 @@ impl ToDot for (&Ibis, &Recipe) {
                 &ibis.shared.trusted_to_remove_tag_from_node
             {
                 if trusted_n == node {
-                    extras.push(format!(
+                    extras.insert(format!(
                         "<font color=\"red\">trusted to drop tags from '{}'</font>",
                         source_node
                     ));
@@ -104,7 +104,7 @@ impl ToDot for (&Ibis, &Recipe) {
             }
             for Claim(claim_node, tag) in &ibis.shared.claims {
                 if claim_node == node {
-                    extras.push(format!(
+                    extras.insert(format!(
                         "<font color=\"orange\">claims to be '{}'</font>",
                         tag
                     ));
@@ -112,14 +112,14 @@ impl ToDot for (&Ibis, &Recipe) {
             }
             for Check(check_node, tag) in &ibis.shared.checks {
                 if check_node == node {
-                    extras.push(format!(
+                    extras.insert(format!(
                         "<font color=\"blue\">checked to be '{}'</font>",
                         tag
                     ));
                 }
             }
             for (tag, sources) in &tags {
-                extras.push(format!(
+                extras.insert(format!(
                     "<font color=\"purple\">'{}' from {}</font>",
                     tag,
                     sources.join(", ")
@@ -144,7 +144,7 @@ impl ToDot for (&Ibis, &Recipe) {
             sol_graph.add_edge(node_id(from), node_id(to), vec![format!("style=dotted color=red label=<<font color=\"red\">expected '{}', found '{}'</font>>", to_ty, from_ty)]);
         }
 
-        let sol = &recipe.id.expect("WAT").solution();
+        let sol = &recipe.id.unwrap_or_else(Sol::empty).solution();
         for (from_id, to_id) in &sol.edges {
             let from = node_id(from_id).to_string();
             let to = node_id(to_id).to_string();

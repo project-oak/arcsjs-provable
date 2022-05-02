@@ -8,16 +8,16 @@
 
 const Histogram = {
   $kind: '$local/Histogram',
-  $bindings: {
-    url: 'hoverUrl'
-  }
+  $outputs: [
+      {url: 'hoverUrl'}
+  ]
 };
 
 const Exif = {
   $kind: '$local/Exif',
-  $bindings: {
-    url: 'hoverUrl'
-  }
+  $outputs: [
+      {url: 'hoverUrl'}
+  ]
 };
 
 export const PhotosByDateRecipe = {
@@ -41,19 +41,21 @@ export const PhotosByDateRecipe = {
   },
   main: {
     $kind: '$local/PhotosByDate',
-    $bindings: {
-      photos: 'photos',
-      pickedPhoto: 'pickedPhoto',
-      urlWithStars: 'urlWithStars',
-      hoverUrl: 'hoverUrl'
-    },
+    $inputs: [
+        {photos: 'photos'},
+        {hoverUrl: 'hoverUrl'}
+    ],
+    $outputs: [
+        {pickedPhoto: 'pickedPhoto'},
+        {urlWithStars: 'urlWithStars'}
+    ],
     $slots: {
       pickedPhotoRecipe: {
         pickedPhotoParticle: {
           $kind: '$local/PickedPhoto',
-          $bindings: {
-            pickedPhoto: 'pickedPhoto'
-          }
+          $outputs: [
+              {pickedPhoto: 'pickedPhoto'}
+          ]
         }
       },
       histogram: {

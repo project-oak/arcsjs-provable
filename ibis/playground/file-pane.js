@@ -144,7 +144,7 @@ export class FilePane extends HTMLElement {
         }
     }
 
-    addFile(event, content) {
+    addFile(event, content, filename) {
         const file = document.createElement('textarea');
         file.rows = 10;
         file.spellcheck = false;
@@ -152,7 +152,11 @@ export class FilePane extends HTMLElement {
         file.value = content || '';
 
         const tab = document.createElement('button');
-        tab.textContent = `${String.fromCharCode(this.fileBase++)}${this.ext || ''}`;
+        if (filename) {
+            tab.textContent = filename;
+        } else {
+            tab.textContent = `${String.fromCharCode(this.fileBase++)}${this.ext || ''}`;
+        }
         tab.linkedFile = file;
         tab.addEventListener('click', this.showFile.bind(this))
 
@@ -169,7 +173,7 @@ export class FilePane extends HTMLElement {
 
     deleteCurrent() {
         if (!this.active) {
-            console.log('no active file');
+            console.warn('no active file');
             return;
         }
         for (const tab of this.tabs.children) {
@@ -192,7 +196,11 @@ export class FilePane extends HTMLElement {
     }
 
     getFileContents() {
-        return Array.from(this.files.children).map(file => file.value);
+        const files = {};
+        for (const tab of this.tabs.children) {
+            files[tab.textContent] = tab.linkedFile.value;
+        }
+        return files;
     }
 
     showFile(event) {

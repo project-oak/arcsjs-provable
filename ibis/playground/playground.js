@@ -5,15 +5,16 @@
 // https://developers.google.com/open-source/licenses/bsd
 import {loadIbis, best_solutions_to_json, best_solutions_to_dot} from '../ibis.js';
 import {FilePane} from './file-pane.js';
+import {recipe_to_ir} from './converter.js';
 
 window.customElements.define('file-pane', FilePane);
 
 const known_files = {
-    chromium: '/chromium.json',
-    demo: '/demo.json',
-    "ArcsJs stdlib": '/libs/arcsjs.json',
-    "TS stdlib": '/libs/typescript.json',
-    "Rust stdlib": '/libs/rust.json',
+    chromium: '../chromium.json',
+    demo: '../demo.json',
+    "ArcsJs stdlib": '../libs/arcsjs.json',
+    "TS stdlib": '../libs/typescript.json',
+    "Rust stdlib": '../libs/rust.json',
 };
 
 var graphviz = d3.select('#graph').graphviz().transition(function () {
@@ -23,12 +24,15 @@ var graphviz = d3.select('#graph').graphviz().transition(function () {
     .duration(1500);
 });
 
+
+function noop(arg) { // also known as `id`
+    return arg;
+}
+
 function render(dot) {
     try {
-        console.log('RENDERING');
         graphviz
             .renderDot(dot)
-        console.log('DONE RENDERING');
     } catch(error) {
         // Possibly display the error
         console.error(error);
@@ -38,7 +42,7 @@ function render(dot) {
 async function addFileFromPath(pane, file) {
     const content = await fetch(file);
     const contentText = await content.text();
-    pane.addFile(undefined, contentText);
+    pane.addFile(undefined, contentText, file);
 }
 
 async function getInputsFromURI() {
@@ -56,7 +60,7 @@ async function getInputsFromURI() {
         await addFileFromPath(filePane, file);
     }
 
-    if (filePane.getFileContents().length === 0) {
+    if (Object.entries(filePane.getFileContents()).length === 0) {
         await addFileFromPath(filePane, known_files.chromium);
     }
 }
@@ -69,20 +73,29 @@ async function startup() {
     const outputPaneDot = document.getElementById('outputPaneDot');
     const outputPaneJSON = document.getElementById('outputPaneJSON');
 
-    const to_json_callback = () => run(best_solutions_to_json, json => {
+    const to_json_callback = () => run(data => Object.values(data), best_solutions_to_json, json => {
         return JSON.stringify(JSON.parse(json), undefined, 2);
     }, outputPaneJSON);
     const to_json = document.getElementById('to_json');
     to_json.addEventListener("click", to_json_callback);
 
-    const to_dot_callback = () => run(best_solutions_to_dot, dot => dot, outputPaneDot);
+    const to_dot_callback = () => run(data => Object.values(data), best_solutions_to_dot, noop, outputPaneDot);
     const to_dot = document.getElementById('to_dot');
     to_dot.addEventListener("click", to_dot_callback);
+
+    const recipe_to_ir_callback = async (data) => {
+        const output = await recipe_to_ir(data);
+        const outputFile = outputPaneJSON.addFile(undefined, output);
+        return output;
+    };
+    const to_ir_then_dot_callback = () => run(recipe_to_ir_callback, best_solutions_to_dot, noop, outputPaneDot);
+    const to_ir_then_dot = document.getElementById('to_ir_then_dot');
+    to_ir_then_dot.addEventListener("click", to_ir_then_dot_callback);
 
     const addFile = document.getElementById('add_file');
     addFile.addEventListener('change', async () => {
         for (const file of addFile.files) {
-            filePane.addFile(undefined, await file.text());
+            filePane.addFile(undefined, await file.text(), file.name);
         }
     });
 
@@ -96,7 +109,7 @@ async function startup() {
 
     outputPaneJSON.addTabSwitchCallback(() => {
         const contents = outputPaneJSON.active.value;
-        console.log(JSON.parse(contents));
+        console.info(JSON.parse(contents));
     });
 
     const feedback = document.getElementById('feedback');
@@ -147,9 +160,10 @@ async function setURIFromInputs() {
 }
 
 
-async function run(ibis_function, formatter, destination) {
+async function run(preparer, ibis_function, formatter, destination) {
     const filePane = document.getElementById('filePane');
-    const result = ibis_function(filePane.getFileContents());
+    const prepared = await preparer(filePane.getFileContents());
+    const result = ibis_function(prepared);
     const outputFile = destination.addFile(undefined, formatter(result));
     outputFile.disabled = true;
 }

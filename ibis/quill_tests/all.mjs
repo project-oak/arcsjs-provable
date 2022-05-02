@@ -11,5 +11,3 @@ export const all = {
     ...PhotosByDateRecipe,
     ...QuillFontPickerRecipe,
 };
-
-console.log(all);
