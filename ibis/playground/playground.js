@@ -37,7 +37,7 @@ function render(dot) {
 async function addFileFromPath(pane, file) {
     const content = await fetch(file);
     const contentText = await content.text();
-    pane.addFile(undefined, contentText);
+    pane.addFile(undefined, contentText, file);
 }
 
 async function getInputsFromURI() {
@@ -80,12 +80,12 @@ async function startup() {
 
     const to_ir_then_dot_callback = () => run(data => recipe_to_ir(data), best_solutions_to_dot, dot => dot, outputPaneDot);
     const to_ir_then_dot = document.getElementById('to_ir_then_dot');
-    ir_then_dot.addEventListener("click", to_ir_then_dot_callback);
+    to_ir_then_dot.addEventListener("click", to_ir_then_dot_callback);
 
     const addFile = document.getElementById('add_file');
     addFile.addEventListener('change', async () => {
         for (const file of addFile.files) {
-            filePane.addFile(undefined, await file.text());
+            filePane.addFile(undefined, await file.text(), file.name);
         }
     });
 

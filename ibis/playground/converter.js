@@ -1,4 +1,4 @@
-import {all} from './pipeline.mjs';
+// import {all} from './pipeline.mjs';
 
 const {entries, fromEntries} = Object;
 const META = '$';
@@ -75,7 +75,7 @@ function add_particle(ir, recipe_name, particle_name, meta) {
     }
 }
 
-export function convert_to_ibis(ir, store_types, recipe_name, recipe) {
+function convert_to_ibis(ir, store_types, recipe_name, recipe) {
     // console.dir(recipe, {depth: null});
     const particles = fromEntries(entries(recipe).filter(([key, value]) => !key.startsWith(META)));
     const stores = recipe.$stores;
@@ -90,30 +90,32 @@ export function convert_to_ibis(ir, store_types, recipe_name, recipe) {
     return ir;
 }
 
-const all_ir = {
-    flags: { planning: false },
-    subtypes: [
-        ["any", "read"],
-        ["any", "write"],
-    ],
-    capabilities: [
-        ["write", "read"],
-    ],
-    less_private_than: [
-        ["public", "private"]
-    ],
-    recipes: [],
-    nodes: [],
-    edges: [],
-    checks: [],
-    claims: [],
-    trusted_to_remove_tag: [],
-};
+export function recipe_to_ir() {
+    const all_ir = {
+        flags: { planning: false },
+        subtypes: [
+            ["any", "read"],
+            ["any", "write"],
+        ],
+        capabilities: [
+            ["write", "read"],
+        ],
+        less_private_than: [
+            ["public", "private"]
+        ],
+        recipes: [],
+        nodes: [],
+        edges: [],
+        checks: [],
+        claims: [],
+        trusted_to_remove_tag: [],
+    };
 
-const store_types = {};
-for(let [key, value] of entries(all)) {
-    convert_to_ibis(all_ir, store_types, key, value);
+    const store_types = {};
+    for(let [key, value] of entries(all)) {
+        convert_to_ibis(all_ir, store_types, key, value);
+    }
+    // console.dir(all_ir, {depth: null});
+    // console.log(JSON.stringify(all_ir, undefined, 2));
+    return all_ir;
 }
-// console.dir(all_ir, {depth: null});
-// console.log(JSON.stringify(all_ir, undefined, 2));
-console.log(JSON.stringify(all_ir));
