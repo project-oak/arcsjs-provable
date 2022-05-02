@@ -91,7 +91,7 @@ function convert_to_ibis(ir, store_types, recipe_name, recipe) {
 export async function recipe_to_ir(all_js) {
     const all = {};
     for(let [key, value] of entries(all_js)) {
-        const module = await import(`data:text/javascript;charset=utf-8,${value}`); // TODO: This isn't safe
+        const module = await import(`data:text/javascript;charset=utf-8,${encodeURIComponent(value)}`); // TODO: This isn't safe
         for (let [particle, meta] of entries(module)) {
             all[particle] = meta;
         }

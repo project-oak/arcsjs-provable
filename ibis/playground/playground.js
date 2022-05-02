@@ -24,6 +24,10 @@ var graphviz = d3.select('#graph').graphviz().transition(function () {
     .duration(1500);
 });
 
+function noop(arg) { // also known as `id`
+    return arg;
+}
+
 function render(dot) {
     try {
         graphviz
@@ -74,11 +78,16 @@ async function startup() {
     const to_json = document.getElementById('to_json');
     to_json.addEventListener("click", to_json_callback);
 
-    const to_dot_callback = () => run(data => Object.values(data), best_solutions_to_dot, dot => dot, outputPaneDot);
+    const to_dot_callback = () => run(data => Object.values(data), best_solutions_to_dot, noop, outputPaneDot);
     const to_dot = document.getElementById('to_dot');
     to_dot.addEventListener("click", to_dot_callback);
 
-    const to_ir_then_dot_callback = () => run(data => recipe_to_ir(data), best_solutions_to_dot, dot => dot, outputPaneDot);
+    const recipe_to_ir_callback = async (data) => {
+        const output = await recipe_to_ir(data);
+        const outputFile = outputPaneJSON.addFile(undefined, output);
+        return output;
+    };
+    const to_ir_then_dot_callback = () => run(recipe_to_ir_callback, best_solutions_to_dot, noop, outputPaneDot);
     const to_ir_then_dot = document.getElementById('to_ir_then_dot');
     to_ir_then_dot.addEventListener("click", to_ir_then_dot_callback);
 
