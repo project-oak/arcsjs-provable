@@ -3,10 +3,9 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file or at
 // https://developers.google.com/open-source/licenses/bsd
-import './third_party/viz.js';
-import './third_party/full.render.js';
 import {loadIbis, best_solutions_to_json, best_solutions_to_dot} from '../ibis.js';
 import {FilePane} from './file-pane.js';
+import {recipe_to_ir} from './converter.js';
 
 window.customElements.define('file-pane', FilePane);
 
@@ -18,23 +17,21 @@ const known_files = {
     "Rust stdlib": '/libs/rust.json',
 };
 
-const graphviz_options = {}; // Can include engine: dot|fdp|circo|osage...
+var graphviz = d3.select('#graph').graphviz().transition(function () {
+    return d3.transition('main')
+    .ease(d3.easeLinear)
+    .delay(0)
+    .duration(1500);
+});
 
-function render(dot, options) {
-  var viz = new Viz();
-
-  viz.renderSVGElement(dot, options)
-  .then(function(element) {
-    const graph = document.getElementById('graph');
-    graph.replaceChildren(element);
-  })
-  .catch(error => {
-    // Create a new Viz instance (@see Caveats page for more info)
-    viz = new Viz();
-
-    // Possibly display the error
-    console.error(error);
-  });
+function render(dot) {
+    try {
+        graphviz
+            .renderDot(dot)
+    } catch(error) {
+        // Possibly display the error
+        console.error(error);
+    };
 }
 
 async function addFileFromPath(pane, file) {
@@ -71,18 +68,19 @@ async function startup() {
     const outputPaneDot = document.getElementById('outputPaneDot');
     const outputPaneJSON = document.getElementById('outputPaneJSON');
 
-    const to_json_callback = () => run(best_solutions_to_json, json => {
+    const to_json_callback = () => run(data => data, best_solutions_to_json, json => {
         return JSON.stringify(JSON.parse(json), undefined, 2);
     }, outputPaneJSON);
     const to_json = document.getElementById('to_json');
     to_json.addEventListener("click", to_json_callback);
 
-    const to_dot_callback = () => run(best_solutions_to_dot, dot => {
-        render(dot, graphviz_options);
-        return dot;
-    }, outputPaneDot);
+    const to_dot_callback = () => run(data => data, best_solutions_to_dot, dot => dot, outputPaneDot);
     const to_dot = document.getElementById('to_dot');
     to_dot.addEventListener("click", to_dot_callback);
+
+    const to_ir_then_dot_callback = () => run(data => recipe_to_ir(data), best_solutions_to_dot, dot => dot, outputPaneDot);
+    const to_ir_then_dot = document.getElementById('to_ir_then_dot');
+    ir_then_dot.addEventListener("click", to_ir_then_dot_callback);
 
     const addFile = document.getElementById('add_file');
     addFile.addEventListener('change', async () => {
@@ -96,7 +94,7 @@ async function startup() {
 
     outputPaneDot.addTabSwitchCallback(() => {
         const contents = outputPaneDot.active.value;
-        render(contents, graphviz_options);
+        render(contents);
     });
 
     outputPaneJSON.addTabSwitchCallback(() => {
@@ -152,9 +150,10 @@ async function setURIFromInputs() {
 }
 
 
-async function run(ibis_function, formatter, destination) {
+async function run(preparer, ibis_function, formatter, destination) {
     const filePane = document.getElementById('filePane');
-    const result = ibis_function(filePane.getFileContents());
+    const prepared = preparer(filePane.getFileContents());
+    const result = ibis_function(prepared);
     const outputFile = destination.addFile(undefined, formatter(result));
     outputFile.disabled = true;
 }

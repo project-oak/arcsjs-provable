@@ -1,4 +1,4 @@
-import {all} from './quill_tests/all.mjs';
+import {all} from './pipeline.mjs';
 
 const {entries, fromEntries} = Object;
 const META = '$';
@@ -35,23 +35,38 @@ function add_particle(ir, recipe_name, particle_name, meta) {
     }
     const handle_id = (handle_name) => `${particle_id}_${handle_name}`;
     const store_id = (store_name) => `store_${store_name}`;
-    const inputs = meta.$inputs || {};
-    for (let [handle_name, store_name] of entries(inputs)) {
+    const connect_particle_to_store = (handle_name, store_name, capability) => {
         if (store_name === '') {
             store_name = handle_name;
         }
         const store_type = store_types[store_name];
-        ir.nodes.push([particle_id, handle_id(handle_name), `read ${store_type}`]);
-        ir.edges.push([`${store_id(store_name)}_out`, handle_id(handle_name)]);
+        ir.nodes.push([particle_id, handle_id(handle_name), `${capability} ${store_type}`]);
+        if (capability === 'write') {
+            ir.edges.push([handle_id(handle_name), `${store_id(store_name)}_in`]);
+        }
+        if (capability === 'read') {
+            ir.edges.push([`${store_id(store_name)}_out`, handle_id(handle_name)]);
+        }
+    };
+    const handle_binding = (binding, capability) => {
+        if (typeof binding === 'string') {
+            connect_particle_to_store(binding, binding, capability);
+        } else if (typeof binding === 'object') {
+            // TODO: Handle multiple entries properly.
+            for (const [handle_name, store_name] of entries(binding)) {
+                connect_particle_to_store(handle_name, store_name, capability);
+            }
+        } else {
+            throw new Error(`Unexpected ${capability} binding: ${JSON.stringify(binding)}`);
+        }
+    };
+    const inputs = meta.$inputs || [];
+    for (let binding of inputs) {
+        handle_binding(binding, 'read');
     }
-    const outputs = meta.$outputs || {};
-    for (let [handle_name, store_name] of entries(outputs)) {
-        if (store_name === '') {
-            store_name = handle_name;
-        }
-        const store_type = store_types[store_name];
-        ir.nodes.push([particle_id, handle_id(handle_name), `write ${store_type}`]);
-        ir.edges.push([handle_id(handle_name), `${store_id(store_name)}_in`]);
+    const outputs = meta.$outputs || [];
+    for (let binding of outputs) {
+        handle_binding(binding, 'write');
     }
 
     const slots = meta.$slots;
@@ -60,7 +75,7 @@ function add_particle(ir, recipe_name, particle_name, meta) {
     }
 }
 
-function convert_to_ibis(ir, store_types, recipe_name, recipe) {
+export function convert_to_ibis(ir, store_types, recipe_name, recipe) {
     // console.dir(recipe, {depth: null});
     const particles = fromEntries(entries(recipe).filter(([key, value]) => !key.startsWith(META)));
     const stores = recipe.$stores;

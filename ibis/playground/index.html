@@ -3,13 +3,16 @@
   <head>
     <title>Ibis - Playground</title>
     <link rel="stylesheet" href="styles.css">
+    <script src="//d3js.org/d3.v5.min.js"></script>
+    <script src="https://unpkg.com/@hpcc-js/wasm@0.3.11/dist/index.min.js"></script>
+    <script src="https://unpkg.com/d3-graphviz@3.0.5/build/d3-graphviz.js"></script>
     <script src="playground.js" type="module"></script>
   </head>
   <body>
     <h1>Ibis - Playground</h1>
     <div id="feedback">Waiting...</div>
     <input class="button" type="button" id="to_dot" value="Run"></input>
-    <input class="button" type="button" id="to_ingest" value="Ingest Recipes"></input>
+    <input class="button" type="button" id="to_ir_then_dot" value="Ingest Recipes"></input>
     <input class="button" type="button" id="to_json" value="Debug"></input>
     <input class="button" type="button" id="share" value="Share"></input>
     <label for="add_file">
@@ -22,7 +25,7 @@
       <file-pane id="outputPaneJSON" name="JSON Output" ext=".json" no-add-button="true"></file-pane>
     <div id="version_info"></div>
     <div class="footer">
-      Thanks to <a href="https://github.com/mdaines/viz.js">vis.js</a> (<a href="https://github.com/mdaines/viz.js/blob/master/LICENSE">license</a>).
+        <span>Thanks to <a href="https://github.com/magjac/d3-graphviz">magjac/d3-graphviz</a> (<a href="https://github.com/magjac/d3-graphviz/blob/master/LICENSE">license</a>).</span>
     </div>
   </body>
 </html>

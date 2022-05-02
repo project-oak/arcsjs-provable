@@ -30,7 +30,7 @@ impl ToDot for Ibis {
             }
             vec![best.expect("Expected a 'best' solution")]
         };
-        for recipe in solutions.iter().chain(Some(&self.shared).iter()) {
+        for recipe in solutions.iter() {
             let sol = &recipe.id.unwrap_or_else(Sol::empty);
             let s_id = sol_id(sol);
             #[allow(unused_mut)]
