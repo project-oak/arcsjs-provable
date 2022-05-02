@@ -33,15 +33,6 @@ function render(dot) {
     try {
         graphviz
             .renderDot(dot)
-
-
-
-
-
-
-
-
-
     } catch(error) {
         // Possibly display the error
         console.error(error);
@@ -88,11 +79,7 @@ async function startup() {
     const to_json = document.getElementById('to_json');
     to_json.addEventListener("click", to_json_callback);
 
-
     const to_dot_callback = () => run(data => Object.values(data), best_solutions_to_dot, noop, outputPaneDot);
-
-
-
     const to_dot = document.getElementById('to_dot');
     to_dot.addEventListener("click", to_dot_callback);
 
