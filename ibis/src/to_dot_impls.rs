@@ -37,7 +37,7 @@ impl ToDot for Ibis {
             let mut sol_graph = (self, *recipe).to_dot_repr();
             #[cfg(feature = "ancestors")]
             {
-                let s = Sol::from(recipe);
+                let s = Sol::from(*recipe);
                 let solution_head = |sol| format!("{}_head", sol_id(sol));
                 sol_graph.add_node(format!(
                     "{}[style=invis height = 0 width = 0 label=\"\"]",
