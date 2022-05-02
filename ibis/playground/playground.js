@@ -10,11 +10,11 @@ import {recipe_to_ir} from './converter.js';
 window.customElements.define('file-pane', FilePane);
 
 const known_files = {
-    chromium: '/chromium.json',
-    demo: '/demo.json',
-    "ArcsJs stdlib": '/libs/arcsjs.json',
-    "TS stdlib": '/libs/typescript.json',
-    "Rust stdlib": '/libs/rust.json',
+    chromium: '../chromium.json',
+    demo: '../demo.json',
+    "ArcsJs stdlib": '../libs/arcsjs.json',
+    "TS stdlib": '../libs/typescript.json',
+    "Rust stdlib": '../libs/rust.json',
 };
 
 var graphviz = d3.select('#graph').graphviz().transition(function () {
