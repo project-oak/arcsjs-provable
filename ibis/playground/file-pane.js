@@ -173,7 +173,7 @@ export class FilePane extends HTMLElement {
 
     deleteCurrent() {
         if (!this.active) {
-            console.log('no active file');
+            console.warn('no active file');
             return;
         }
         for (const tab of this.tabs.children) {
@@ -196,7 +196,11 @@ export class FilePane extends HTMLElement {
     }
 
     getFileContents() {
-        return Array.from(this.files.children).map(file => file.value);
+        const files = {};
+        for (const tab of this.tabs.children) {
+            files[tab.textContent] = tab.linkedFile.value;
+        }
+        return files;
     }
 
     showFile(event) {

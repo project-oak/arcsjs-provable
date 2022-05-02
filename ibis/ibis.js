@@ -20,7 +20,7 @@ function logStatus(status, style) {
         if (style === 'error') {
             console.error(status);
         } else {
-            console.log(`ibis: ${status}`);
+            console.info(`ibis: ${status}`);
         }
     }
 }

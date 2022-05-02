@@ -55,7 +55,7 @@ async function getInputsFromURI() {
         await addFileFromPath(filePane, file);
     }
 
-    if (filePane.getFileContents().length === 0) {
+    if (Object.entries(filePane.getFileContents()).length === 0) {
         await addFileFromPath(filePane, known_files.chromium);
     }
 }
@@ -68,13 +68,13 @@ async function startup() {
     const outputPaneDot = document.getElementById('outputPaneDot');
     const outputPaneJSON = document.getElementById('outputPaneJSON');
 
-    const to_json_callback = () => run(data => data, best_solutions_to_json, json => {
+    const to_json_callback = () => run(data => Object.values(data), best_solutions_to_json, json => {
         return JSON.stringify(JSON.parse(json), undefined, 2);
     }, outputPaneJSON);
     const to_json = document.getElementById('to_json');
     to_json.addEventListener("click", to_json_callback);
 
-    const to_dot_callback = () => run(data => data, best_solutions_to_dot, dot => dot, outputPaneDot);
+    const to_dot_callback = () => run(data => Object.values(data), best_solutions_to_dot, dot => dot, outputPaneDot);
     const to_dot = document.getElementById('to_dot');
     to_dot.addEventListener("click", to_dot_callback);
 
@@ -99,7 +99,7 @@ async function startup() {
 
     outputPaneJSON.addTabSwitchCallback(() => {
         const contents = outputPaneJSON.active.value;
-        console.log(JSON.parse(contents));
+        console.info(JSON.parse(contents));
     });
 
     const feedback = document.getElementById('feedback');
@@ -152,7 +152,7 @@ async function setURIFromInputs() {
 
 async function run(preparer, ibis_function, formatter, destination) {
     const filePane = document.getElementById('filePane');
-    const prepared = preparer(filePane.getFileContents());
+    const prepared = await preparer(filePane.getFileContents());
     const result = ibis_function(prepared);
     const outputFile = destination.addFile(undefined, formatter(result));
     outputFile.disabled = true;

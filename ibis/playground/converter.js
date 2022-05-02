@@ -19,14 +19,14 @@ function add_store(ir, store_types, store_name, meta) {
     }
 }
 
-function add_slot(ir, recipe_name, particle_id, slot_name, meta) {
+function add_slot(ir, store_types, recipe_name, particle_id, slot_name, meta) {
     for (const [particle, particle_meta] of entries(meta)) {
-        add_particle(ir, recipe_name, particle, particle_meta) // TODO: Namespacing?
+        add_particle(ir, store_types, recipe_name, particle, particle_meta) // TODO: Namespacing?
     }
     // TODO: add slot itself
 }
 
-function add_particle(ir, recipe_name, particle_name, meta) {
+function add_particle(ir, store_types, recipe_name, particle_name, meta) {
     const particle_id = `particle_${recipe_name}_${particle_name}`;
     const kind = meta.$kind; // TODO: unknown usage
     const staticInputs = meta.$staticInputs; // TODO: unknown usage
@@ -71,12 +71,11 @@ function add_particle(ir, recipe_name, particle_name, meta) {
 
     const slots = meta.$slots;
     for (const [slot, meta] of entries(slots || {})) {
-        add_slot(ir, recipe_name, particle_id, slot, meta);
+        add_slot(ir, store_types, recipe_name, particle_id, slot, meta);
     }
 }
 
 function convert_to_ibis(ir, store_types, recipe_name, recipe) {
-    // console.dir(recipe, {depth: null});
     const particles = fromEntries(entries(recipe).filter(([key, value]) => !key.startsWith(META)));
     const stores = recipe.$stores;
     for (const [store_name, meta] of entries(stores)) {
@@ -84,13 +83,20 @@ function convert_to_ibis(ir, store_types, recipe_name, recipe) {
     }
 
     for (const [particle_name, meta] of entries(particles)) {
-        add_particle(ir, particle_name, recipe_name, meta);
+        add_particle(ir, store_types, particle_name, recipe_name, meta);
     }
-    // console.log(ir);
     return ir;
 }
 
-export function recipe_to_ir() {
+export async function recipe_to_ir(all_js) {
+    const all = {};
+    for(let [key, value] of entries(all_js)) {
+        const module = await import(`data:text/javascript;charset=utf-8,${value}`); // TODO: This isn't safe
+        for (let [particle, meta] of entries(module)) {
+            all[particle] = meta;
+        }
+    }
+
     const all_ir = {
         flags: { planning: false },
         subtypes: [
@@ -115,7 +121,5 @@ export function recipe_to_ir() {
     for(let [key, value] of entries(all)) {
         convert_to_ibis(all_ir, store_types, key, value);
     }
-    // console.dir(all_ir, {depth: null});
-    // console.log(JSON.stringify(all_ir, undefined, 2));
-    return all_ir;
+    return [JSON.stringify(all_ir, undefined, 2)]; // Single recipe description
 }

@@ -31,12 +31,12 @@ export const QuillFontPickerRecipe = {
 
   main: {
     $kind: "$local/QuillFontPicker",
-    $inputs: {
-      fonts: 'fonts',
-      suggested: 'suggested'
-    },
-    $outputs: {
-      pickedFont: 'pickedFont'
-    }
+    $inputs: [
+        {fonts: 'fonts'},
+        {suggested: 'suggested'}
+    ],
+    $outputs: [
+        {pickedFont: 'pickedFont'}
+    ]
   }
 };
