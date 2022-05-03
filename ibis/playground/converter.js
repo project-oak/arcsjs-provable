@@ -21,7 +21,7 @@ function add_store(ir, store_types, store_name, meta) {
 
 function add_slot(ir, store_types, recipe_name, particle_id, slot_name, meta) {
     for (const [particle, particle_meta] of entries(meta)) {
-        add_particle(ir, store_types, recipe_name, particle, particle_meta) // TODO: Namespacing?
+        add_particle(ir, store_types, recipe_name, particle, particle_meta); // TODO: Namespacing?
     }
     // TODO: add slot itself
 }
@@ -40,12 +40,15 @@ function add_particle(ir, store_types, recipe_name, particle_name, meta) {
             store_name = handle_name;
         }
         const store_type = store_types[store_name];
-        ir.nodes.push([particle_id, handle_id(handle_name), `${capability} ${store_type}`]);
+        const new_handle_id = handle_id(handle_name);
+        ir.nodes.push([particle_id, new_handle_id, `${capability} ${store_type}`]);
         if (capability === 'write') {
-            ir.edges.push([handle_id(handle_name), `${store_id(store_name)}_in`]);
+            ir.edges.push([new_handle_id, `${store_id(store_name)}_in`]);
+            ir.claims.push([new_handle_id, `down_stream_${particle_id}`]);
         }
         if (capability === 'read') {
-            ir.edges.push([`${store_id(store_name)}_out`, handle_id(handle_name)]);
+            ir.edges.push([`${store_id(store_name)}_out`, new_handle_id]);
+            ir.checks.push([new_handle_id, `not_down_stream_${particle_id}`]);
         }
     };
     const handle_binding = (binding, capability) => {
@@ -100,14 +103,18 @@ export async function recipe_to_ir(all_js) {
     const all_ir = {
         flags: { planning: false },
         subtypes: [
-            ["any", "read"],
-            ["any", "write"],
+            ['any', 'read'],
+            ['any', 'write'],
+            ['FontKey', 'Key'],
+            ['Key', 'FontKey'],
+            ["List", "ibis.GenericType"],
+            ["List", "ibis.InductiveType"],
         ],
         capabilities: [
-            ["write", "read"],
+            ['write', 'read'],
         ],
         less_private_than: [
-            ["public", "private"]
+            ['public', 'private']
         ],
         recipes: [],
         nodes: [],
