@@ -52,7 +52,9 @@ async function getInputsFromURI() {
     // Read the inputs from the URI.
     const inputs = uri.searchParams && uri.searchParams.getAll('i') || [];
     for (let input of inputs) {
-        filePane.addFile(undefined, input);
+        let name = input.split('\n', 1)[0];
+        input = input.substr(name.length+1);
+        filePane.addFile(undefined, input, name);
     }
     const files = uri.searchParams && uri.searchParams.getAll('p') || [];
     for (let file of files) {
@@ -162,8 +164,8 @@ async function setURIFromInputs() {
     }
     uri.searchParams.delete('i');
     uri.searchParams.delete('p'); // Avoid sharing local file paths.
-    for (let content of Object.values(contents)) {
-        uri.searchParams.append('i', content);
+    for (let [name, content] of Object.entries(contents)) {
+        uri.searchParams.append('i', `${name}\n${content}`);
     }
     window.history.pushState({},"", uri);
 }
