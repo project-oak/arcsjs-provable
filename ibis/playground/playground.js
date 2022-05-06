@@ -24,7 +24,6 @@ var graphviz = d3.select('#graph').graphviz().transition(function () {
     .duration(1500);
 });
 
-
 function noop(arg) { // also known as `id`
     return arg;
 }
