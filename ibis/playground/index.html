@@ -10,6 +10,10 @@
   </head>
   <body>
     <h1>Ibis - Playground</h1>
+    <div>
+      Add IR examples:
+      <div id="examples"></div>
+    </div>
     <div id="feedback">Waiting...</div>
     <input class="button" type="button" id="to_dot" value="Run"></input>
     <input class="button" type="button" id="to_json" value="Debug"></input>
@@ -17,7 +21,7 @@
     <label for="add_file">
       <span class="button">Upload local files</span>
     </label>
-    <input id="add_file" style="opacity: 0" type="file" multiple="multiple"></input>
+    <input id="add_file" style="display: none" type="file" multiple="multiple"></input>
     <file-pane id="filePane" ext=".json"></file-pane>
     <div id="graph" class="graph"></div>
       <file-pane id="outputPaneDot" name="Dot output" ext=".dot" no-add-button="true"></file-pane>

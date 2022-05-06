@@ -71,8 +71,21 @@ window.onpopstate = function(event) {
 }
 
 async function startup() {
+    const filePane = document.getElementById('filePane');
     const outputPaneDot = document.getElementById('outputPaneDot');
     const outputPaneJSON = document.getElementById('outputPaneJSON');
+
+    const examples = document.getElementById('examples');
+    for (const [name, path] of Object.entries(known_files)) {
+        const example = document.createElement('input');
+        example.type="button";
+        example.value = name;
+        example.addEventListener('click', async () => {
+            await addFileFromPath(filePane, path);
+        });
+        example.classList.add('button');
+        examples.appendChild(example);
+    }
 
     const preprocessor = async (data) => {
         console.log(data);
@@ -110,7 +123,6 @@ async function startup() {
         }
     });
 
-    const filePane = document.getElementById('filePane');
     filePane.addExecuteCallback(to_dot_callback);
 
     outputPaneDot.addTabSwitchCallback(() => {
