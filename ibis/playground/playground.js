@@ -52,7 +52,9 @@ async function getInputsFromURI() {
     // Read the inputs from the URI.
     const inputs = uri.searchParams && uri.searchParams.getAll('i') || [];
     for (let input of inputs) {
-        filePane.addFile(undefined, input);
+        let name = input.split('\n', 1)[0];
+        input = input.substr(name.length+1);
+        filePane.addFile(undefined, input, name);
     }
     const files = uri.searchParams && uri.searchParams.getAll('p') || [];
     for (let file of files) {
@@ -72,24 +74,34 @@ async function startup() {
     const outputPaneDot = document.getElementById('outputPaneDot');
     const outputPaneJSON = document.getElementById('outputPaneJSON');
 
-    const to_json_callback = () => run(data => Object.values(data), best_solutions_to_json, json => {
+    const preprocessor = async (data) => {
+        console.log(data);
+        const files = [];
+        const recipes = {};
+        for (const [key, value] of Object.entries(data)) {
+            if (key.endsWith('.json')) { // Assume it is ibis IR.
+                files.push(value);
+            } else {
+                recipes[key] = value; // Keep it for conversion.
+            }
+        }
+        if (recipes !== {}) {
+            const output = await recipe_to_ir(recipes);
+            outputPaneJSON.addFile(undefined, output);
+            files.push(output);
+        }
+        return files;
+    };
+
+    const to_json_callback = () => run(preprocessor, best_solutions_to_json, json => {
         return JSON.stringify(JSON.parse(json), undefined, 2);
     }, outputPaneJSON);
     const to_json = document.getElementById('to_json');
     to_json.addEventListener("click", to_json_callback);
 
-    const to_dot_callback = () => run(data => Object.values(data), best_solutions_to_dot, noop, outputPaneDot);
+    const to_dot_callback = () => run(preprocessor, best_solutions_to_dot, noop, outputPaneDot);
     const to_dot = document.getElementById('to_dot');
     to_dot.addEventListener("click", to_dot_callback);
-
-    const recipe_to_ir_callback = async (data) => {
-        const output = await recipe_to_ir(data);
-        const outputFile = outputPaneJSON.addFile(undefined, output);
-        return output;
-    };
-    const to_ir_then_dot_callback = () => run(recipe_to_ir_callback, best_solutions_to_dot, noop, outputPaneDot);
-    const to_ir_then_dot = document.getElementById('to_ir_then_dot');
-    to_ir_then_dot.addEventListener("click", to_ir_then_dot_callback);
 
     const addFile = document.getElementById('add_file');
     addFile.addEventListener('change', async () => {
@@ -152,8 +164,8 @@ async function setURIFromInputs() {
     }
     uri.searchParams.delete('i');
     uri.searchParams.delete('p'); // Avoid sharing local file paths.
-    for (let content of contents) {
-        uri.searchParams.append('i', content);
+    for (let [name, content] of Object.entries(contents)) {
+        uri.searchParams.append('i', `${name}\n${content}`);
     }
     window.history.pushState({},"", uri);
 }

@@ -158,7 +158,7 @@ export class FilePane extends HTMLElement {
             tab.textContent = `${String.fromCharCode(this.fileBase++)}${this.ext || ''}`;
         }
         tab.linkedFile = file;
-        tab.addEventListener('click', this.showFile.bind(this))
+        tab.addEventListener('click', this.showFileOrRename.bind(this))
 
         this.tabs.appendChild(tab);
         this.files.appendChild(file);
@@ -201,6 +201,33 @@ export class FilePane extends HTMLElement {
             files[tab.textContent] = tab.linkedFile.value;
         }
         return files;
+    }
+
+    showFileOrRename(event) {
+        if (this.editmode) {
+            return;
+        }
+        const tab = event.target;
+        if (tab.classList.contains('active')) {
+            this.editmode = true;
+            const label = tab.innerText;
+            const edit_tab = document.createElement('input');
+            edit_tab.type = 'text';
+            edit_tab.value = label;
+            const done_button = document.createElement('input');
+            done_button.type = 'submit';
+            const form = document.createElement('form');
+            form.addEventListener('submit', (e) => {
+                e.preventDefault();
+                this.editmode = false;
+                tab.replaceChildren(edit_tab.value);
+                return false;
+            });
+            form.replaceChildren(edit_tab, done_button);
+            tab.replaceChildren(form);
+        } else {
+            this.showFile(event);
+        }
     }
 
     showFile(event) {
