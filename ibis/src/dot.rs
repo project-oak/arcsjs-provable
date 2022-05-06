@@ -32,7 +32,7 @@ impl DotGraph {
 
     pub fn to_dot(self) -> String {
         format!(
-            "digraph solutions {{compound=true; {} }}",
+            "digraph solutions {{compound=true; rankdir=\"LR\"; {} }}",
             self.to_dot_items()
         )
     }
