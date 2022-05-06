@@ -216,6 +216,7 @@ export class FilePane extends HTMLElement {
             edit_tab.value = label;
             const done_button = document.createElement('input');
             done_button.type = 'submit';
+            done_button.value = 'Done';
             const form = document.createElement('form');
             form.addEventListener('submit', (e) => {
                 e.preventDefault();
