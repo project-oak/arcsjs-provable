@@ -162,7 +162,7 @@ async function setURIFromInputs() {
     }
     uri.searchParams.delete('i');
     uri.searchParams.delete('p'); // Avoid sharing local file paths.
-    for (let content of contents) {
+    for (let content of Object.values(contents)) {
         uri.searchParams.append('i', content);
     }
     window.history.pushState({},"", uri);
