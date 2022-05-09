@@ -47,7 +47,7 @@ macro_rules! apply {
         {{
              // TODO: Types should be made of ents to avoid cloning work.
             let mut ty = (*$type.get_type()).clone();
-            let args = vec![$(($arg.get_type().clone()), )*];
+            let args = vec![$($arg.get_type(), )*];
             ty.args.extend(args);
             Ent::by_type(std::sync::Arc::new(ty))
         }}
