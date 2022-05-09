@@ -29,12 +29,12 @@ impl Type {
             args: vec![],
         }
     }
-    pub fn with_args(mut self, mut args: Vec<Type>) -> Self {
-        self.args.extend(args.drain(0..).map(|arg| Arc::new(arg)));
+    pub fn with_args<T: Into<Arc<Type>>>(mut self, mut args: Vec<T>) -> Self {
+        self.args.extend(args.drain(0..).map(|arg| arg.into()));
         self
     }
-    pub fn with_arg(mut self, arg: Type) -> Self {
-        self.args.push(Arc::new(arg));
+    pub fn with_arg<T: Into<Arc<Type>>>(mut self, arg: T) -> Self {
+        self.args.push(arg.into());
         self
     }
     pub fn with_capability(self, cap: &str) -> Self {

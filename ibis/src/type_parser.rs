@@ -13,78 +13,91 @@ use nom::{
     sequence::tuple,
     Finish, IResult,
 };
+use std::sync::Arc;
 
-struct TypeParser<F> {
-    inner: F,
+fn is_name_char(c: char) -> bool {
+    !matches!(
+        c,
+        '(' | ')' | '{' | '}' | ',' | ':' | ' ' | '\n' | '\r' | '\t'
+    )
 }
 
-impl <F: Fn(&str, F) -> IResult<&str, Type>> TypeParser<F> {
-    fn is_name_char(&self, c: char) -> bool {
-        !matches!(
-            c,
-            '(' | ')' | '{' | '}' | ',' | ':' | ' ' | '\n' | '\r' | '\t'
-        )
+fn tag<'a>(exp: &'static str) -> impl Fn(&'a str) -> IResult<&'a str, &'a str> {
+    move |input: &'a str| {
+        let (input, (_, s)) = tuple((space0, simple_tag(exp)))(input)?;
+        Ok((input, s))
     }
+}
 
-    fn tag(&self, exp: &'static str) -> impl Fn(&str) -> IResult<&str, &str> {
-        move |input| {
-            let (input, (_, s)) = tuple((space0, simple_tag(exp)))(input)?;
-            Ok((input, s))
-        }
-    }
+fn is_lower_char(c: char) -> bool {
+    matches!(c, 'a'..='z' | '_')
+}
 
-    fn is_lower_char(&self, c: char) -> bool {
-        matches!(c, 'a'..='z' | '_')
-    }
-
-    fn name<'a>(&self, input: &'a str) -> IResult<&'a str, &'a str> {
+fn name<'a>() -> impl Fn(&'a str) -> IResult<&'a str, &'a str> {
+    move |input: &'a str| {
         let (input, _) = space0(input)?;
-        take_while1(|i| self.is_name_char(i))(input)
+        take_while1(|c| is_name_char(c))(input)
+    }
+}
+
+fn label<'a>() -> impl Fn(&'a str) -> IResult<&'a str, &'a str> {
+    move |input: &'a str| {
+        let (input, (name, _)) = tuple((name(), tag(":")))(input)?;
+        Ok((input, name))
+    }
+}
+
+pub trait TypeParser {
+    fn store_type(&mut self, _og_input: &str, get_ty: impl FnOnce(&mut Self) -> Arc<Type>) -> Arc<Type>;
+
+    fn read_type(&mut self, input: &str) -> Arc<Type> {
+        self.store_type(input, &|s: &mut Self| Arc::new(s.read_type_core(input)))
     }
 
-    fn capability<'a>(&self, input: &'a str) -> IResult<&'a str, &'a str> {
-        let (input, (_, cap, _)) = tuple((space0, take_while1(|i| self.is_lower_char(i)), space1))(input)?;
+    fn capability<'a>(&mut self, input: &'a str) -> IResult<&'a str, &'a str> {
+        let (input, (_, cap, _)) =
+            tuple((space0, take_while1(|c| is_lower_char(c)), space1))(input)?;
         Ok((input, cap))
     }
 
-    fn label<'a>(&self, input: &'a str) -> IResult<&'a str, &'a str> {
-        let (input, (name, _)) = tuple((|i| self.name(i), |i| self.tag(":")(i)))(input)?;
-        Ok((input, name))
-    }
-
-    fn type_args<'a>(&self, input: &'a str) -> IResult<&'a str, Vec<Type>> {
+    fn type_args<'a>(&mut self, input: &'a str) -> IResult<&'a str, Vec<Type>> {
         let (input, (_, args, _)) = tuple((
-            |i| self.tag("(")(i),
-            cut(separated_list0(|i| self.tag(",")(i), |i| self.type_parser(i))),
-            |i| self.tag(")")(i),
+            tag("("),
+            cut(separated_list0(
+                tag(","),
+                |i| self.type_parser(i),
+            )),
+            tag(")"),
         ))(input)?;
         Ok((input, args))
     }
 
-    fn parenthesized(&self, input: &str) -> IResult<&str, Type> {
-        let (input, (_, ty, _)) = tuple((tag("("), cut(type_parser), tag(")")))(input)?;
+    fn parenthesized<'a>(&mut self, input: &'a str) -> IResult<&'a str, Type> {
+        let (input, (_, ty, _)) = tuple((
+            tag("("),
+            cut(|i| self.type_parser(i)),
+            tag(")"),
+        ))(input)?;
         Ok((input, ty))
     }
 
-    fn simple_structure(&self, input: &str) -> IResult<&str, Type> {
-        let (input, (name, args)) = tuple((name, opt(type_args)))(input)?;
+    fn simple_structure<'a>(&mut self, input: &'a str) -> IResult<&'a str, Type> {
+        let (input, (name, args)) = tuple((name(), opt(|i| self.type_args(i))))(input)?;
         Ok((input, Type::new(name).with_args(args.unwrap_or_default())))
     }
 
-    fn labelled_type(&self, input: &str) -> IResult<&str, Type> {
-        let (input, (label, ty)) = tuple((label, cut(type_parser)))(input)?;
+    fn labelled_type<'a>(&mut self, input: &'a str) -> IResult<&'a str, Type> {
+        let (input, (label, ty)) = tuple((label(), cut(|i| self.type_parser(i))))(input)?;
         Ok((
             input,
             Type::new(LABELLED).with_arg(Type::new(label)).with_arg(ty),
         ))
     }
 
-    fn product_type(&self, input: &str) -> IResult<&str, Type> {
-        let (input, (_, mut types, _)) = tuple((
-            tag("{"),
-            cut(separated_list1(tag(","), type_parser)),
-            tag("}"),
-        ))(input)?;
+    fn product_type<'a>(&mut self, input: &'a str) -> IResult<&'a str, Type> {
+        let (input, _) = tag("{")(input)?;
+        let (input, mut types) = cut(separated_list1(tag(","), |i| self.type_parser(i)))(input)?;
+        let (input, _) = tag("}")(input)?;
         let mut types: Vec<Type> = types.drain(0..).rev().collect();
         let mut ty = types
             .pop()
@@ -95,24 +108,27 @@ impl <F: Fn(&str, F) -> IResult<&str, Type>> TypeParser<F> {
         Ok((input, ty))
     }
 
-    fn structure_with_capability(&self, input: &str) -> IResult<&str, Type> {
-        let (input, (cap, ty)) = tuple((capability, cut(type_parser)))(input)?;
+    fn structure_with_capability<'a>(&mut self, input: &'a str) -> IResult<&'a str, Type> {
+        let (input, cap) = self.capability(input)?;
+        let (input, ty) = cut(|i| self.type_parser(i))(input)?;
         Ok((input, ty.with_capability(cap)))
     }
 
-    fn type_parser(&self, input: &str) -> IResult<&str, Type> {
-        let (input, res) = parenthesized(input)
-            .or_else(|_| product_type(input))
-            .or_else(|_| labelled_type(input))
-            .or_else(|_| structure_with_capability(input))
-            .or_else(|_| simple_structure(input))?;
+    fn type_parser<'a>(&mut self, input: &'a str) -> IResult<&'a str, Type> {
+        let (input, res) = self
+            .parenthesized(input)
+            .or_else(|_| self.product_type(input))
+            .or_else(|_| self.labelled_type(input))
+            .or_else(|_| self.structure_with_capability(input))
+            .or_else(|_| self.simple_structure(input))?;
         let (input, _) = space0(input)?; // drop any following whitespace.
         Ok((input, res))
     }
 
-    pub fn read_type_uncached(&self, og_input: &str) -> Type {
+    fn read_type_core(&mut self, og_input: &str) -> Type {
         // TODO: return errors instead of panics
-        let (input, ty) = type_parser(og_input, type_parser)
+        let (input, ty) = self
+            .type_parser(og_input)
             .finish()
             .expect("Could not parse type");
         if !input.is_empty() {
@@ -131,7 +147,20 @@ impl <F: Fn(&str, F) -> IResult<&str, Type>> TypeParser<F> {
 mod tests {
     use super::*;
 
-    use read_type_uncached as read_type;
+    struct TP;
+
+    impl TypeParser for TP {
+        fn store_type(&mut self, _og_input: &str, get_ty: impl FnOnce(&mut Self) -> Arc<Type>) -> Arc<Type> {
+            // This is lazy / lossy, re-parsing a type will make a new copy.
+            get_ty(self)
+        }
+    }
+
+    fn read_type(input: &str) -> Type {
+        let mut tp = TP {};
+        // This discards the 'arc'. Bad form
+        (*tp.read_type(input)).clone()
+    }
 
     fn parse_and_round_trip(s: &str, t: Type) {
         let ty = read_type(s);
