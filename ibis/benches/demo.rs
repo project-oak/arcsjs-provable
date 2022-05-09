@@ -18,3 +18,10 @@ pub fn criterion_benchmark_solve_demo(c: &mut Criterion) {
         b.iter(|| solve_demo(black_box(data)))
     });
 }
+
+pub fn criterion_benchmark_solve_chromium_demo(c: &mut Criterion) {
+    let data = include_str!("../chromium.json");
+    c.bench_function("solve chromium.json", |b| {
+        b.iter(|| solve_demo(black_box(data)))
+    });
+}

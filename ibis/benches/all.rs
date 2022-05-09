@@ -25,6 +25,7 @@ criterion_group!(
     benches,
     criterion_benchmark_checking_only,
     criterion_benchmark_noop_planning,
-    criterion_benchmark_solve_demo
+    criterion_benchmark_solve_demo,
+    criterion_benchmark_solve_chromium_demo
 );
 criterion_main!(benches, micro_benches);
