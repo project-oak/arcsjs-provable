@@ -14,111 +14,117 @@ use nom::{
     Finish, IResult,
 };
 
-fn is_name_char(c: char) -> bool {
-    !matches!(
-        c,
-        '(' | ')' | '{' | '}' | ',' | ':' | ' ' | '\n' | '\r' | '\t'
-    )
+struct TypeParser<F> {
+    inner: F,
 }
 
-fn tag(exp: &'static str) -> impl Fn(&str) -> IResult<&str, &str> {
-    move |input| {
-        let (input, (_, s)) = tuple((space0, simple_tag(exp)))(input)?;
-        Ok((input, s))
+impl <F: Fn(&str, F) -> IResult<&str, Type>> TypeParser<F> {
+    fn is_name_char(&self, c: char) -> bool {
+        !matches!(
+            c,
+            '(' | ')' | '{' | '}' | ',' | ':' | ' ' | '\n' | '\r' | '\t'
+        )
     }
-}
 
-fn is_lower_char(c: char) -> bool {
-    matches!(c, 'a'..='z' | '_')
-}
-
-fn name(input: &str) -> IResult<&str, &str> {
-    let (input, _) = space0(input)?;
-    take_while1(is_name_char)(input)
-}
-
-fn capability(input: &str) -> IResult<&str, &str> {
-    let (input, (_, cap, _)) = tuple((space0, take_while1(is_lower_char), space1))(input)?;
-    Ok((input, cap))
-}
-
-fn label(input: &str) -> IResult<&str, &str> {
-    let (input, (name, _)) = tuple((name, tag(":")))(input)?;
-    Ok((input, name))
-}
-
-fn type_args(input: &str) -> IResult<&str, Vec<Type>> {
-    let (input, (_, args, _)) = tuple((
-        tag("("),
-        cut(separated_list0(tag(","), type_parser)),
-        tag(")"),
-    ))(input)?;
-    Ok((input, args))
-}
-
-fn parenthesized(input: &str) -> IResult<&str, Type> {
-    let (input, (_, ty, _)) = tuple((tag("("), cut(type_parser), tag(")")))(input)?;
-    Ok((input, ty))
-}
-
-fn simple_structure(input: &str) -> IResult<&str, Type> {
-    let (input, (name, args)) = tuple((name, opt(type_args)))(input)?;
-    Ok((input, Type::new(name).with_args(args.unwrap_or_default())))
-}
-
-fn labelled_type(input: &str) -> IResult<&str, Type> {
-    let (input, (label, ty)) = tuple((label, cut(type_parser)))(input)?;
-    Ok((
-        input,
-        Type::new(LABELLED).with_arg(Type::new(label)).with_arg(ty),
-    ))
-}
-
-fn product_type(input: &str) -> IResult<&str, Type> {
-    let (input, (_, mut types, _)) = tuple((
-        tag("{"),
-        cut(separated_list1(tag(","), type_parser)),
-        tag("}"),
-    ))(input)?;
-    let mut types: Vec<Type> = types.drain(0..).rev().collect();
-    let mut ty = types
-        .pop()
-        .expect("A product type requires at least one type");
-    for new_ty in types {
-        ty = Type::new(PRODUCT).with_arg(ty).with_arg(new_ty);
+    fn tag(&self, exp: &'static str) -> impl Fn(&str) -> IResult<&str, &str> {
+        move |input| {
+            let (input, (_, s)) = tuple((space0, simple_tag(exp)))(input)?;
+            Ok((input, s))
+        }
     }
-    Ok((input, ty))
-}
 
-fn structure_with_capability(input: &str) -> IResult<&str, Type> {
-    let (input, (cap, ty)) = tuple((capability, cut(type_parser)))(input)?;
-    Ok((input, ty.with_capability(cap)))
-}
+    fn is_lower_char(&self, c: char) -> bool {
+        matches!(c, 'a'..='z' | '_')
+    }
 
-fn type_parser(input: &str) -> IResult<&str, Type> {
-    let (input, res) = parenthesized(input)
-        .or_else(|_| product_type(input))
-        .or_else(|_| labelled_type(input))
-        .or_else(|_| structure_with_capability(input))
-        .or_else(|_| simple_structure(input))?;
-    let (input, _) = space0(input)?; // drop any following whitespace.
-    Ok((input, res))
-}
+    fn name<'a>(&self, input: &'a str) -> IResult<&'a str, &'a str> {
+        let (input, _) = space0(input)?;
+        take_while1(|i| self.is_name_char(i))(input)
+    }
 
-pub fn read_type_uncached(og_input: &str) -> Type {
-    // TODO: return errors instead of panics
-    let (input, ty) = type_parser(og_input)
-        .finish()
-        .expect("Could not parse type");
-    if !input.is_empty() {
-        todo!(
-            "Did not reach end of input. Read {:?}. Left over '{}' from '{}'",
-            ty,
+    fn capability<'a>(&self, input: &'a str) -> IResult<&'a str, &'a str> {
+        let (input, (_, cap, _)) = tuple((space0, take_while1(|i| self.is_lower_char(i)), space1))(input)?;
+        Ok((input, cap))
+    }
+
+    fn label<'a>(&self, input: &'a str) -> IResult<&'a str, &'a str> {
+        let (input, (name, _)) = tuple((|i| self.name(i), |i| self.tag(":")(i)))(input)?;
+        Ok((input, name))
+    }
+
+    fn type_args<'a>(&self, input: &'a str) -> IResult<&'a str, Vec<Type>> {
+        let (input, (_, args, _)) = tuple((
+            |i| self.tag("(")(i),
+            cut(separated_list0(|i| self.tag(",")(i), |i| self.type_parser(i))),
+            |i| self.tag(")")(i),
+        ))(input)?;
+        Ok((input, args))
+    }
+
+    fn parenthesized(&self, input: &str) -> IResult<&str, Type> {
+        let (input, (_, ty, _)) = tuple((tag("("), cut(type_parser), tag(")")))(input)?;
+        Ok((input, ty))
+    }
+
+    fn simple_structure(&self, input: &str) -> IResult<&str, Type> {
+        let (input, (name, args)) = tuple((name, opt(type_args)))(input)?;
+        Ok((input, Type::new(name).with_args(args.unwrap_or_default())))
+    }
+
+    fn labelled_type(&self, input: &str) -> IResult<&str, Type> {
+        let (input, (label, ty)) = tuple((label, cut(type_parser)))(input)?;
+        Ok((
             input,
-            og_input
-        );
+            Type::new(LABELLED).with_arg(Type::new(label)).with_arg(ty),
+        ))
     }
-    ty
+
+    fn product_type(&self, input: &str) -> IResult<&str, Type> {
+        let (input, (_, mut types, _)) = tuple((
+            tag("{"),
+            cut(separated_list1(tag(","), type_parser)),
+            tag("}"),
+        ))(input)?;
+        let mut types: Vec<Type> = types.drain(0..).rev().collect();
+        let mut ty = types
+            .pop()
+            .expect("A product type requires at least one type");
+        for new_ty in types {
+            ty = Type::new(PRODUCT).with_arg(ty).with_arg(new_ty);
+        }
+        Ok((input, ty))
+    }
+
+    fn structure_with_capability(&self, input: &str) -> IResult<&str, Type> {
+        let (input, (cap, ty)) = tuple((capability, cut(type_parser)))(input)?;
+        Ok((input, ty.with_capability(cap)))
+    }
+
+    fn type_parser(&self, input: &str) -> IResult<&str, Type> {
+        let (input, res) = parenthesized(input)
+            .or_else(|_| product_type(input))
+            .or_else(|_| labelled_type(input))
+            .or_else(|_| structure_with_capability(input))
+            .or_else(|_| simple_structure(input))?;
+        let (input, _) = space0(input)?; // drop any following whitespace.
+        Ok((input, res))
+    }
+
+    pub fn read_type_uncached(&self, og_input: &str) -> Type {
+        // TODO: return errors instead of panics
+        let (input, ty) = type_parser(og_input, type_parser)
+            .finish()
+            .expect("Could not parse type");
+        if !input.is_empty() {
+            todo!(
+                "Did not reach end of input. Read {:?}. Left over '{}' from '{}'",
+                ty,
+                input,
+                og_input
+            );
+        }
+        ty
+    }
 }
 
 #[cfg(test)]
