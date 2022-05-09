@@ -26,7 +26,7 @@ fn is_lower_char(c: char) -> bool {
 }
 
 fn name<'a>() -> impl Fn(&'a str) -> IResult<&'a str, &'a str> {
-    move |input: &'a str| take_while1(|c| is_name_char(c))(input)
+    move |input: &'a str| take_while1(is_name_char)(input)
 }
 
 fn label<'a>() -> impl Fn(&'a str) -> IResult<&'a str, &'a str> {
@@ -52,7 +52,7 @@ pub trait TypeParser {
     }
 
     fn capability<'a>(&mut self, input: &'a str) -> IResult<&'a str, &'a str> {
-        let (input, (cap, _)) = tuple((take_while1(|c| is_lower_char(c)), space1))(input)?;
+        let (input, (cap, _)) = tuple((take_while1(is_lower_char), space1))(input)?;
         Ok((input, cap))
     }
 
