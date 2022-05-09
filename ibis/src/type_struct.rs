@@ -3,6 +3,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file or at
 // https://developers.google.com/open-source/licenses/bsd
+use std::sync::Arc;
 
 pub const UNIVERSAL: &str = "ibis.UniversalType";
 pub const WITH_CAPABILITY: &str = "ibis.WithCapability";
@@ -15,7 +16,7 @@ pub const LABELLED: &str = "ibis.Labelled";
 #[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct Type {
     pub name: String,
-    pub args: Vec<Type>,
+    pub args: Vec<Arc<Type>>,
 }
 
 impl Type {
@@ -28,12 +29,12 @@ impl Type {
             args: vec![],
         }
     }
-    pub fn with_args(mut self, args: Vec<Type>) -> Self {
-        self.args.extend(args);
+    pub fn with_args<T: Into<Arc<Type>>>(mut self, mut args: Vec<T>) -> Self {
+        self.args.extend(args.drain(0..).map(|arg| arg.into()));
         self
     }
-    pub fn with_arg(mut self, arg: Type) -> Self {
-        self.args.push(arg);
+    pub fn with_arg<T: Into<Arc<Type>>>(mut self, arg: T) -> Self {
+        self.args.push(arg.into());
         self
     }
     pub fn with_capability(self, cap: &str) -> Self {
@@ -44,7 +45,7 @@ impl Type {
 fn format_arg_set(
     f: &mut std::fmt::Formatter<'_>,
     joiner: &str,
-    args: &[Type],
+    args: &[Arc<Type>],
 ) -> std::fmt::Result {
     if let Some(first) = args.first() {
         write!(f, "{}", first)?;
