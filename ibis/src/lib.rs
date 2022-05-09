@@ -64,10 +64,10 @@ macro_rules! is_a {
 
 #[macro_export]
 macro_rules! name {
-    ($type: expr) => {{
-        let ty = $type.get_type();
-        ent!(&format!("{}", ty.name))
-    }};
+    ($type: expr) => {
+        // TODO: remove this
+        ent!(&$type.get_type().name)
+    };
 }
 
 #[macro_export]
@@ -78,7 +78,8 @@ macro_rules! arg {
         if ind >= ty.args.len() {
             panic!("Cannot access argument {} of {}", ind, ty);
         }
-        ent!(&format!("{}", ty.args[ind]))
+        // Clones an Arc
+        Ent::by_type(ty.args[ind].clone())
     }};
 }
 
@@ -89,7 +90,7 @@ macro_rules! args {
             .get_type()
             .args
             .iter()
-            .map(|arg| ent!(&format!("{}", arg)))
+            .map(|arg| Ent::by_type(arg.clone()))
     }};
 }
 
