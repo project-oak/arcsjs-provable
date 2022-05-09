@@ -48,7 +48,7 @@ pub trait TypeParser {
     }
 
     fn read_type(&mut self, input: &str) -> Arc<Type> {
-        self.store_type(input, &|s: &mut Self| s.read_type_core(input))
+        self.store_type(input, &|s: &mut Self| s.read_type_uncached(input))
     }
 
     fn capability<'a>(&mut self, input: &'a str) -> IResult<&'a str, &'a str> {
@@ -148,7 +148,7 @@ pub trait TypeParser {
         Ok((input, res))
     }
 
-    fn read_type_core(&mut self, og_input: &str) -> Arc<Type> {
+    fn read_type_uncached(&mut self, og_input: &str) -> Arc<Type> {
         // TODO: return errors instead of panics
         let (input, ty) = self
             .type_parser(og_input)
