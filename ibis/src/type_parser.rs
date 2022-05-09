@@ -26,9 +26,7 @@ fn is_lower_char(c: char) -> bool {
 }
 
 fn name<'a>() -> impl Fn(&'a str) -> IResult<&'a str, &'a str> {
-    move |input: &'a str| {
-        take_while1(|c| is_name_char(c))(input)
-    }
+    move |input: &'a str| take_while1(|c| is_name_char(c))(input)
 }
 
 fn label<'a>() -> impl Fn(&'a str) -> IResult<&'a str, &'a str> {
@@ -44,6 +42,10 @@ pub trait TypeParser {
         og_input: &str,
         get_ty: impl FnOnce(&mut Self) -> Arc<Type>,
     ) -> Arc<Type>;
+
+    fn type_from_name(&mut self, name: &str) -> Arc<Type> {
+        self.store_type(name, |_self| Arc::new(Type::new(name)))
+    }
 
     fn read_type(&mut self, input: &str) -> Arc<Type> {
         self.store_type(input, &|s: &mut Self| s.read_type_core(input))
@@ -70,37 +72,54 @@ pub trait TypeParser {
 
     fn simple_structure<'a>(&mut self, og_input: &'a str) -> IResult<&'a str, Arc<Type>> {
         let (input, (name, args)) = tuple((name(), opt(|i| self.type_args(i))))(og_input)?;
+        let name = self.type_from_name(name);
         let covered = &og_input[0..og_input.len() - input.len()];
         Ok((
             input,
             self.store_type(covered, |_self| {
-                Arc::new(Type::new(name).with_args(args.unwrap_or_default()))
+                // TODO: with_arg(s) shouldn't mutate.
+                Arc::new((*name).clone().with_args(args.unwrap_or_default()))
             }),
         ))
     }
 
     fn labelled_type<'a>(&mut self, og_input: &'a str) -> IResult<&'a str, Arc<Type>> {
         let (input, (label, ty)) = tuple((label(), cut(|i| self.type_parser(i))))(og_input)?;
+        let label = self.type_from_name(label);
         let covered = &og_input[0..og_input.len() - input.len()];
         Ok((
             input,
-            self.store_type(covered, |_self| {
-                Arc::new(Type::new(LABELLED).with_arg(Type::new(label)).with_arg(ty))
+            self.store_type(covered, |s| {
+                // TODO: with_arg(s) shouldn't mutate.
+                Arc::new(
+                    (*s.type_from_name(LABELLED))
+                        .clone()
+                        .with_arg(label)
+                        .with_arg(ty),
+                )
             }),
         ))
     }
 
     fn product_type<'a>(&mut self, input: &'a str) -> IResult<&'a str, Arc<Type>> {
-        let (input, _) = tag("{")(input)?;
-        let (input, mut types) = cut(separated_list1(tag(","), |i| self.type_parser(i)))(input)?;
-        let (input, _) = tag("}")(input)?;
+        let (input, (_, mut types, _)) = tuple((
+            tag("{"),
+            cut(separated_list1(tag(","), |i| self.type_parser(i))),
+            tag("}"),
+        ))(input)?;
         let mut types: Vec<Arc<Type>> = types.drain(0..).rev().collect();
         let mut ty = types
             .pop()
             .expect("A product type requires at least one type");
         for new_ty in types {
-            // We're not trying to store the incrementals, as type are not from the 'source'.
-            ty = Arc::new(Type::new(PRODUCT).with_arg(ty).with_arg(new_ty));
+            // Cannot store the incremental parses, as they are not directly from the 'source'.
+            // TODO: Avoid needing nesting for a simple multi-product.
+            ty = Arc::new(
+                (*self.type_from_name(PRODUCT))
+                    .clone()
+                    .with_arg(ty)
+                    .with_arg(new_ty),
+            );
         }
         Ok((input, ty))
     }
@@ -109,9 +128,12 @@ pub trait TypeParser {
         let (input, cap) = self.capability(og_input)?;
         let (input, ty) = cut(|i| self.type_parser(i))(input)?;
         let covered = &og_input[0..og_input.len() - input.len()];
-        Ok((input, self.store_type(covered, |_self| {
-            Arc::new((*ty).clone().with_capability(cap))
-        })))
+        Ok((
+            input,
+            self.store_type(covered, |_self| {
+                Arc::new((*ty).clone().with_capability(cap))
+            }),
+        ))
     }
 
     fn type_parser<'a>(&mut self, input: &'a str) -> IResult<&'a str, Arc<Type>> {
