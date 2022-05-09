@@ -6,7 +6,7 @@
 extern crate nom;
 use crate::type_struct::*;
 use nom::{
-    bytes::complete::{tag as simple_tag, take_while1},
+    bytes::complete::{tag, take_while1},
     character::complete::{space0, space1},
     combinator::{cut, opt},
     multi::{separated_list0, separated_list1},
@@ -21,21 +21,12 @@ fn is_name_char(c: char) -> bool {
         '(' | ')' | '{' | '}' | ',' | ':' | ' ' | '\n' | '\r' | '\t'
     )
 }
-
-fn tag<'a>(exp: &'static str) -> impl Fn(&'a str) -> IResult<&'a str, &'a str> {
-    move |input: &'a str| {
-        let (input, (_, s)) = tuple((space0, simple_tag(exp)))(input)?;
-        Ok((input, s))
-    }
-}
-
 fn is_lower_char(c: char) -> bool {
     matches!(c, 'a'..='z' | '_')
 }
 
 fn name<'a>() -> impl Fn(&'a str) -> IResult<&'a str, &'a str> {
     move |input: &'a str| {
-        let (input, _) = space0(input)?;
         take_while1(|c| is_name_char(c))(input)
     }
 }
@@ -48,73 +39,83 @@ fn label<'a>() -> impl Fn(&'a str) -> IResult<&'a str, &'a str> {
 }
 
 pub trait TypeParser {
-    fn store_type(&mut self, _og_input: &str, get_ty: impl FnOnce(&mut Self) -> Arc<Type>) -> Arc<Type>;
+    fn store_type(
+        &mut self,
+        og_input: &str,
+        get_ty: impl FnOnce(&mut Self) -> Arc<Type>,
+    ) -> Arc<Type>;
 
     fn read_type(&mut self, input: &str) -> Arc<Type> {
-        self.store_type(input, &|s: &mut Self| Arc::new(s.read_type_core(input)))
+        self.store_type(input, &|s: &mut Self| s.read_type_core(input))
     }
 
     fn capability<'a>(&mut self, input: &'a str) -> IResult<&'a str, &'a str> {
-        let (input, (_, cap, _)) =
-            tuple((space0, take_while1(|c| is_lower_char(c)), space1))(input)?;
+        let (input, (cap, _)) = tuple((take_while1(|c| is_lower_char(c)), space1))(input)?;
         Ok((input, cap))
     }
 
-    fn type_args<'a>(&mut self, input: &'a str) -> IResult<&'a str, Vec<Type>> {
+    fn type_args<'a>(&mut self, input: &'a str) -> IResult<&'a str, Vec<Arc<Type>>> {
         let (input, (_, args, _)) = tuple((
             tag("("),
-            cut(separated_list0(
-                tag(","),
-                |i| self.type_parser(i),
-            )),
+            cut(separated_list0(tag(","), |i| self.type_parser(i))),
             tag(")"),
         ))(input)?;
         Ok((input, args))
     }
 
-    fn parenthesized<'a>(&mut self, input: &'a str) -> IResult<&'a str, Type> {
-        let (input, (_, ty, _)) = tuple((
-            tag("("),
-            cut(|i| self.type_parser(i)),
-            tag(")"),
-        ))(input)?;
+    fn parenthesized<'a>(&mut self, input: &'a str) -> IResult<&'a str, Arc<Type>> {
+        let (input, (_, ty, _)) = tuple((tag("("), cut(|i| self.type_parser(i)), tag(")")))(input)?;
         Ok((input, ty))
     }
 
-    fn simple_structure<'a>(&mut self, input: &'a str) -> IResult<&'a str, Type> {
-        let (input, (name, args)) = tuple((name(), opt(|i| self.type_args(i))))(input)?;
-        Ok((input, Type::new(name).with_args(args.unwrap_or_default())))
-    }
-
-    fn labelled_type<'a>(&mut self, input: &'a str) -> IResult<&'a str, Type> {
-        let (input, (label, ty)) = tuple((label(), cut(|i| self.type_parser(i))))(input)?;
+    fn simple_structure<'a>(&mut self, og_input: &'a str) -> IResult<&'a str, Arc<Type>> {
+        let (input, (name, args)) = tuple((name(), opt(|i| self.type_args(i))))(og_input)?;
+        let covered = &og_input[0..og_input.len() - input.len()];
         Ok((
             input,
-            Type::new(LABELLED).with_arg(Type::new(label)).with_arg(ty),
+            self.store_type(covered, |_self| {
+                Arc::new(Type::new(name).with_args(args.unwrap_or_default()))
+            }),
         ))
     }
 
-    fn product_type<'a>(&mut self, input: &'a str) -> IResult<&'a str, Type> {
+    fn labelled_type<'a>(&mut self, og_input: &'a str) -> IResult<&'a str, Arc<Type>> {
+        let (input, (label, ty)) = tuple((label(), cut(|i| self.type_parser(i))))(og_input)?;
+        let covered = &og_input[0..og_input.len() - input.len()];
+        Ok((
+            input,
+            self.store_type(covered, |_self| {
+                Arc::new(Type::new(LABELLED).with_arg(Type::new(label)).with_arg(ty))
+            }),
+        ))
+    }
+
+    fn product_type<'a>(&mut self, input: &'a str) -> IResult<&'a str, Arc<Type>> {
         let (input, _) = tag("{")(input)?;
         let (input, mut types) = cut(separated_list1(tag(","), |i| self.type_parser(i)))(input)?;
         let (input, _) = tag("}")(input)?;
-        let mut types: Vec<Type> = types.drain(0..).rev().collect();
+        let mut types: Vec<Arc<Type>> = types.drain(0..).rev().collect();
         let mut ty = types
             .pop()
             .expect("A product type requires at least one type");
         for new_ty in types {
-            ty = Type::new(PRODUCT).with_arg(ty).with_arg(new_ty);
+            // We're not trying to store the incrementals, as type are not from the 'source'.
+            ty = Arc::new(Type::new(PRODUCT).with_arg(ty).with_arg(new_ty));
         }
         Ok((input, ty))
     }
 
-    fn structure_with_capability<'a>(&mut self, input: &'a str) -> IResult<&'a str, Type> {
-        let (input, cap) = self.capability(input)?;
+    fn structure_with_capability<'a>(&mut self, og_input: &'a str) -> IResult<&'a str, Arc<Type>> {
+        let (input, cap) = self.capability(og_input)?;
         let (input, ty) = cut(|i| self.type_parser(i))(input)?;
-        Ok((input, ty.with_capability(cap)))
+        let covered = &og_input[0..og_input.len() - input.len()];
+        Ok((input, self.store_type(covered, |_self| {
+            Arc::new((*ty).clone().with_capability(cap))
+        })))
     }
 
-    fn type_parser<'a>(&mut self, input: &'a str) -> IResult<&'a str, Type> {
+    fn type_parser<'a>(&mut self, input: &'a str) -> IResult<&'a str, Arc<Type>> {
+        let (input, _) = space0(input)?;
         let (input, res) = self
             .parenthesized(input)
             .or_else(|_| self.product_type(input))
@@ -125,7 +126,7 @@ pub trait TypeParser {
         Ok((input, res))
     }
 
-    fn read_type_core(&mut self, og_input: &str) -> Type {
+    fn read_type_core(&mut self, og_input: &str) -> Arc<Type> {
         // TODO: return errors instead of panics
         let (input, ty) = self
             .type_parser(og_input)
@@ -150,7 +151,11 @@ mod tests {
     struct TP;
 
     impl TypeParser for TP {
-        fn store_type(&mut self, _og_input: &str, get_ty: impl FnOnce(&mut Self) -> Arc<Type>) -> Arc<Type> {
+        fn store_type(
+            &mut self,
+            _og_input: &str,
+            get_ty: impl FnOnce(&mut Self) -> Arc<Type>,
+        ) -> Arc<Type> {
             // This is lazy / lossy, re-parsing a type will make a new copy.
             get_ty(self)
         }

@@ -24,7 +24,11 @@ pub struct CachedTP {
 }
 
 impl TypeParser for CachedTP {
-    fn store_type(&mut self, input: &str, get_ty: impl FnOnce(&mut Self) -> Arc<Type>) -> Arc<Type> {
+    fn store_type(
+        &mut self,
+        input: &str,
+        get_ty: impl FnOnce(&mut Self) -> Arc<Type>,
+    ) -> Arc<Type> {
         if let Some(ty) = self.cache.get(input) {
             return ty.clone();
         }
@@ -45,6 +49,11 @@ mod tests {
     use super::*;
     use crate::type_struct::*;
 
+    pub fn read_type(input: &str) -> Arc<Type> {
+        let mut tp = CachedTP::default();
+        tp.read_type(input)
+    }
+
     fn parse_and_round_trip(s: &str, t: Type) {
         let ty = read_type(s);
         assert_eq!(*ty, t);
@@ -53,10 +62,11 @@ mod tests {
 
     #[test]
     fn read_a_type_multiple_times() {
-        let a = read_type("Type");
-        let b = read_type("Type");
+        let mut tp = CachedTP::default();
+        let a = tp.read_type("Type");
+        let b = tp.read_type("Type");
         assert_eq!(a, b);
-        // One for a, one for b, and one for the cache.
+        // One for the cache, one for 'a' and one for 'b'.
         assert_eq!(Arc::strong_count(&a), 3);
         assert_eq!(Arc::strong_count(&b), 3);
     }
@@ -65,9 +75,8 @@ mod tests {
     fn read_a_type_multiple_times_via_nesting() {
         let a = read_type("And(Type, Type)");
         assert_eq!(a.args[0], a.args[1]);
-        // One for a, one for b, and one for the cache.
-        assert_eq!(Arc::strong_count(&a.args[0]), 3);
-        assert_eq!(Arc::strong_count(&a.args[1]), 3);
+        assert_eq!(Arc::strong_count(&a.args[0]), 2);
+        assert_eq!(Arc::strong_count(&a.args[1]), 2);
     }
 
     #[test]
