@@ -76,7 +76,7 @@ crepe! {
     #[derive(Debug, Ord, PartialOrd, Serialize, Deserialize)]
     pub struct TypeError(pub Sol, pub Ent, pub Ent, pub Ent, pub Ent); // sol, node, ty, source, ty
     UncheckedSolution(parent.add_edge(from, to)) <-
-        FlagEnabled("planning", true),
+        FlagEnabled(PLANNING, true),
         Node(_from_particle, from, from_type),
         Node(_to_particle, to, to_type),
         (from != to),
@@ -247,7 +247,8 @@ fn is_default<T: Default + Eq>(v: &T) -> bool {
     v == &T::default()
 }
 
-const FLAGS: &[&str] = &["planning"];
+const PLANNING: &str = "planning";
+const FLAGS: &[&str] = &[PLANNING];
 
 #[derive(Default, Debug, Clone, Serialize, Deserialize, Eq, PartialEq)]
 #[serde(deny_unknown_fields)]
@@ -448,7 +449,7 @@ impl Ibis {
         }
 
         let (solutions, unchecked_solutions, has_tags, leaks, type_errors) = runtime.run();
-        let recipes: Vec<Sol> = if let Some(true) = &self.config.flags.get("planning") {
+        let recipes: Vec<Sol> = if let Some(true) = &self.config.flags.get(PLANNING) {
             solutions.iter().map(|Solution(s)| *s).collect()
         } else {
             unchecked_solutions
