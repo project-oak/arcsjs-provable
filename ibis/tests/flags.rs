@@ -18,9 +18,18 @@ fn unknown_flag_generates_warning() {
 "#;
     let results: Ibis = get_solutions(data, None);
     assert_eq!(results.shared.warnings.len(), 1);
-    let warning = results.shared.warnings.get(0).expect("Should have a single value");
+    let warning = results
+        .shared
+        .warnings
+        .get(0)
+        .expect("Should have a single value");
     let expected = r#"Unknown flag "unknown_and_unexpected_flag" set to: true"#;
-    assert!(warning.starts_with(expected), "unexpected warning:\n'{}'\n'{}'", warning, expected);
+    assert!(
+        warning.starts_with(expected),
+        "unexpected warning:\n'{}'\n'{}'",
+        warning,
+        expected
+    );
 }
 
 #[test]

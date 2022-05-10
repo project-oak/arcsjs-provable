@@ -247,9 +247,7 @@ fn is_default<T: Default + Eq>(v: &T) -> bool {
     v == &T::default()
 }
 
-const FLAGS: &[&'static str] = &[
-    "planning",
-];
+const FLAGS: &[&str] = &["planning"];
 
 #[derive(Default, Debug, Clone, Serialize, Deserialize, Eq, PartialEq)]
 #[serde(deny_unknown_fields)]
@@ -401,9 +399,14 @@ impl Ibis {
         let mut warnings = Vec::new();
         for (key, value) in &self.config.flags {
             if let Some(flag) = FLAGS.iter().find(|flag| flag == &key) {
-                runtime.extend(&[FlagEnabled(&flag, *value)]);
+                runtime.extend(&[FlagEnabled(flag, *value)]);
             } else {
-                warnings.push(format!("Unknown flag {:?} set to: {:?}. Known flags are {}", key, value, FLAGS.join(", ")));
+                warnings.push(format!(
+                    "Unknown flag {:?} set to: {:?}. Known flags are {}",
+                    key,
+                    value,
+                    FLAGS.join(", ")
+                ));
             }
         }
         runtime.extend(self.config.subtypes.clone());
@@ -432,7 +435,7 @@ impl Ibis {
                 feedback: _,
                 metadata: _,
                 id: _,
-                edges: _, // To be captured by sol
+                edges: _,    // To be captured by sol
                 warnings: _, // These should be regenerated.
                 #[cfg(feature = "ancestors")]
                     ancestors: _,
