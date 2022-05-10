@@ -10,11 +10,12 @@ use crate::util::make;
 use crate::{apply, arg, args, ent, is_a, name, Ent, Sol, SolutionData};
 use crepe::crepe;
 use serde::{Deserialize, Serialize};
+use std::collections::BTreeMap;
 
 crepe! {
     @input
     #[derive(Debug, Ord, PartialOrd, Serialize, Deserialize)]
-    pub struct PlanningIsEnabled(pub bool);
+    pub struct FlagEnabled(pub &'static str, pub bool);
     @output
     #[derive(Debug, Ord, PartialOrd, Serialize, Deserialize)]
     pub struct Solution(pub Sol);
@@ -75,7 +76,7 @@ crepe! {
     #[derive(Debug, Ord, PartialOrd, Serialize, Deserialize)]
     pub struct TypeError(pub Sol, pub Ent, pub Ent, pub Ent, pub Ent); // sol, node, ty, source, ty
     UncheckedSolution(parent.add_edge(from, to)) <-
-        PlanningIsEnabled(true),
+        FlagEnabled(PLANNING, true),
         Node(_from_particle, from, from_type),
         Node(_to_particle, to, to_type),
         (from != to),
@@ -246,12 +247,8 @@ fn is_default<T: Default + Eq>(v: &T) -> bool {
     v == &T::default()
 }
 
-#[derive(Default, Debug, Clone, Serialize, Deserialize, Eq, PartialEq)]
-#[serde(deny_unknown_fields)]
-pub struct Flags {
-    #[serde(default, skip_serializing_if = "is_default")]
-    pub planning: bool,
-}
+const PLANNING: &str = "planning";
+const FLAGS: &[&str] = &[PLANNING];
 
 #[derive(Default, Debug, Clone, Serialize, Deserialize, Eq, PartialEq)]
 #[serde(deny_unknown_fields)]
@@ -265,7 +262,7 @@ pub struct Config {
     #[serde(default, skip_serializing_if = "is_default")]
     pub capabilities: Vec<Capability>,
     #[serde(default, skip_serializing_if = "is_default")]
-    pub flags: Flags,
+    pub flags: BTreeMap<String, bool>,
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize, Eq, PartialEq)]
@@ -305,6 +302,8 @@ pub struct Ibis {
 pub struct Recipe {
     #[serde(default, skip_serializing_if = "is_default")]
     pub metadata: serde_json::Value,
+    #[serde(default, skip_serializing_if = "is_default")]
+    pub warnings: Vec<String>,
     #[serde(skip, default)]
     pub id: Option<Sol>,
     // Do not deserialize the feedback on a recipe: Re-generate it each time for consistency.
@@ -333,6 +332,7 @@ impl Recipe {
         Recipe {
             #[cfg(feature = "ancestors")]
             ancestors: sol.ancestors().iter().cloned().collect(),
+            warnings: Vec::new(),
             id: Some(sol),
             feedback: Feedback::default(),
             metadata: serde_json::Value::Null,
@@ -397,7 +397,19 @@ impl Ibis {
 
     pub fn extract_solutions_with_loss(mut self, loss: Option<usize>) -> Ibis {
         let mut runtime = Crepe::new();
-        runtime.extend(&[PlanningIsEnabled(self.config.flags.planning)]);
+        let mut warnings = Vec::new();
+        for (key, value) in &self.config.flags {
+            if let Some(flag) = FLAGS.iter().find(|flag| flag == &key) {
+                runtime.extend(&[FlagEnabled(flag, *value)]);
+            } else {
+                warnings.push(format!(
+                    "Unknown flag {:?} set to: {:?}. Known flags are {}",
+                    key,
+                    value,
+                    FLAGS.join(", ")
+                ));
+            }
+        }
         runtime.extend(self.config.subtypes.clone());
         runtime.extend(self.config.less_private_than.clone());
         runtime.extend(self.config.capabilities.clone());
@@ -424,7 +436,8 @@ impl Ibis {
                 feedback: _,
                 metadata: _,
                 id: _,
-                edges: _, // To be captured by sol
+                edges: _,    // To be captured by sol
+                warnings: _, // These should be regenerated.
                 #[cfg(feature = "ancestors")]
                     ancestors: _,
             } = recipe;
@@ -436,7 +449,7 @@ impl Ibis {
         }
 
         let (solutions, unchecked_solutions, has_tags, leaks, type_errors) = runtime.run();
-        let recipes: Vec<Sol> = if self.config.flags.planning {
+        let recipes: Vec<Sol> = if let Some(true) = &self.config.flags.get(PLANNING) {
             solutions.iter().map(|Solution(s)| *s).collect()
         } else {
             unchecked_solutions
@@ -482,6 +495,7 @@ impl Ibis {
             recipes
         };
         let mut shared = self.shared;
+        shared.warnings.extend(warnings);
         for recipe in self.recipes.drain(0..) {
             shared.nodes.extend(recipe.nodes);
             shared.claims.extend(recipe.claims);
