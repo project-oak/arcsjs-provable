@@ -56,7 +56,11 @@ impl Ent {
     }
 
     pub fn args(&self) -> Vec<Ent> {
-        self.get_type().args.iter().map(|arg| Ent::by_type(arg.clone())).collect()
+        self.get_type()
+            .args
+            .iter()
+            .map(|arg| Ent::by_type(arg.clone()))
+            .collect()
     }
 
     pub fn num_args(&self) -> usize {
