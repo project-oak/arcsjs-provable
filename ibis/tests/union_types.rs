@@ -47,7 +47,8 @@ fn a_union_is_not_a_subtype_of_its_arguments_with_unshared_super_types() {
   ],
   "subtypes": [
     ["TallMan", "Man"],
-    ["ShortMan", "Man"]
+    ["ShortMan", "Man"],
+    ["Man", "ibis.UnionType(TallMan, ShortMan)"]
   ],
   "recipes": [
     {

@@ -123,26 +123,26 @@ crepe! {
     // TODO: Replace with the 'all' aggregate when it exists.
     // See https://github.com/ekzhang/crepe/issues/10
     struct SubtypesAllArgs(Ent, Ent, usize);
-    SubtypesAllArgs(x, y, y.num_args()) <- KnownType(x), KnownType(y);
+    SubtypesAllArgs(x, y, 0) <- KnownType(x), KnownType(y);
     SubtypesAllArgs(x, y, n+1) <-
         SubtypesAllArgs(x, y, n),
-        (n+1 < y.num_args()),
-        Subtype(x, y.args()[n+1]);
+        (n < y.num_args()),
+        Subtype(x, y.args()[n]);
 
     // TODO: Replace with the 'all' aggregate when it exists.
     // See https://github.com/ekzhang/crepe/issues/10
     struct SupertypesAllArgs(Ent, Ent, usize);
-    SupertypesAllArgs(x, y, y.num_args()) <- KnownType(x), KnownType(y);
+    SupertypesAllArgs(x, y, 0) <- KnownType(x), KnownType(y);
     SupertypesAllArgs(x, y, n+1) <-
         SupertypesAllArgs(x, y, n),
-        (n+1 < y.num_args()),
-        Subtype(y.args()[n+1], x);
+        (n < y.num_args()),
+        Subtype(y.args()[n], x);
 
     Subtype(x, prod) <-
         KnownType(prod),
         (prod.is_a(PRODUCT)),
         KnownType(x),
-        SubtypesAllArgs(x, prod, 0);
+        SubtypesAllArgs(x, prod, prod.num_args());
 
     Subtype(
         prod,
@@ -159,7 +159,7 @@ crepe! {
         KnownType(union_type),
         (union_type.is_a(UNION)),
         KnownType(x),
-        SupertypesAllArgs(x, union_type, 0);
+        SupertypesAllArgs(x, union_type, union_type.num_args());
 
     Subtype(
         arg,
