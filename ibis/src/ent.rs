@@ -50,13 +50,27 @@ impl Ent {
             .expect("All entities should have a type")
     }
 
+    pub fn is_a(&self, parent: &str) -> bool {
+        let ty = self.get_type();
+        ty.name == parent && !ty.args.is_empty()
+    }
+
+    pub fn args(&self) -> Vec<Ent> {
+        self.get_type().args.iter().map(|arg| Ent::by_type(arg.clone())).collect()
+    }
+
+    pub fn num_args(&self) -> usize {
+        self.get_type().args.len()
+    }
+
     fn get_by_type(ctx: &mut Ctx, ty: &Type) -> Option<Ent> {
         ctx.id_to_type.get_back(ty).cloned()
     }
 
-    pub fn by_type(ty: Arc<Type>) -> Ent {
+    pub fn by_type<T: Into<Arc<Type>>>(ty: T) -> Ent {
         let guard = CTX.lock().expect("Shouldn't fail");
         let mut ctx = (*guard).borrow_mut();
+        let ty = ty.into();
         Ent::get_by_type(&mut ctx, &ty).unwrap_or_else(|| Ent::new(&mut ctx, ty))
     }
 }
