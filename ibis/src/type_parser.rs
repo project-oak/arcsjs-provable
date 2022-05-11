@@ -219,11 +219,13 @@ mod tests {
     fn read_a_product_type_using_syntactic_sugar() {
         let name_string = read_type("{name: String}");
         let age_number = read_type("{age: Number}");
+        let address_string = read_type("{address: String}");
         parse_and_round_trip(
-            "{name: String, age: Number}",
+            "{name: String, age: Number, address: String}",
             Type::new(PRODUCT)
                 .with_arg(name_string)
-                .with_arg(age_number),
+                .with_arg(age_number)
+                .with_arg(address_string),
         );
     }
 
