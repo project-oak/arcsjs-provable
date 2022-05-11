@@ -35,6 +35,35 @@ fn a_union_is_a_subtype_of_its_arguments() {
 }
 
 #[test]
+fn a_union_is_not_a_subtype_of_its_arguments_with_unshared_super_types() {
+    let solutions = all_edges(
+        r#"
+{
+  "flags": {
+    "planning": true
+  },
+  "capabilities": [
+    ["any", "any"]
+  ],
+  "subtypes": [
+    ["TallMan", "Man"],
+    ["ShortMan", "Man"]
+  ],
+  "recipes": [
+    {
+      "nodes": [
+        ["p_a", "a", "any ibis.UnionType(TallMan, ShortMan, Dog)"],
+        ["p_b", "b", "any Man"]
+      ]
+    }
+  ]
+}"#,
+    );
+    let expected: Vec<String> = vec!["b -> a".to_string()];
+    assert_eq!(solutions, expected);
+}
+
+#[test]
 fn a_union_is_a_subtype_of_its_arguments_shared_super_types() {
     let solutions = all_edges(
         r#"
@@ -107,6 +136,37 @@ fn union_of_unions() {
       "nodes": [
         ["p_abc", "abc", "any ibis.UnionType(A, ibis.UnionType(B, C))"],
         ["p_acb", "acb", "any ibis.UnionType(ibis.UnionType(A, C), B)"],
+        ["p_a", "a", "any A"],
+        ["p_b", "b", "any B"],
+        ["p_c", "c", "any C"]
+      ]
+    }
+  ]
+}"#,
+    );
+    let expected: Vec<String> = vec![
+        "a -> abc, a -> acb, abc -> acb, acb -> abc, b -> abc, b -> acb, c -> abc, c -> acb"
+            .to_string(),
+    ];
+    assert_eq!(solutions, expected);
+}
+
+#[test]
+fn union_of_unions_inlined() {
+    let solutions = all_edges(
+        r#"
+{
+  "flags": {
+    "planning": true
+  },
+  "capabilities": [
+    ["any", "any"]
+  ],
+  "recipes": [
+    {
+      "nodes": [
+        ["p_abc", "abc", "any ibis.UnionType(A, B, C)"],
+        ["p_acb", "acb", "any ibis.UnionType(A, C, B)"],
         ["p_a", "a", "any A"],
         ["p_b", "b", "any B"],
         ["p_c", "c", "any C"]
