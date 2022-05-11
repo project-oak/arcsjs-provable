@@ -101,27 +101,27 @@ pub trait TypeParser {
         ))
     }
 
-    fn product_type<'a>(&mut self, input: &'a str) -> IResult<&'a str, Arc<Type>> {
+    fn product_type<'a>(&mut self, og_input: &'a str) -> IResult<&'a str, Arc<Type>> {
         let (input, (_, mut types, _)) = tuple((
             tag("{"),
             cut(separated_list1(tag(","), |i| self.type_parser(i))),
             tag("}"),
-        ))(input)?;
-        let mut types: Vec<Arc<Type>> = types.drain(0..).rev().collect();
-        let mut ty = types
-            .pop()
-            .expect("A product type requires at least one type");
-        for new_ty in types {
-            // Cannot store the incremental parses, as they are not directly from the 'source'.
-            // TODO: Avoid needing nesting for a simple multi-product.
-            ty = Arc::new(
-                (*self.type_from_name(PRODUCT))
-                    .clone()
-                    .with_arg(ty)
-                    .with_arg(new_ty),
-            );
+        ))(og_input)?;
+        // Cannot store the incremental parses, as they are not directly from the 'source'.
+        if types.len() == 1 {
+            Ok((
+                input,
+                types.pop().expect("Types should have a single element"),
+            ))
+        } else {
+            let covered = &og_input[0..og_input.len() - input.len()];
+            Ok((
+                input,
+                self.store_type(covered, |s| {
+                    Arc::new((*s.type_from_name(PRODUCT)).clone().with_args(types))
+                }),
+            ))
         }
-        Ok((input, ty))
     }
 
     fn structure_with_capability<'a>(&mut self, og_input: &'a str) -> IResult<&'a str, Arc<Type>> {
