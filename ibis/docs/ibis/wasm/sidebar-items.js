@@ -1,0 +1,1 @@
+initSidebarItems({"fn":[["all_solutions_to_dot",""],["all_solutions_to_json",""],["best_solutions_to_dot",""],["best_solutions_to_json",""],["version_info",""]]});

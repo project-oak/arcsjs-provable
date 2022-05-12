@@ -1,0 +1,1 @@
+initSidebarItems({"macro":[["crepe","The main macro, which lets you write a Datalog program declaratively."]]});

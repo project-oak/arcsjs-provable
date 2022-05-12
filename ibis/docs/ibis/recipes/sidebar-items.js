@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["Capability",""],["Check",""],["Claim",""],["Config",""],["Feedback",""],["FlagEnabled",""],["HasTag",""],["Ibis",""],["Leak",""],["LessPrivateThan",""],["Node",""],["Recipe",""],["Seed",""],["Solution",""],["SubtypeInput",""],["TrustedToRemoveTag",""],["TrustedToRemoveTagFromNode",""],["TypeError",""],["UncheckedSolution",""]]});
