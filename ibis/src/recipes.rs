@@ -60,15 +60,24 @@ crepe! {
     pub struct Check(pub Ent, pub Ent); // identifier, tag
     @input
     #[derive(Debug, Ord, PartialOrd, Serialize, Deserialize)]
-    pub struct TrustedToRemoveTag(pub Ent, pub Ent); // node, tag
+    pub struct TrustedToRemoveSecrecyTag(pub Ent, pub Ent); // node, tag
     @input
     #[derive(Debug, Ord, PartialOrd, Serialize, Deserialize)]
-    pub struct TrustedToRemoveTagFromNode(pub Ent, pub Ent); // node, node from
+    pub struct TrustedToRemoveSecrecyTagFromNode(pub Ent, pub Ent); // node, node from
+    @input
+    #[derive(Debug, Ord, PartialOrd, Serialize, Deserialize)]
+    pub struct TrustedToAddIntegrityTag(pub Ent, pub Ent); // node, tag
+    @input
+    #[derive(Debug, Ord, PartialOrd, Serialize, Deserialize)]
+    pub struct TrustedToAddIntegrityTagFromNode(pub Ent, pub Ent); // node, node from
 
     // Feedback
     @output
     #[derive(Debug, Ord, PartialOrd, Serialize, Deserialize)]
-    pub struct HasTag(pub Sol, pub Ent, pub Ent, pub Ent); // solution, source node, node with tag, tag
+    pub struct HasSecrecyTag(pub Sol, pub Ent, pub Ent, pub Ent); // solution, source node, node with tag, tag
+    @output
+    #[derive(Debug, Ord, PartialOrd, Serialize, Deserialize)]
+    pub struct HasIntegrityTag(pub Sol, pub Ent, pub Ent, pub Ent); // solution, source node, node with tag, tag
     @output
     #[derive(Debug, Ord, PartialOrd, Serialize, Deserialize)]
     pub struct Leak(pub Sol, pub Ent, pub Ent, pub Ent, pub Ent); // sol, node, expected_tag, source, tag2
@@ -197,30 +206,30 @@ crepe! {
         KnownType(apply!(x_generic, x_arg)),
         KnownType(apply!(y_generic, y_arg));
 
-    HasTag(s, n, n, tag) <- UncheckedSolution(s), Claim(n, tag);
-    HasTag(s, source, *down, tag) <- // Propagate tags 'downstream'
-        HasTag(s, source, curr, tag),
+    HasSecrecyTag(s, n, n, tag) <- UncheckedSolution(s), Claim(n, tag);
+    HasSecrecyTag(s, source, *down, tag) <- // Propagate tags 'downstream'
+        HasSecrecyTag(s, source, curr, tag),
         for (up, down) in &s.solution().edges,
         (*up == curr),
-        !TrustedToRemoveTag(*down, tag),
-        !TrustedToRemoveTagFromNode(*down, curr);
+        !TrustedToRemoveSecrecyTag(*down, tag),
+        !TrustedToRemoveSecrecyTagFromNode(*down, curr);
 
-    HasTag(s, source, down, tag) <- // Propagate tags 'across stream' (i.e. inside a particle)
-        HasTag(s, source, curr, tag),
+    HasSecrecyTag(s, source, down, tag) <- // Propagate tags 'across stream' (i.e. inside a particle)
+        HasSecrecyTag(s, source, curr, tag),
         Node(particle, curr, curr_ty),
         HasCapability(curr_cap, curr_ty),
         Capability(_, curr_cap), // Is input (e.g. read)
         Node(particle, down, down_ty),
         (curr != down),
-        !TrustedToRemoveTag(down, tag),
-        !TrustedToRemoveTagFromNode(down, curr),
+        !TrustedToRemoveSecrecyTag(down, tag),
+        !TrustedToRemoveSecrecyTagFromNode(down, curr),
         HasCapability(down_cap, down_ty), // Has to be able to output it.
         Capability(down_cap, _); // Is output (e.g. write)
 
     Leak(s, n, t1, source, t2) <-
         Check(n, t1),
         LessPrivateThan(t1, t2),
-        HasTag(s, source, n, t2); // Check failed, node has a 'more private' tag i.e. is leaking.
+        HasSecrecyTag(s, source, n, t2); // Check failed, node has a 'more private' tag i.e. is leaking.
 
     TypeError(s, *from, from_ty, *to, to_ty) <-
         UncheckedSolution(s),
@@ -274,7 +283,9 @@ pub struct Feedback {
     #[serde(default, skip_serializing_if = "is_default")]
     pub type_errors: Vec<TypeError>,
     #[serde(default, skip_serializing_if = "is_default")]
-    pub has_tags: Vec<HasTag>,
+    pub has_secrecy_tags: Vec<HasSecrecyTag>,
+    #[serde(default, skip_serializing_if = "is_default")]
+    pub has_integrity_tags: Vec<HasIntegrityTag>,
 }
 
 fn starting_recipes() -> Vec<Recipe> {
@@ -317,9 +328,13 @@ pub struct Recipe {
     #[serde(default, skip_serializing_if = "is_default")]
     pub checks: Vec<Check>,
     #[serde(default, skip_serializing_if = "is_default")]
-    pub trusted_to_remove_tag: Vec<TrustedToRemoveTag>,
+    pub trusted_to_add_integrity_tag: Vec<TrustedToAddIntegrityTag>,
     #[serde(default, skip_serializing_if = "is_default")]
-    pub trusted_to_remove_tag_from_node: Vec<TrustedToRemoveTagFromNode>,
+    pub trusted_to_add_integrity_tag_from_node: Vec<TrustedToAddIntegrityTagFromNode>,
+    #[serde(default, skip_serializing_if = "is_default")]
+    pub trusted_to_remove_secrecy_tag: Vec<TrustedToRemoveSecrecyTag>,
+    #[serde(default, skip_serializing_if = "is_default")]
+    pub trusted_to_remove_secrecy_tag_from_node: Vec<TrustedToRemoveSecrecyTagFromNode>,
     #[serde(default, skip_serializing_if = "is_default")]
     pub edges: Vec<(Ent, Ent)>,
     #[cfg(feature = "ancestors")]
@@ -340,8 +355,10 @@ impl Recipe {
             nodes: vec![],
             claims: vec![],
             checks: vec![],
-            trusted_to_remove_tag: vec![],
-            trusted_to_remove_tag_from_node: vec![],
+            trusted_to_remove_secrecy_tag: vec![],
+            trusted_to_remove_secrecy_tag_from_node: vec![],
+            trusted_to_add_integrity_tag: vec![],
+            trusted_to_add_integrity_tag_from_node: vec![],
             edges: solution.edges.iter().cloned().collect(),
         }
     }
@@ -432,8 +449,10 @@ impl Ibis {
                 checks,
                 claims,
                 nodes,
-                trusted_to_remove_tag,
-                trusted_to_remove_tag_from_node,
+                trusted_to_remove_secrecy_tag,
+                trusted_to_remove_secrecy_tag_from_node,
+                trusted_to_add_integrity_tag,
+                trusted_to_add_integrity_tag_from_node,
                 feedback: _,
                 metadata: _,
                 id: _,
@@ -445,11 +464,13 @@ impl Ibis {
             runtime.extend(checks);
             runtime.extend(claims);
             runtime.extend(nodes);
-            runtime.extend(trusted_to_remove_tag);
-            runtime.extend(trusted_to_remove_tag_from_node);
+            runtime.extend(trusted_to_remove_secrecy_tag);
+            runtime.extend(trusted_to_remove_secrecy_tag_from_node);
+            runtime.extend(trusted_to_add_integrity_tag);
+            runtime.extend(trusted_to_add_integrity_tag_from_node);
         }
 
-        let (solutions, unchecked_solutions, has_tags, leaks, type_errors) = runtime.run();
+        let (solutions, unchecked_solutions, has_secrecy_tags, has_integrity_tags, leaks, type_errors) = runtime.run();
         let recipes: Vec<Sol> = if let Some(true) = &self.config.flags.get(PLANNING) {
             solutions.iter().map(|Solution(s)| *s).collect()
         } else {
@@ -472,9 +493,14 @@ impl Ibis {
                         .filter(|TypeError(type_s, _, _, _, _)| type_s == s)
                         .cloned()
                         .collect(),
-                    has_tags: has_tags
+                    has_integrity_tags: has_integrity_tags
                         .iter()
-                        .filter(|HasTag(has_tag_s, _, _, _)| has_tag_s == s)
+                        .filter(|HasIntegrityTag(has_tag_s, _, _, _)| has_tag_s == s)
+                        .cloned()
+                        .collect(),
+                    has_secrecy_tags: has_secrecy_tags
+                        .iter()
+                        .filter(|HasSecrecyTag(has_tag_s, _, _, _)| has_tag_s == s)
                         .cloned()
                         .collect(),
                 })
@@ -502,11 +528,11 @@ impl Ibis {
             shared.claims.extend(recipe.claims);
             shared.checks.extend(recipe.checks);
             shared
-                .trusted_to_remove_tag
-                .extend(recipe.trusted_to_remove_tag);
+                .trusted_to_remove_secrecy_tag
+                .extend(recipe.trusted_to_remove_secrecy_tag);
             shared
-                .trusted_to_remove_tag_from_node
-                .extend(recipe.trusted_to_remove_tag_from_node);
+                .trusted_to_remove_secrecy_tag_from_node
+                .extend(recipe.trusted_to_remove_secrecy_tag_from_node);
         }
         Ibis {
             config: self.config,

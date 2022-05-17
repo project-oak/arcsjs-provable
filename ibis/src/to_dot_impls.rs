@@ -6,7 +6,7 @@
 
 use crate::dot::{DotGraph, ToDot};
 use crate::recipes::{
-    Check, Claim, HasTag, Ibis, Leak, Node, Recipe, TrustedToRemoveTag, TrustedToRemoveTagFromNode,
+    Check, Claim, HasSecrecyTag, HasIntegrityTag, Ibis, Leak, Node, Recipe, TrustedToRemoveSecrecyTag, TrustedToAddIntegrityTag, TrustedToRemoveSecrecyTagFromNode, TrustedToAddIntegrityTagFromNode,
     TypeError,
 };
 use crate::Sol;
@@ -76,28 +76,53 @@ impl ToDot for (&Ibis, &Recipe) {
         let mut particles = HashMap::new();
         for Node(particle, node, ty) in &ibis.shared.nodes {
             let mut extras: HashSet<String> = HashSet::new();
-            let mut tags: HashMap<String, Vec<String>> = HashMap::new();
-            for HasTag(_hts, source, sink, tag) in &recipe.feedback.has_tags {
+            let mut tags: HashMap<String, HashSet<(String, String)>> = HashMap::new();
+            for HasSecrecyTag(_hts, source, sink, tag) in &recipe.feedback.has_secrecy_tags {
                 if sink == node && source != node {
                     tags.entry(tag.to_string())
-                        .or_insert(vec![])
-                        .push(source.to_string());
+                        .or_insert(hset![])
+                        .insert(("secrecy".to_string(), source.to_string()));
                 }
             }
-            for TrustedToRemoveTag(trusted_n, tag) in &ibis.shared.trusted_to_remove_tag {
+            for HasIntegrityTag(_hts, source, sink, tag) in &recipe.feedback.has_integrity_tags {
+                if sink == node && source != node {
+                    tags.entry(tag.to_string())
+                        .or_insert(hset![])
+                        .insert(("integrity".to_string(), source.to_string()));
+                }
+            }
+            for TrustedToRemoveSecrecyTag(trusted_n, tag) in &ibis.shared.trusted_to_remove_secrecy_tag {
                 if trusted_n == node {
                     extras.insert(format!(
-                        "<font color=\"red\">trusted to drop tag '{}'</font>",
+                        "<font color=\"red\">trusted to drop secrecy tag '{}'</font>",
                         tag
                     ));
                 }
             }
-            for TrustedToRemoveTagFromNode(trusted_n, source_node) in
-                &ibis.shared.trusted_to_remove_tag_from_node
+            for TrustedToRemoveSecrecyTagFromNode(trusted_n, source_node) in
+                &ibis.shared.trusted_to_remove_secrecy_tag_from_node
             {
                 if trusted_n == node {
                     extras.insert(format!(
-                        "<font color=\"red\">trusted to drop tags from '{}'</font>",
+                        "<font color=\"red\">trusted to drop secrecy tags from '{}'</font>",
+                        source_node
+                    ));
+                }
+            }
+            for TrustedToAddIntegrityTag(trusted_n, tag) in &ibis.shared.trusted_to_add_integrity_tag {
+                if trusted_n == node {
+                    extras.insert(format!(
+                        "<font color=\"red\">trusted to add integrity tag '{}'</font>",
+                        tag
+                    ));
+                }
+            }
+            for TrustedToAddIntegrityTagFromNode(trusted_n, source_node) in
+                &ibis.shared.trusted_to_add_integrity_tag_from_node
+            {
+                if trusted_n == node {
+                    extras.insert(format!(
+                        "<font color=\"red\">trusted to add integrity tags from '{}'</font>",
                         source_node
                     ));
                 }
@@ -119,6 +144,7 @@ impl ToDot for (&Ibis, &Recipe) {
                 }
             }
             for (tag, sources) in &tags {
+                let sources: Vec<String> = sources.iter().map(|(kind, tag)| format!("{} {}", kind, tag)).collect();
                 extras.insert(format!(
                     "<font color=\"purple\">'{}' from {}</font>",
                     tag,

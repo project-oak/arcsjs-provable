@@ -24,6 +24,22 @@ macro_rules! map {
 }
 
 #[macro_export]
+macro_rules! hset {
+    () => {
+        std::collections::HashSet::new()
+    };
+    ( $( $arg: expr ),* $(,)?) => {
+        {
+            let mut st = set!();
+            $(
+                st.insert( $arg );
+            )*
+            st
+        }
+    };
+}
+
+#[macro_export]
 macro_rules! set {
     () => {
         std::collections::BTreeSet::new()
