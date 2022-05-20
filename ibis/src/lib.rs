@@ -17,6 +17,8 @@ mod type_struct;
 mod util;
 #[cfg(feature = "dot")]
 pub mod dot;
+#[cfg(feature = "d3")]
+pub mod d3;
 pub mod recipes;
 #[cfg(feature = "dot")]
 pub mod to_dot_impls;
