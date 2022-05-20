@@ -4,6 +4,9 @@ on:
   push:
     branches: [ main ]
 
+permissions:
+  contents: write
+
 defaults:
  run:
   working-directory: ./ibis
@@ -40,6 +43,8 @@ jobs:
         if-no-files-found: error
         name: ibis
         path: ibis/pkg/*
+    - name: 'Check build output'
+      run: git diff | cat || true
     - name: Deploy 🚀
       uses: JamesIves/github-pages-deploy-action@v4.2.5
       with:
