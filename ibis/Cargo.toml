@@ -15,9 +15,10 @@ crate-type = ["cdylib", "rlib"]
 # rlib is for native
 
 [features]
-default = [ "dot", "wasm" ]
+default = [ "dot", "d3", "wasm" ]
 ancestors = [] # Support the tracking of ancestor solutions
 dot = [] # Support the generation of dot graphs (for debugging)
+d3 = [] # Support the generation of d3 graphs (for user interface)
 wasm = [ "wasm-bindgen", "console_error_panic_hook" ] # Support wasm-bindgen API
 
 [dependencies]

@@ -249,7 +249,9 @@ fn is_default<T: Default + Eq>(v: &T) -> bool {
 }
 
 const PLANNING: &str = "planning";
-const FLAGS: &[&str] = &[PLANNING];
+const D3_OUTPUT: &str = "d3";
+const DOT_OUTPUT: &str = "dot";
+const FLAGS: &[&str] = &[PLANNING, D3_OUTPUT, DOT_OUTPUT];
 
 #[derive(Default, Debug, Clone, Serialize, Deserialize, Eq, PartialEq)]
 #[serde(deny_unknown_fields)]
@@ -296,6 +298,10 @@ pub struct Ibis {
     pub num_solutions: usize,
     #[serde(default, skip_serializing_if = "is_default")]
     pub num_selected: usize,
+    #[serde(default, skip_serializing_if = "is_default")]
+    pub d3_output: Option<crate::d3::D3Graph>,
+    #[serde(default, skip_serializing_if = "is_default")]
+    pub dot_output: Option<String>,
 }
 
 #[derive(Default, Debug, Clone, Serialize, Deserialize, Eq, PartialEq)]
@@ -383,10 +389,12 @@ impl Ibis {
                     flags,
                 },
             mut recipes, // Mutation required to move rather than copy the data.
+            shared,
             num_unchecked_solutions: _,
             num_solutions: _,
             num_selected: _,
-            shared,
+            d3_output: _,
+            dot_output: _,
         } = recipes;
         self.config.flags = flags; // TODO: Merge not overwrite.
         self.config.subtypes.extend(subtypes);
@@ -404,7 +412,7 @@ impl Ibis {
                 runtime.extend(&[FlagEnabled(flag, *value)]);
             } else {
                 warnings.push(format!(
-                    "Unknown flag {:?} set to: {:?}. Known flags are {}",
+                    "Unknown flag '{}' set to: {:?}. Known flags are {}",
                     key,
                     value,
                     FLAGS.join(", ")
@@ -508,13 +516,33 @@ impl Ibis {
                 .trusted_to_remove_tag_from_node
                 .extend(recipe.trusted_to_remove_tag_from_node);
         }
-        Ibis {
-            config: self.config,
+
+        let mut result = Ibis {
+            config: self.config.clone(),
             num_unchecked_solutions: unchecked_solutions.len(),
             num_solutions: solutions.len(),
             num_selected: recipes.len(),
             recipes,
             shared,
+            // '_output's are unused unless requested
+            d3_output: None,
+            dot_output: None,
+        };
+
+        #[cfg(feature = "d3")]
+        if let Some(true) = self.config.flags.get(D3_OUTPUT).cloned() {
+            // Generate the d3 output
+            use crate::d3::ToD3;
+            result.d3_output = Some(result.to_d3());
         }
+
+        #[cfg(feature = "dot")]
+        if let Some(true) = self.config.flags.get(DOT_OUTPUT) {
+            // Generate the dot output
+            use crate::dot::ToDot;
+            result.dot_output = Some(result.to_dot());
+        }
+
+        result
     }
 }

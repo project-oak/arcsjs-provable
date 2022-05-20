@@ -3,7 +3,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file or at
 // https://developers.google.com/open-source/licenses/bsd
-import {loadIbis, best_solutions_to_json, best_solutions_to_dot} from '../ibis.js';
+import {loadIbis, run_ibis} from '../ibis.js';
 import {FilePane} from './file-pane.js';
 import {recipe_to_ir} from './converter.js';
 
@@ -87,34 +87,8 @@ async function startup() {
         examples.appendChild(example);
     }
 
-    const preprocessor = async (data) => {
-        console.log(data);
-        const files = [];
-        const recipes = {};
-        for (const [key, value] of Object.entries(data)) {
-            if (key.endsWith('.json')) { // Assume it is ibis IR.
-                files.push(value);
-            } else {
-                recipes[key] = value; // Keep it for conversion.
-            }
-        }
-        if (recipes !== {}) {
-            const output = await recipe_to_ir(recipes);
-            outputPaneJSON.addFile(undefined, output);
-            files.push(output);
-        }
-        return files;
-    };
-
-    const to_json_callback = () => run(preprocessor, best_solutions_to_json, json => {
-        return JSON.stringify(JSON.parse(json), undefined, 2);
-    }, outputPaneJSON);
-    const to_json = document.getElementById('to_json');
-    to_json.addEventListener("click", to_json_callback);
-
-    const to_dot_callback = () => run(preprocessor, best_solutions_to_dot, noop, outputPaneDot);
-    const to_dot = document.getElementById('to_dot');
-    to_dot.addEventListener("click", to_dot_callback);
+    const run_button = document.getElementById('run');
+    run_button.addEventListener("click", run_playground);
 
     const addFile = document.getElementById('add_file');
     addFile.addEventListener('change', async () => {
@@ -123,7 +97,7 @@ async function startup() {
         }
     });
 
-    filePane.addExecuteCallback(to_dot_callback);
+    filePane.addExecuteCallback(run_playground);
 
     outputPaneDot.addTabSwitchCallback(() => {
         const contents = outputPaneDot.active.value;
@@ -132,7 +106,7 @@ async function startup() {
 
     outputPaneJSON.addTabSwitchCallback(() => {
         const contents = outputPaneJSON.active.value;
-        console.info(JSON.parse(contents));
+        console.info('output pane json:', JSON.parse(contents));
     });
 
     const feedback = document.getElementById('feedback');
@@ -164,7 +138,7 @@ async function startup() {
         ),
         getInputsFromURI()
     ]);
-    await to_dot_callback();
+    await run_playground();
 }
 
 async function setURIFromInputs() {
@@ -183,12 +157,48 @@ async function setURIFromInputs() {
 }
 
 
-async function run(preparer, ibis_function, formatter, destination) {
+async function run_playground() {
+    const outputPaneDot = document.getElementById('outputPaneDot');
+    const outputPaneD3 = document.getElementById('outputPaneD3');
+    const outputPaneJSON = document.getElementById('outputPaneJSON');
     const filePane = document.getElementById('filePane');
+    const settings = {
+        flags: {
+            planning: false,
+            dot: true,
+            d3: true,
+        },
+    };
+
+    const preparer = async (data) => {
+        console.log('input data:', data);
+        const files = [JSON.stringify(settings)];
+        const recipes = {};
+        for (const [key, value] of Object.entries(data)) {
+            if (key.endsWith('.json')) { // Assume it is ibis IR.
+                files.push(value);
+            } else {
+                recipes[key] = value; // Keep it for conversion.
+            }
+        }
+        if (recipes !== {}) {
+            const output = await recipe_to_ir(recipes);
+            outputPaneJSON.addFile(undefined, output);
+            files.push(output);
+        }
+        return files;
+    };
+
     const prepared = await preparer(filePane.getFileContents());
-    const result = ibis_function(prepared);
-    const outputFile = destination.addFile(undefined, formatter(result));
-    outputFile.disabled = true;
+    const result = run_ibis(prepared);
+    const outputFileJSON = outputPaneJSON.addFile(undefined, result);
+    outputFileJSON.disabled = true;
+    const dot_output = JSON.parse(result).dot_output;
+    const outputFileDot = outputPaneDot.addFile(undefined, dot_output);
+    outputFileDot.disabled = true;
+    const d3_output = JSON.parse(result).d3_output;
+    const outputFileD3 = outputPaneD3.addFile(undefined, JSON.stringify(d3_output, undefined, 2));
+    outputFileD3.disabled = true;
 }
 
 window.onload = function() {

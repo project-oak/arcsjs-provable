@@ -34,13 +34,17 @@
 <span id="29">29</span>
 <span id="30">30</span>
 <span id="31">31</span>
+<span id="32">32</span>
+<span id="33">33</span>
+<span id="34">34</span>
+<span id="35">35</span>
 </pre><pre class="rust"><code><span class="comment">// Copyright 2022 Google LLC</span>
 <span class="comment">//</span>
 <span class="comment">// Use of this source code is governed by a BSD-style</span>
 <span class="comment">// license that can be found in the LICENSE file or at</span>
 <span class="comment">// https://developers.google.com/open-source/licenses/bsd</span>
 
-<span class="kw">use</span> <span class="ident">ibis::best_solutions_to_json</span>;
+<span class="kw">use</span> <span class="ident">ibis::run_ibis</span>;
 <span class="kw">use</span> <span class="ident">ibis::IbisError</span>;
 <span class="kw">use</span> <span class="ident">std::io::Read</span>;
 
@@ -51,7 +55,11 @@
         .<span class="ident">read_to_string</span>(<span class="kw-2">&amp;mut</span> <span class="ident">data</span>)
         .<span class="ident">expect</span>(<span class="string">&quot;IO Error, reading stdin&quot;</span>);
     <span class="macro">eprintln!</span>(<span class="string">&quot;Preparing graph...&quot;</span>);
-    <span class="macro">println!</span>(<span class="string">&quot;{}&quot;</span>, <span class="ident">best_solutions_to_json</span>(<span class="kw-2">&amp;</span><span class="ident">data</span>));
+    <span class="kw">let</span> <span class="ident">solutions</span> <span class="op">=</span> <span class="ident">run_ibis</span>(<span class="kw-2">&amp;</span><span class="ident">data</span>);
+    <span class="macro">println!</span>(
+        <span class="string">&quot;{}&quot;</span>,
+        <span class="ident">serde_json::to_string</span>(<span class="kw-2">&amp;</span><span class="ident">solutions</span>).<span class="ident">expect</span>(<span class="string">&quot;Couldn&#39;t serialize Ibis output&quot;</span>)
+    );
     <span class="prelude-val">Ok</span>(())
 }
 
