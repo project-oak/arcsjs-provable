@@ -10,8 +10,8 @@ import {recipe_to_ir} from './converter.js';
 window.customElements.define('file-pane', FilePane);
 
 const known_files = {
-    chromium: '../chromium.json',
-    demo: '../demo.json',
+    chromium: '../examples/chromium.json',
+    demo: '../examples/demo.json',
     "ArcsJs stdlib": '../libs/arcsjs.json',
     "TS stdlib": '../libs/typescript.json',
     "Rust stdlib": '../libs/rust.json',

@@ -9,7 +9,7 @@ use pretty_assertions::assert_eq;
 
 #[test]
 fn demo_json_round_trips() {
-    let data = include_str!("../demo.json");
+    let data = include_str!("../examples/demo.json");
     let ibis: Ibis = serde_json::from_str(data).expect("JSON Error?");
 
     let serialized = serde_json::to_string(&ibis).unwrap();
