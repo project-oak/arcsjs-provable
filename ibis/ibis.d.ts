@@ -14,5 +14,4 @@ export function check_is_subtype(
   supertype: string,
   subtypes: [string, string][]
 ): boolean;
-export function best_solutions_to_json(input: string): string;
-export function best_solutions_to_dot(input: string): string;
+export function best_solutions(input: string): string;

@@ -59,7 +59,8 @@ function merge_recipe(dest, new_recipe) {
     }
 }
 
-function run(func, input) {
+
+export function best_solutions(input) {
     try {
         logStatus(`Merging recipes...`);
         const inputData = {};
@@ -72,7 +73,7 @@ function run(func, input) {
         const inputJSON = JSON.stringify(inputData);
         logStatus(`Running...`);
         const startTime = performance.now()
-        const result = func(inputJSON);
+        const result = best_solutions_impl(inputJSON);
         const endTime = performance.now()
         logStatus(`Done in ${(endTime-startTime)/1000.0} seconds`);
         return result;
@@ -101,12 +102,8 @@ export function check_is_subtype(subtype, supertype, subtypes) {
             }
         ]
     };
-    const result = JSON.parse(run(best_solutions_impl, [JSON.stringify(input)]));
+    const result = JSON.parse(best_solutions([JSON.stringify(input)]));
     const errors = result.recipes.map(recipe => recipe.type_errors) || []; // TODO: check for other kinds of errors.
     logStatus(JSON.stringify('Found errors:', errors), 'error');
     return errors.length === 0;
-}
-
-export function best_solutions(input) {
-    return run(best_solutions_impl, input);
 }
