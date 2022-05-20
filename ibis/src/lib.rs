@@ -15,10 +15,10 @@ mod type_parser_cache;
 mod type_struct;
 #[macro_use]
 mod util;
-#[cfg(feature = "dot")]
-pub mod dot;
 #[cfg(feature = "d3")]
 pub mod d3;
+#[cfg(feature = "dot")]
+pub mod dot;
 pub mod recipes;
 #[cfg(feature = "dot")]
 pub mod to_dot_impls;

@@ -16,7 +16,10 @@ fn main() -> Result<(), IbisError> {
         .expect("IO Error, reading stdin");
     eprintln!("Preparing graph...");
     let solutions = run_ibis(&data);
-    println!("{}", serde_json::to_string(&solutions).expect("Couldn't serialize Ibis output"));
+    println!(
+        "{}",
+        serde_json::to_string(&solutions).expect("Couldn't serialize Ibis output")
+    );
     Ok(())
 }
 

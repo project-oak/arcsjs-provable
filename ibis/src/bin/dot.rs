@@ -15,7 +15,12 @@ fn main() -> Result<(), IbisError> {
         .read_to_string(&mut data)
         .expect("IO Error, reading stdin");
     eprintln!("Preparing graph...");
-    println!("{}", run_ibis(&data).dot_output.unwrap_or_else(||"Dot output not found".to_string()));
+    println!(
+        "{}",
+        run_ibis(&data)
+            .dot_output
+            .unwrap_or_else(|| "Dot output not found".to_string())
+    );
     Ok(())
 }
 
