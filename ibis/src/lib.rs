@@ -55,11 +55,43 @@ macro_rules! apply {
 }
 
 #[macro_export]
+macro_rules! is_a {
+    ($type: expr, $parent: expr) => {{
+        let ty = $type.get_type();
+        ty.name == $parent && !ty.args.is_empty()
+    }};
+}
+
+#[macro_export]
 macro_rules! name {
     ($type: expr) => {
         // TODO: remove this
         ent!(&$type.get_type().name)
     };
+}
+
+#[macro_export]
+macro_rules! arg {
+    ($type: expr, $ind: expr) => {{
+        let ty = $type.get_type();
+        let ind = $ind;
+        if ind >= ty.args.len() {
+            panic!("Cannot access argument {} of {}", ind, ty);
+        }
+        // Clones an Arc
+        Ent::by_type(ty.args[ind].clone())
+    }};
+}
+
+#[macro_export]
+macro_rules! args {
+    ($type: expr) => {{
+        $type
+            .get_type()
+            .args
+            .iter()
+            .map(|arg| Ent::by_type(arg.clone()))
+    }};
 }
 
 pub fn get_solutions(data: &str, loss: Option<usize>) -> Ibis {

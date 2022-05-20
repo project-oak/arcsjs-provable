@@ -35,36 +35,6 @@ fn a_product_is_a_subtype_of_its_arguments() {
 }
 
 #[test]
-fn a_type_is_not_a_subtype_of_products_of_its_super_types_and_something_else() {
-    let solutions = all_edges(
-        r#"
-{
-  "flags": {
-    "planning": true
-  },
-  "capabilities": [
-    ["any", "any"]
-  ],
-  "subtypes": [
-    ["Man", "Mortal"],
-    ["Man", "Human"],
-    ["Socretes", "Man"]
-  ],
-  "recipes": [
-    {
-      "nodes": [
-        ["p_a", "a", "any {Mortal, Human, Man, Socretes, Dog}"],
-        ["p_b", "b", "any Socretes"]
-      ]
-    }
-  ]
-}"#,
-    );
-    let expected: Vec<String> = vec!["a -> b".to_string()];
-    assert_eq!(solutions, expected);
-}
-
-#[test]
 fn a_type_is_a_subtype_of_products_of_its_super_types() {
     let solutions = all_edges(
         r#"
@@ -77,20 +47,19 @@ fn a_type_is_a_subtype_of_products_of_its_super_types() {
   ],
   "subtypes": [
     ["Man", "Mortal"],
-    ["Man", "Human"],
-    ["Socretes", "Man"]
+    ["Man", "Human"]
   ],
   "recipes": [
     {
       "nodes": [
-        ["p_a", "a", "any {Mortal, Human, Man, Socretes}"],
-        ["p_b", "b", "any Socretes"]
+        ["p_a", "a", "any {Human, Mortal}"],
+        ["p_b", "b", "any Man"]
       ]
     }
   ]
 }"#,
     );
-    let expected: Vec<String> = vec!["a -> b, b -> a".to_string()];
+    let expected: Vec<String> = vec!["b -> a".to_string()];
     assert_eq!(solutions, expected);
 }
 

@@ -7,7 +7,7 @@
 
 use crate::type_struct::*;
 use crate::util::make;
-use crate::{apply, ent, name, Ent, Sol, SolutionData};
+use crate::{apply, arg, args, ent, is_a, name, Ent, Sol, SolutionData};
 use crepe::crepe;
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
@@ -86,103 +86,102 @@ crepe! {
 
     HasCapability(cap, ty) <-
         KnownType(ty),
-        (ty.is_a(WITH_CAPABILITY)),
-        Subtype(ty.args()[0], cap);
+        (is_a!(ty, WITH_CAPABILITY)),
+        Subtype(arg!(ty, 0), cap);
 
     HasCapability(cap, ty) <-
         KnownType(ty),
-        (ty.is_a(WITH_CAPABILITY)),
-        HasCapability(cap, ty.args()[1]); // Has all the child capabilities too.
+        (is_a!(ty, WITH_CAPABILITY)),
+        HasCapability(cap, arg!(ty, 1)); // Has all the child capabilities too.
 
     // Base case: just types.
     CompatibleWith(x, y) <-
         KnownType(x),
-        (!x.is_a(WITH_CAPABILITY)),
+        (!is_a!(x, WITH_CAPABILITY)),
         KnownType(y),
-        (!y.is_a(WITH_CAPABILITY)),
+        (!is_a!(y, WITH_CAPABILITY)),
         // ({eprintln!("checking subtyping ({}) ({})", x, y); true}),
         Subtype(x, y);
 
     CompatibleWith(x, y) <- // Check that y has the capabilities required by x.
         KnownType(x),
-        (x.is_a(WITH_CAPABILITY)),
+        (is_a!(x, WITH_CAPABILITY)),
         KnownType(y),
         HasCapability(y_cap, y), // For each of the capabilities y supports
-        Subtype(x.args()[0], x_cap),
+        Subtype(arg!(x, 0), x_cap),
         Capability(x_cap, y_cap), // If this one is supported we can continue.
-        CompatibleWith(x.args()[1], y);
+        CompatibleWith(arg!(x, 1), y);
 
     CompatibleWith(x, y) <- // If a type has no capabilities, discard the capabilities of it's possible super type.
         KnownType(x),
-        (!x.is_a(WITH_CAPABILITY)),
+        (!is_a!(x, WITH_CAPABILITY)),
         KnownType(y),
-        (y.is_a(WITH_CAPABILITY)),
+        (is_a!(y, WITH_CAPABILITY)),
         // ({eprintln!("discarding capability from y ({}) ({})", x, y); true}),
-        CompatibleWith(x, y.args()[1]);
+        CompatibleWith(x, arg!(y, 1));
 
-    // TODO: Replace with the 'all' aggregate when it exists.
-    // See https://github.com/ekzhang/crepe/issues/10
-    struct SubtypesAllArgs(Ent, Ent, usize);
-    SubtypesAllArgs(x, y, 0) <- KnownType(x), KnownType(y);
-    SubtypesAllArgs(x, y, n+1) <-
-        SubtypesAllArgs(x, y, n),
-        (n < y.num_args()),
-        Subtype(x, y.args()[n]);
-
-    // TODO: Replace with the 'all' aggregate when it exists.
-    // See https://github.com/ekzhang/crepe/issues/10
-    struct SupertypesAllArgs(Ent, Ent, usize);
-    SupertypesAllArgs(x, y, 0) <- KnownType(x), KnownType(y);
-    SupertypesAllArgs(x, y, n+1) <-
-        SupertypesAllArgs(x, y, n),
-        (n < y.num_args()),
-        Subtype(y.args()[n], x);
-
-    Subtype(x, prod) <-
+    Subtype(
+        x,
+        prod
+    ) <-
         KnownType(prod),
-        (prod.is_a(PRODUCT)),
+        (is_a!(prod, PRODUCT)),
         KnownType(x),
-        SubtypesAllArgs(x, prod, prod.num_args());
+        Subtype(x, arg!(prod, 0)),
+        Subtype(x, arg!(prod, 1));
 
     Subtype(
         prod,
-        arg
+        arg!(prod, 0)
     ) <-
         KnownType(prod),
-        (prod.is_a(PRODUCT)),
-        for arg in prod.args();
+        (is_a!(prod, PRODUCT));
+
+    Subtype(
+        prod,
+        arg!(prod, 1)
+    ) <-
+        KnownType(prod),
+        (is_a!(prod, PRODUCT));
 
     Subtype(
         union_type,
         x
     ) <-
         KnownType(union_type),
-        (union_type.is_a(UNION)),
+        (is_a!(union_type, UNION)),
         KnownType(x),
-        SupertypesAllArgs(x, union_type, union_type.num_args());
+        Subtype(arg!(union_type, 0), x),
+        Subtype(arg!(union_type, 1), x);
 
     Subtype(
-        arg,
+        arg!(union_type, 0),
         union_type
     ) <-
         KnownType(union_type),
-        (union_type.is_a(UNION)),
-        for arg in union_type.args();
+        (is_a!(union_type, UNION));
+
+    Subtype(
+        arg!(union_type, 1),
+        union_type
+    ) <-
+        KnownType(union_type),
+        (is_a!(union_type, UNION));
 
     Subtype(
         labelled,
-        labelled.args()[1]
+        arg!(labelled, 1)
     ) <-
         KnownType(labelled),
-        (labelled.is_a(LABELLED));
+        (is_a!(labelled, LABELLED));
 
     Subtype(
         labelled,
-        apply!(ent!(LABELLED), labelled.args()[0], sup)
+        apply!(ent!(LABELLED), arg!(labelled, 0), sup)
     ) <-
         KnownType(labelled),
-        (labelled.is_a(LABELLED)),
-        Subtype(labelled.args()[1], sup);
+        (is_a!(labelled, LABELLED)),
+        Subtype(arg!(labelled, 1), sup);
 
     Subtype(
         apply!(x_generic, x_arg),
@@ -235,7 +234,7 @@ crepe! {
         !Leak(s, _, _, _, _);
 
     KnownType(name!(ty)) <- KnownType(ty); // Types without their arguments are still types
-    KnownType(arg) <- KnownType(ty), for arg in ty.args(); // Types arguments are types
+    KnownType(arg) <- KnownType(ty), for arg in args!(ty); // Types arguments are types
     KnownType(x) <- Node(_par, _node, x); // Infer types that are used in the recipes.
     KnownType(x) <- Subtype(x, _);
     KnownType(y) <- Subtype(_, y);
