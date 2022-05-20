@@ -16,25 +16,11 @@ impl ToDot for Ibis {
     fn to_dot_repr(&self) -> DotGraph {
         let mut g = DotGraph::default();
 
-        let solutions = if true {
-            self.recipes.iter().collect()
-        } else {
-            let mut max = 0;
-            let mut best = None;
-            for s in &self.recipes {
-                let l = s.edges.len();
-                if l > max {
-                    best = Some(s);
-                    max = l;
-                }
-            }
-            vec![best.expect("Expected a 'best' solution")]
-        };
-        for recipe in solutions.iter() {
+        for recipe in &self.recipes {
             let sol = &recipe.id.unwrap_or_else(Sol::empty);
             let s_id = sol_id(sol);
             #[allow(unused_mut)]
-            let mut sol_graph = (self, *recipe).to_dot_repr();
+            let mut sol_graph = (self, recipe).to_dot_repr();
             #[cfg(feature = "ancestors")]
             {
                 let s = Sol::from(*recipe);
