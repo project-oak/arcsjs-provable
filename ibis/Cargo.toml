@@ -1,6 +1,6 @@
 [package]
 name = "arcsjs-ibis"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 description = "Ibis - a knowledge engine for type checking asynchronously communicating modules"
 repository = "https://github.com/project-oak/arcsjs-provable"
