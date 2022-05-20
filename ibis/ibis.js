@@ -7,7 +7,7 @@
 import {
     default as ibis,
     version_info,
-    best_solutions as best_solutions_impl,
+    run_ibis as run_ibis_impl,
 } from './pkg/ibis.js';
 
 let ibisStatusCallback = undefined;
@@ -60,7 +60,7 @@ function merge_recipe(dest, new_recipe) {
 }
 
 
-export function best_solutions(input) {
+export function run_ibis(input) {
     try {
         logStatus(`Merging recipes...`);
         const inputData = {};
@@ -73,7 +73,7 @@ export function best_solutions(input) {
         const inputJSON = JSON.stringify(inputData);
         logStatus(`Running...`);
         const startTime = performance.now()
-        const result = best_solutions_impl(inputJSON);
+        const result = run_ibis_impl(inputJSON);
         const endTime = performance.now()
         logStatus(`Done in ${(endTime-startTime)/1000.0} seconds`);
         return result;
@@ -102,7 +102,7 @@ export function check_is_subtype(subtype, supertype, subtypes) {
             }
         ]
     };
-    const result = JSON.parse(best_solutions([JSON.stringify(input)]));
+    const result = JSON.parse(run_ibis([JSON.stringify(input)]));
     const errors = result.recipes.map(recipe => recipe.type_errors) || []; // TODO: check for other kinds of errors.
     logStatus(JSON.stringify('Found errors:', errors), 'error');
     return errors.length === 0;

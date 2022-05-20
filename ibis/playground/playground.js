@@ -3,7 +3,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file or at
 // https://developers.google.com/open-source/licenses/bsd
-import {loadIbis, best_solutions} from '../ibis.js';
+import {loadIbis, run_ibis} from '../ibis.js';
 import {FilePane} from './file-pane.js';
 import {recipe_to_ir} from './converter.js';
 
@@ -88,7 +88,7 @@ async function startup() {
     }
 
     const run_button = document.getElementById('run');
-    run_button.addEventListener("click", run_ibis);
+    run_button.addEventListener("click", run_playground);
 
     const addFile = document.getElementById('add_file');
     addFile.addEventListener('change', async () => {
@@ -97,7 +97,7 @@ async function startup() {
         }
     });
 
-    filePane.addExecuteCallback(run_ibis);
+    filePane.addExecuteCallback(run_playground);
 
     outputPaneDot.addTabSwitchCallback(() => {
         const contents = outputPaneDot.active.value;
@@ -106,7 +106,7 @@ async function startup() {
 
     outputPaneJSON.addTabSwitchCallback(() => {
         const contents = outputPaneJSON.active.value;
-        console.info(JSON.parse(contents));
+        console.info('output pane json:', JSON.parse(contents));
     });
 
     const feedback = document.getElementById('feedback');
@@ -138,7 +138,7 @@ async function startup() {
         ),
         getInputsFromURI()
     ]);
-    await run_ibis();
+    await run_playground();
 }
 
 async function setURIFromInputs() {
@@ -157,15 +157,22 @@ async function setURIFromInputs() {
 }
 
 
-async function run_ibis() {
+async function run_playground() {
     const outputPaneDot = document.getElementById('outputPaneDot');
     const outputPaneD3 = document.getElementById('outputPaneD3');
     const outputPaneJSON = document.getElementById('outputPaneJSON');
     const filePane = document.getElementById('filePane');
+    const settings = {
+        flags: {
+            planning: false,
+            dot: true,
+            d3: true,
+        },
+    };
 
     const preparer = async (data) => {
-        console.log(data);
-        const files = [];
+        console.log('input data:', data);
+        const files = [JSON.stringify(settings)];
         const recipes = {};
         for (const [key, value] of Object.entries(data)) {
             if (key.endsWith('.json')) { // Assume it is ibis IR.
@@ -183,14 +190,14 @@ async function run_ibis() {
     };
 
     const prepared = await preparer(filePane.getFileContents());
-    const result = best_solutions(prepared);
+    const result = run_ibis(prepared);
     const outputFileJSON = outputPaneJSON.addFile(undefined, result);
     outputFileJSON.disabled = true;
     const dot_output = JSON.parse(result).dot_output;
     const outputFileDot = outputPaneDot.addFile(undefined, dot_output);
     outputFileDot.disabled = true;
     const d3_output = JSON.parse(result).d3_output;
-    const outputFileD3 = outputPaneD3.addFile(undefined, d3_output);
+    const outputFileD3 = outputPaneD3.addFile(undefined, JSON.stringify(d3_output, undefined, 2));
     outputFileD3.disabled = true;
 }
 

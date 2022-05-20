@@ -64,6 +64,14 @@ macro_rules! name {
     };
 }
 
+pub fn run_ibis(data: &str) -> Ibis {
+    get_solutions(data, Some(0))
+}
+
+pub fn all_solutions(data: &str) -> Ibis {
+    get_solutions(data, None)
+}
+
 pub fn get_solutions(data: &str, loss: Option<usize>) -> Ibis {
     let mut runtime = Ibis::new();
 
@@ -102,9 +110,9 @@ pub mod wasm {
     }
 
     #[wasm_bindgen]
-    pub fn best_solutions(data: &str) -> String {
+    pub fn run_ibis(data: &str) -> String {
         setup();
-        let solutions = super::best_solutions(data);
+        let solutions = super::run_ibis(data);
         serde_json::to_string(&solutions).expect("Couldn't serialize Ibis output")
     }
 
@@ -114,12 +122,4 @@ pub mod wasm {
         let solutions = super::all_solutions(data);
         serde_json::to_string(&solutions).expect("Couldn't serialize Ibis output")
     }
-}
-
-pub fn best_solutions(data: &str) -> Ibis {
-    get_solutions(data, Some(0))
-}
-
-pub fn all_solutions(data: &str) -> Ibis {
-    get_solutions(data, None)
 }

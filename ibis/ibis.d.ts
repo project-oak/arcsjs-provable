@@ -14,4 +14,4 @@ export function check_is_subtype(
   supertype: string,
   subtypes: [string, string][]
 ): boolean;
-export function best_solutions(input: string): string;
+export function run_ibis(input: string): string;

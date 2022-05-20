@@ -412,7 +412,7 @@ impl Ibis {
                 runtime.extend(&[FlagEnabled(flag, *value)]);
             } else {
                 warnings.push(format!(
-                    "Unknown flag '{}' set to: '{}'. Known flags are {}",
+                    "Unknown flag '{}' set to: {:?}. Known flags are {}",
                     key,
                     value,
                     FLAGS.join(", ")

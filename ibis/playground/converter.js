@@ -101,7 +101,6 @@ export async function recipe_to_ir(all_js) {
     }
 
     const all_ir = {
-        flags: { planning: false },
         subtypes: [
             ['any', 'read'],
             ['any', 'write'],
