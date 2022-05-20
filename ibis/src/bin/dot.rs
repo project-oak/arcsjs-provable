@@ -4,7 +4,7 @@
 // license that can be found in the LICENSE file or at
 // https://developers.google.com/open-source/licenses/bsd
 
-use ibis::best_solutions_to_dot;
+use ibis::best_solutions;
 use ibis::IbisError;
 use std::io::Read;
 
@@ -15,8 +15,7 @@ fn main() -> Result<(), IbisError> {
         .read_to_string(&mut data)
         .expect("IO Error, reading stdin");
     eprintln!("Preparing graph...");
-    #[cfg(feature = "dot")]
-    println!("{}", best_solutions_to_dot(&data));
+    println!("{}", best_solutions(&data).dot_output.unwrap_or_else(||"Dot output not found".to_string()));
     Ok(())
 }
 

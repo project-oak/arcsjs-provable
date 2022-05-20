@@ -102,52 +102,24 @@ pub mod wasm {
     }
 
     #[wasm_bindgen]
-    pub fn best_solutions_to_json(data: &str) -> String {
+    pub fn best_solutions(data: &str) -> String {
         setup();
-        super::best_solutions_to_json(data)
+        let solutions = super::best_solutions(data);
+        serde_json::to_string(&solutions).expect("Couldn't serialize Ibis output")
     }
 
     #[wasm_bindgen]
-    pub fn all_solutions_to_json(data: &str) -> String {
+    pub fn all_solutions(data: &str) -> String {
         setup();
-        super::all_solutions_to_json(data)
-    }
-
-    #[cfg(feature = "dot")]
-    #[wasm_bindgen]
-    pub fn best_solutions_to_dot(data: &str) -> String {
-        setup();
-        super::best_solutions_to_dot(data)
-    }
-
-    #[cfg(feature = "dot")]
-    #[wasm_bindgen]
-    pub fn all_solutions_to_dot(data: &str) -> String {
-        setup();
-        super::all_solutions_to_dot(data)
+        let solutions = super::all_solutions(data);
+        serde_json::to_string(&solutions).expect("Couldn't serialize Ibis output")
     }
 }
 
-pub fn best_solutions_to_json(data: &str) -> String {
-    let solutions = get_solutions(data, Some(0));
-    serde_json::to_string(&solutions).expect("Couldn't serialize Ibis output")
+pub fn best_solutions(data: &str) -> Ibis {
+    get_solutions(data, Some(0))
 }
 
-pub fn all_solutions_to_json(data: &str) -> String {
-    let solutions = get_solutions(data, None);
-    serde_json::to_string(&solutions).expect("Couldn't serialize Ibis output")
-}
-
-#[cfg(feature = "dot")]
-pub fn best_solutions_to_dot(data: &str) -> String {
-    use dot::ToDot;
-    let solutions = get_solutions(data, Some(0));
-    solutions.to_dot()
-}
-
-#[cfg(feature = "dot")]
-pub fn all_solutions_to_dot(data: &str) -> String {
-    use dot::ToDot;
-    let solutions = get_solutions(data, None);
-    solutions.to_dot()
+pub fn all_solutions(data: &str) -> Ibis {
+    get_solutions(data, None)
 }

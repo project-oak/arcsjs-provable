@@ -517,11 +517,8 @@ impl Ibis {
                 .extend(recipe.trusted_to_remove_tag_from_node);
         }
 
-        let d3_output = self.config.flags.get(D3_OUTPUT).cloned();
-        let dot_output = self.config.flags.get(DOT_OUTPUT).cloned();
-
         let mut result = Ibis {
-            config: self.config,
+            config: self.config.clone(),
             num_unchecked_solutions: unchecked_solutions.len(),
             num_solutions: solutions.len(),
             num_selected: recipes.len(),
@@ -533,14 +530,14 @@ impl Ibis {
         };
 
         #[cfg(feature = "d3")]
-        if let Some(true) = d3_output {
+        if let Some(true) = self.config.flags.get(D3_OUTPUT).cloned() {
             // Generate the d3 output
             use crate::d3::ToD3;
             result.d3_output = Some(result.to_d3());
         }
 
         #[cfg(feature = "dot")]
-        if let Some(true) = dot_output {
+        if let Some(true) = self.config.flags.get(DOT_OUTPUT) {
             // Generate the dot output
             use crate::dot::ToDot;
             result.dot_output = Some(result.to_dot());
