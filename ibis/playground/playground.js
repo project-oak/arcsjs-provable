@@ -4,6 +4,7 @@
 // license that can be found in the LICENSE file or at
 // https://developers.google.com/open-source/licenses/bsd
 import {loadIbis, run_ibis} from '../ibis.js';
+import {ForceGraph} from '../ibis_d3.js';
 import {FilePane} from './file-pane.js';
 import {recipe_to_ir} from './converter.js';
 
@@ -159,7 +160,7 @@ async function setURIFromInputs() {
 
 async function run_playground() {
     const outputPaneDot = document.getElementById('outputPaneDot');
-    const outputPaneD3 = document.getElementById('outputPaneD3');
+    const outputD3 = document.getElementById('outputD3');
     const outputPaneJSON = document.getElementById('outputPaneJSON');
     const filePane = document.getElementById('filePane');
     const settings = {
@@ -197,8 +198,23 @@ async function run_playground() {
     const outputFileDot = outputPaneDot.addFile(undefined, dot_output);
     outputFileDot.disabled = true;
     const d3_output = JSON.parse(result).d3_output;
-    const outputFileD3 = outputPaneD3.addFile(undefined, JSON.stringify(d3_output, undefined, 2));
-    outputFileD3.disabled = true;
+    outputD3.innerText = JSON.stringify(d3_output, undefined, 2);
+
+    const invalidation = async () => {
+        console.log('Someone ran the invalidation!?');
+    };
+    const chart = ForceGraph({
+        nodes: new Array(d3_output['nodes'] || []),
+        links: new Array(d3_output['links'] || [])
+    }, {
+      nodeId: d => d.id,
+      nodeGroup: d => d.group,
+      nodeTitle: d => `${d.id}\n${d.group}`,
+      linkStrokeWidth: l => Math.sqrt(l.value),
+      width: 800,
+      height: 600,
+      invalidation // a promise to stop the simulation when the cell is re-run
+    });
 }
 
 window.onload = function() {

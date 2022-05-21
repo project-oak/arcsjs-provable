@@ -43,6 +43,28 @@ impl D3Graph {
         self.links.push(link);
     }
 
+    // TODO: Might not need this but it seems useful.
+    pub fn map_ids<F: Fn(u64) -> u64>(&mut self, f: &F) {
+        for node in &mut self.nodes {
+            node.id = f(node.id);
+        }
+        for link in &mut self.links {
+            link.target = f(link.target);
+            link.source = f(link.source);
+        }
+    }
+
+    // Usage: to merge disconnected subgraphs, use
+    // let mut result = D3Graph::default();
+    // for (i, graph) of graphs.drain(0..).ennumerate() {
+    //      graph.scale_and_offset_ids(graphs.len(), i);
+    //      result.merge(graph);
+    // }
+    pub fn scale_and_offset_ids(&mut self, mul: u64, offset: u64) {
+        let f = |x| mul*x + offset;
+        self.map_ids(&f);
+    }
+
     pub fn merge(&mut self, other: Self) {
         self.nodes.extend(other.nodes);
         self.links.extend(other.links);
