@@ -18,12 +18,12 @@ const known_files = {
     "Rust stdlib": '../libs/rust.json',
 };
 
-var graphviz = d3.select('#graph').graphviz().transition(function () {
-    return d3.transition('main')
-    .ease(d3.easeLinear)
-    .delay(0)
-    .duration(1500);
-});
+// var graphviz = d3.select('#graph').graphviz().transition(function () {
+    // return d3.transition('main')
+    // .ease(d3.easeLinear)
+    // .delay(0)
+    // .duration(1500);
+// });
 
 function noop(arg) { // also known as `id`
     return arg;
@@ -31,8 +31,8 @@ function noop(arg) { // also known as `id`
 
 function render(dot) {
     try {
-        graphviz
-            .renderDot(dot)
+        // graphviz
+            // .renderDot(dot)
     } catch(error) {
         // Possibly display the error
         console.error(error);
@@ -198,14 +198,13 @@ async function run_playground() {
     const outputFileDot = outputPaneDot.addFile(undefined, dot_output);
     outputFileDot.disabled = true;
     const d3_output = JSON.parse(result).d3_output;
-    outputD3.innerText = JSON.stringify(d3_output, undefined, 2);
 
-    const invalidation = async () => {
-        console.log('Someone ran the invalidation!?');
-    };
+    const invalidation = new Promise((resolve, reject) => {
+        resolve();
+    });
     const chart = ForceGraph({
-        nodes: new Array(d3_output['nodes'] || []),
-        links: new Array(d3_output['links'] || [])
+        nodes: new Array(...(d3_output['nodes'] || [])),
+        links: new Array(...(d3_output['links'] || []))
     }, {
       nodeId: d => d.id,
       nodeGroup: d => d.group,
@@ -215,6 +214,7 @@ async function run_playground() {
       height: 600,
       invalidation // a promise to stop the simulation when the cell is re-run
     });
+    outputD3.replaceChildren(chart);
 }
 
 window.onload = function() {

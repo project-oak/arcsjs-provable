@@ -18,13 +18,25 @@ For the following you'll need [git]() and [cargo](https://rustup.rs).
 # Assuming git and cargo are already installed
 git clone https://github.com/project-oak/arcsjs-provable.git
 cd arcsjs-provable/ibis
-cat demo.json | cargo run --bin dot > out.dot
+cat ./examples/demo.json | cargo run --bin dot > out.dot
 ```
 
 Ibis also has a test suite that can be run with
 
 ```bash
 cargo test
+```
+
+## Getting started with WASM
+
+```bash
+# Build the wasm
+wasm-pack build --target web --release
+
+# Run a server
+npx http-server . -p 8001
+
+# Open http://localhost:8001/playground
 ```
 
 ### Optional tools & dependencies

@@ -3,6 +3,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file or at
 // https://developers.google.com/open-source/licenses/bsd
+use crate::type_struct::WITH_CAPABILITY;
 use crate::ent::EntityIdBackingType;
 use crate::recipes::{Ibis, Node, Recipe};
 use crate::{Ent, Sol};
@@ -84,6 +85,18 @@ impl ToD3 for (&Ibis, &Recipe) {
                 id: node.id,
                 name: format!("{}: {}", node, ty),
             });
+            // if ty.is_a(WITH_CAPABILITY) && ty.args()[0].is_a("write") {
+            d3.add_link(Link {
+                source: particle.id,
+                target: node.id,
+            });
+            // }
+            // if ty.is_a(WITH_CAPABILITY) && ty.args()[0].is_a("read") {
+                // d3.add_link(Link {
+                    // source: node.id,
+                    // target: particle.id,
+                // });
+            // }
         }
         for particle in particles {
             d3.add_node(D3Node {
