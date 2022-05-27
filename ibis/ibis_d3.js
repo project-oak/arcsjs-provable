@@ -12,7 +12,7 @@ export function ForceGraph({
   nodeStroke = "#fff", // node stroke color
   nodeStrokeWidth = 1.5, // node stroke width, in pixels
   nodeStrokeOpacity = 1, // node stroke opacity
-  nodeRadius = 7.5, // node radius, in pixels
+  nodeRadius = 10, // node radius, in pixels
   nodeStrength,
   linkSource = ({source}) => source, // given d in links, returns a node identifier string
   linkTarget = ({target}) => target, // given d in links, returns a node identifier string
@@ -60,6 +60,27 @@ export function ForceGraph({
       .attr("viewBox", [-width / 2, -height / 2, width, height])
       .attr("style", "max-width: 100%; height: auto; height: intrinsic;");
 
+  const arrowScale = 0.5;
+  const arrowPoints = [[0, 0], [0, arrowScale*20], [arrowScale*20, arrowScale*10]];
+  const refX = arrowScale*20+nodeRadius;
+  const refY = arrowScale*10;
+  const markerBoxWidth = arrowScale*20;
+  const markerBoxHeight = arrowScale*20;
+
+  svg
+    .append('defs')
+    .append('marker')
+    .attr('id', 'arrow')
+    .attr('viewBox', [0, 0, markerBoxWidth, markerBoxHeight])
+    .attr('refX', refX)
+    .attr('refY', refY)
+    .attr('markerWidth', markerBoxWidth)
+    .attr('markerHeight', markerBoxHeight)
+    .attr('orient', 'auto-start-reverse')
+    .append('path')
+    .attr('d', d3.line()(arrowPoints));
+    //.attr('stroke', 'black');
+
   const link = svg.append("g")
       .attr("stroke", typeof linkStroke !== "function" ? linkStroke : null)
       .attr("stroke-opacity", linkStrokeOpacity)
@@ -84,6 +105,14 @@ export function ForceGraph({
   if (L) link.attr("stroke", ({index: i}) => L[i]);
   if (G) node.attr("fill", ({index: i}) => color(G[i]));
   node.append("title").text(({index: i}) => nodes[i].name);
+
+  link.attr('marker-end', ({kind}) => {
+      if (kind === 'particle_out_handle' || kind === 'particle_in_handle') {
+          return 'url(#arrow)';
+      }
+      return '';
+  });
+
   if (invalidation != null) invalidation.then(() => simulation.stop());
 
   function intern(value) {

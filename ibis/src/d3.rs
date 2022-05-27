@@ -90,19 +90,25 @@ impl ToD3 for (&Ibis, &Recipe) {
                 group: particle.id,
                 kind: "handle".to_string(),
             });
-            // if ty.is_a(WITH_CAPABILITY) && ty.args()[0].is_a("write") {
-            d3.add_link(Link {
-                source: particle.id,
-                target: node.id,
-                kind: "handle_in_particle".to_string(),
-            });
-            // }
-            // if ty.is_a(WITH_CAPABILITY) && ty.args()[0].is_a("read") {
-                // d3.add_link(Link {
-                    // source: node.id,
-                    // target: particle.id,
-                // });
-            // }
+            if ty.is_a(WITH_CAPABILITY) && ty.args()[0].is_named("write") {
+                d3.add_link(Link {
+                    source: particle.id,
+                    target: node.id,
+                    kind: "particle_out_handle".to_string(),
+                });
+            } else if ty.is_a(WITH_CAPABILITY) && ty.args()[0].is_named("read") {
+                d3.add_link(Link {
+                    source: node.id,
+                    target: particle.id,
+                    kind: "particle_in_handle".to_string(),
+                });
+            } else {
+                d3.add_link(Link {
+                    source: node.id,
+                    target: particle.id,
+                    kind: "particle_handle".to_string(),
+                });
+            }
         }
         for particle in particles {
             d3.add_node(D3Node {

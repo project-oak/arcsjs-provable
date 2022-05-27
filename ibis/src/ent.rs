@@ -50,6 +50,11 @@ impl Ent {
             .expect("All entities should have a type")
     }
 
+    pub fn is_named(&self, parent: &str) -> bool {
+        let ty = self.get_type();
+        ty.name == parent
+    }
+
     pub fn is_a(&self, parent: &str) -> bool {
         let ty = self.get_type();
         ty.name == parent && !ty.args.is_empty()

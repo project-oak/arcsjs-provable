@@ -213,7 +213,13 @@ async function run_playground() {
           if (l.kind === 'type_error' || l.kind === 'leak') {
             return "#f00";
           }
-          if (l.kind === 'handle_in_particle') {
+          if (l.kind === 'particle_in_handle') {
+            return "#050";
+          }
+          if (l.kind === 'particle_out_handle') {
+            return "#005";
+          }
+          if (l.kind === 'particle_handle') {
             return "#000";
           }
           return "#222";
