@@ -39,8 +39,8 @@ export function ForceGraph({
   //  if (nodeTitle === undefined) nodeTitle = (_, i) => N[i];
   //  const T = nodeTitle == null ? null : d3.map(nodes, nodeTitle);
   const G = nodeGroup == null ? null : d3.map(nodes, nodeGroup).map(intern);
-  //  const W = typeof linkStrokeWidth !== "function" ? null : d3.map(links, linkStrokeWidth);
-  //  const L = typeof linkStroke !== "function" ? null : d3.map(links, linkStroke);
+  const W = typeof linkStrokeWidth !== "function" ? null : d3.map(links, linkStrokeWidth);
+  const L = typeof linkStroke !== "function" ? null : d3.map(links, linkStroke);
 
   // Compute default domains.
   if (G && nodeGroups === undefined) nodeGroups = d3.sort(G);
@@ -80,8 +80,8 @@ export function ForceGraph({
       .attr("r", nodeRadius)
       .call(drag(simulation));
 
-  // if (W) link.attr("stroke-width", ({index: i}) => W[i]);
-  // if (L) link.attr("stroke", ({index: i}) => L[i]);
+  if (W) link.attr("stroke-width", ({index: i}) => W[i]);
+  if (L) link.attr("stroke", ({index: i}) => L[i]);
   if (G) node.attr("fill", ({index: i}) => color(G[i]));
   node.append("title").text(({index: i}) => nodes[i].name);
   if (invalidation != null) invalidation.then(() => simulation.stop());

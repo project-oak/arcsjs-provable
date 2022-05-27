@@ -210,11 +210,8 @@ async function run_playground() {
       nodeGroup: d => d.group,
       nodeTitle: d => `${d.id}\n${d.group}`,
       linkStroke: l => {
-          if (l.kind === 'type_error') {
+          if (l.kind === 'type_error' || l.kind === 'leak') {
             return "#f00";
-          }
-          if (l.kind === 'leak') {
-            return "#f30";
           }
           if (l.kind === 'handle_in_particle') {
             return "#000";
@@ -223,7 +220,7 @@ async function run_playground() {
       },
       linkStrokeWidth: l => {
           if (l.kind === 'type_error' || l.kind === 'leak') {
-            return 3;
+            return 5;
           }
           if (l.kind === 'handle_in_particle') {
             return 3;
