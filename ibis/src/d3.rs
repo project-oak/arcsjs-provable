@@ -16,6 +16,7 @@ pub struct D3Node {
     id: EntityIdBackingType,
     name: String,
     group: EntityIdBackingType,
+    kind: String,
 }
 
 #[derive(Default, Debug, Serialize, Deserialize, Eq, PartialEq)]
@@ -23,6 +24,7 @@ pub struct D3Node {
 pub struct Link {
     source: EntityIdBackingType,
     target: EntityIdBackingType,
+    kind: String,
 }
 
 #[derive(Default, Debug, Serialize, Deserialize, Eq, PartialEq)]
@@ -86,11 +88,13 @@ impl ToD3 for (&Ibis, &Recipe) {
                 id: node.id,
                 name: format!("{}: {}", node, ty),
                 group: particle.id,
+                kind: "handle".to_string(),
             });
             // if ty.is_a(WITH_CAPABILITY) && ty.args()[0].is_a("write") {
             d3.add_link(Link {
                 source: particle.id,
                 target: node.id,
+                kind: "handle_in_particle".to_string(),
             });
             // }
             // if ty.is_a(WITH_CAPABILITY) && ty.args()[0].is_a("read") {
@@ -105,6 +109,7 @@ impl ToD3 for (&Ibis, &Recipe) {
                 id: particle.id,
                 name: format!("{}", particle),
                 group: particle.id,
+                kind: "particle".to_string(),
             });
         }
         let sol = &recipe.id.unwrap_or_else(Sol::empty).solution();
@@ -112,6 +117,25 @@ impl ToD3 for (&Ibis, &Recipe) {
             d3.add_link(Link {
                 source: source.id,
                 target: target.id,
+                kind: "connection".to_string(),
+            });
+        }
+
+        use crate::recipes::TypeError;
+        for TypeError(_sol, source, _expected_ty, target, _found_ty) in &recipe.feedback.type_errors {
+            d3.add_link(Link {
+                source: source.id,
+                target: target.id,
+                kind: "type_error".to_string(),
+            });
+        }
+
+        use crate::recipes::Leak;
+        for Leak(_sol, source, _expected_tag, target, _found_tag) in &recipe.feedback.leaks {
+            d3.add_link(Link {
+                source: source.id,
+                target: target.id,
+                kind: "leak".to_string(),
             });
         }
 

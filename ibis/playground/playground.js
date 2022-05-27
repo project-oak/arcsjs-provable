@@ -209,7 +209,30 @@ async function run_playground() {
       nodeId: d => d.id,
       nodeGroup: d => d.group,
       nodeTitle: d => `${d.id}\n${d.group}`,
-      linkStrokeWidth: l => Math.sqrt(l.value),
+      linkStroke: l => {
+          if (l.kind === 'type_error') {
+            return "#f00";
+          }
+          if (l.kind === 'leak') {
+            return "#f30";
+          }
+          if (l.kind === 'handle_in_particle') {
+            return "#000";
+          }
+          return "#222";
+      },
+      linkStrokeWidth: l => {
+          if (l.kind === 'type_error' || l.kind === 'leak') {
+            return 3;
+          }
+          if (l.kind === 'handle_in_particle') {
+            return 3;
+          }
+          if (l.kind === 'connection') {
+            return 1;
+          }
+          return 1;
+      },
       width: 800,
       height: 600,
       invalidation // a promise to stop the simulation when the cell is re-run

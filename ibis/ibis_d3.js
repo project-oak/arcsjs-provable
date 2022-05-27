@@ -12,7 +12,7 @@ export function ForceGraph({
   nodeStroke = "#fff", // node stroke color
   nodeStrokeWidth = 1.5, // node stroke width, in pixels
   nodeStrokeOpacity = 1, // node stroke opacity
-  nodeRadius = 5, // node radius, in pixels
+  nodeRadius = 7.5, // node radius, in pixels
   nodeStrength,
   linkSource = ({source}) => source, // given d in links, returns a node identifier string
   linkTarget = ({target}) => target, // given d in links, returns a node identifier string
@@ -41,10 +41,6 @@ export function ForceGraph({
   const G = nodeGroup == null ? null : d3.map(nodes, nodeGroup).map(intern);
   //  const W = typeof linkStrokeWidth !== "function" ? null : d3.map(links, linkStrokeWidth);
   //  const L = typeof linkStroke !== "function" ? null : d3.map(links, linkStroke);
-
-  // Replace the input nodes and links with mutable objects for the simulation.
-  //  nodes = d3.map(nodes, (_, i) => ({id: N[i]}));
-  //  links = d3.map(links, (_, i) => ({source: LS[i], target: LT[i]}));
 
   // Compute default domains.
   if (G && nodeGroups === undefined) nodeGroups = d3.sort(G);
