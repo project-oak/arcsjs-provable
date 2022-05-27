@@ -15,6 +15,7 @@ use std::collections::HashSet;
 pub struct D3Node {
     id: EntityIdBackingType,
     name: String,
+    group: EntityIdBackingType,
 }
 
 #[derive(Default, Debug, Serialize, Deserialize, Eq, PartialEq)]
@@ -84,6 +85,7 @@ impl ToD3 for (&Ibis, &Recipe) {
             d3.add_node(D3Node {
                 id: node.id,
                 name: format!("{}: {}", node, ty),
+                group: particle.id,
             });
             // if ty.is_a(WITH_CAPABILITY) && ty.args()[0].is_a("write") {
             d3.add_link(Link {
@@ -102,6 +104,7 @@ impl ToD3 for (&Ibis, &Recipe) {
             d3.add_node(D3Node {
                 id: particle.id,
                 name: format!("{}", particle),
+                group: particle.id,
             });
         }
         let sol = &recipe.id.unwrap_or_else(Sol::empty).solution();

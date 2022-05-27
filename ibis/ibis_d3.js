@@ -32,6 +32,26 @@ export function ForceGraph({
   if (nodeStrength !== undefined) forceNode.strength(nodeStrength);
   if (linkStrength !== undefined) forceLink.strength(linkStrength);
 
+  // Compute values.
+  //  const N = d3.map(nodes, nodeId).map(intern);
+  //  const LS = d3.map(links, linkSource).map(intern);
+  //  const LT = d3.map(links, linkTarget).map(intern);
+  //  if (nodeTitle === undefined) nodeTitle = (_, i) => N[i];
+  //  const T = nodeTitle == null ? null : d3.map(nodes, nodeTitle);
+  const G = nodeGroup == null ? null : d3.map(nodes, nodeGroup).map(intern);
+  //  const W = typeof linkStrokeWidth !== "function" ? null : d3.map(links, linkStrokeWidth);
+  //  const L = typeof linkStroke !== "function" ? null : d3.map(links, linkStroke);
+
+  // Replace the input nodes and links with mutable objects for the simulation.
+  //  nodes = d3.map(nodes, (_, i) => ({id: N[i]}));
+  //  links = d3.map(links, (_, i) => ({source: LS[i], target: LT[i]}));
+
+  // Compute default domains.
+  if (G && nodeGroups === undefined) nodeGroups = d3.sort(G);
+
+  // Construct the scales.
+  const color = nodeGroup == null ? null : d3.scaleOrdinal(nodeGroups, colors);
+
   const simulation = d3.forceSimulation(nodes)
       .force("link", forceLink)
       .force("charge", forceNode)
@@ -66,7 +86,7 @@ export function ForceGraph({
 
   // if (W) link.attr("stroke-width", ({index: i}) => W[i]);
   // if (L) link.attr("stroke", ({index: i}) => L[i]);
-  // if (G) node.attr("fill", ({index: i}) => color(G[i]));
+  if (G) node.attr("fill", ({index: i}) => color(G[i]));
   node.append("title").text(({index: i}) => nodes[i].name);
   if (invalidation != null) invalidation.then(() => simulation.stop());
 
@@ -110,5 +130,5 @@ export function ForceGraph({
       .on("end", dragended);
   }
 
-  return Object.assign(svg.node(), {scales: {}});
+  return Object.assign(svg.node(), {scales: {color}});
 }
