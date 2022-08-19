@@ -36,14 +36,14 @@ shadow!(build);
 #[macro_export]
 macro_rules! ent {
     ($fmt: expr) => {
-        Ent::by_type(crate::type_parser_cache::read_type($fmt))
+        Ent::by_type($crate::type_parser_cache::read_type($fmt))
     };
 }
 
 #[macro_export]
 macro_rules! apply {
     ($type: expr) => {
-        crate::ent!($type)
+        $crate::ent!($type)
     };
     ($type: expr, $($arg: expr),*) => {
         {{
