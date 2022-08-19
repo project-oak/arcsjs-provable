@@ -83,7 +83,7 @@ impl std::fmt::Display for Type {
             format_arg_set(f, ", ", &self.args)?;
             write!(f, "}}")
         } else {
-            let res = write!(
+            write!(
                 f,
                 "{}",
                 if self.name == UNIVERSAL {
@@ -93,7 +93,7 @@ impl std::fmt::Display for Type {
                 }
             )?;
             if self.args.is_empty() {
-                Ok(res)
+                Ok(())
             } else {
                 write!(f, "(")?;
                 format_arg_set(f, ", ", &self.args)?;

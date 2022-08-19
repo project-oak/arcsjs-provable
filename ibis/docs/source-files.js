@@ -1,4 +1,4 @@
-var N = null;var sourcesIndex = {};
+var sourcesIndex = {};
 sourcesIndex["bumpalo"] = {"name":"","files":["alloc.rs","lib.rs"]};
 sourcesIndex["cfg_if"] = {"name":"","files":["lib.rs"]};
 sourcesIndex["chrono"] = {"name":"","dirs":[{"name":"format","files":["mod.rs","parse.rs","parsed.rs","scan.rs","strftime.rs"]},{"name":"naive","files":["date.rs","datetime.rs","internals.rs","isoweek.rs","time.rs"]},{"name":"offset","files":["fixed.rs","local.rs","mod.rs","utc.rs"]},{"name":"sys","files":["unix.rs"]}],"files":["date.rs","datetime.rs","div.rs","lib.rs","round.rs","sys.rs"]};

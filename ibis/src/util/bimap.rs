@@ -10,7 +10,7 @@ use std::hash::Hash;
 #[macro_export]
 macro_rules! bimap {
     () => {
-        crate::util::BiMap::new()
+        $crate::util::BiMap::new()
     };
     ( $( $key: expr => $value: expr ),* $(,)?) => {
         {

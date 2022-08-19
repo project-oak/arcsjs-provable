@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["DotGraph",""]],"trait":[["ToDot",""]]});
+window.SIDEBAR_ITEMS = {"struct":[["DotGraph",""]],"trait":[["ToDot",""]]};
