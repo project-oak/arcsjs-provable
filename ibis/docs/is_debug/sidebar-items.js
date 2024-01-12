@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":[["BuildModel",""]],"fn":[["build_channel",""],["is_debug",""],["is_release",""]]};
+window.SIDEBAR_ITEMS = {"enum":["BuildModel"],"fn":["build_channel","is_debug","is_release"]};

@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"macro":[["crepe","The main macro, which lets you write a Datalog program declaratively."]]};
+window.SIDEBAR_ITEMS = {"macro":["crepe"]};

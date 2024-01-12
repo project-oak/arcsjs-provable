@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"attr":[["__wasm_bindgen_class_marker",""],["wasm_bindgen",""]]};
+window.SIDEBAR_ITEMS = {"attr":["__wasm_bindgen_class_marker","wasm_bindgen"]};

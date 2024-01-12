@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"attr":[["wasm_bindgen",""]]};
+window.SIDEBAR_ITEMS = {"attr":["wasm_bindgen"]};
